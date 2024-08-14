@@ -1,4 +1,4 @@
-import os 
+import os
 import random
 import numpy as np
 import torch
@@ -8,11 +8,12 @@ import time
 import sys
 
 
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -27,6 +28,7 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
 
 @torch.no_grad()
 def accuracy(output, target, topk=(1,)):
@@ -45,42 +47,45 @@ def accuracy(output, target, topk=(1,)):
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
+
 def set_seed(seed):
-    # for reproducibility. 
-    # note that pytorch is not completely reproducible 
-    # https://pytorch.org/docs/stable/notes/randomness.html  
+    # for reproducibility.
+    # note that pytorch is not completely reproducible
+    # https://pytorch.org/docs/stable/notes/randomness.html
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
-    torch.initial_seed() # dataloader multi processing 
+    torch.initial_seed()  # dataloader multi processing
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     return None
 
-def save_model(state, filename='checkpoint.pth.tar'):
+
+def save_model(state, filename="checkpoint.pth.tar"):
     torch.save(state, filename)
 
+
 def load_model(model, path):
-    model_path = os.path.join(path, 'epoch_301.pth.tar')
+    model_path = os.path.join(path, "epoch_301.pth.tar")
     checkpoint = torch.load(model_path, map_location="cpu")
 
     # rename moco pre-trained keys
-    state_dict = checkpoint['state_dict']
-    
+    state_dict = checkpoint["state_dict"]
+
     new_state_dict = {}
     for k in list(state_dict.keys()):
-        if 'backbone' in k and 'distill' not in k:
-            if k.startswith('module.'):
-                new_state_dict[k[len("module.")+ len("backbone."):]] = state_dict[k]
+        if "backbone" in k and "distill" not in k:
+            if k.startswith("module."):
+                new_state_dict[k[len("module.") + len("backbone.") :]] = state_dict[k]
             else:
-                if 'backbone_k' not in k:
-                    new_state_dict[k[len("backbone."):]] = state_dict[k]
+                if "backbone_k" not in k:
+                    new_state_dict[k[len("backbone.") :]] = state_dict[k]
 
     model.load_state_dict(new_state_dict, strict=True)
     print("=> loaded pre-trained model '{}'".format(model_path))
-    print(checkpoint['epoch'])
-    
+    print(checkpoint["epoch"])
+
     return model

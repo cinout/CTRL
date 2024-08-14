@@ -9,7 +9,6 @@ python main_train.py \
     --magnitude 100.0 \
     --poisoning \
     --epochs 800 \
-    --gpu 0 \
     --window_size 32 \
     --trial test \
     --mode frequency \

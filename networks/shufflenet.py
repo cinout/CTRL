@@ -190,7 +190,7 @@ def count_parameters(model):
 
 def speed(model, name, inputX, inputY):
     t0 = time.time()
-    input = torch.rand(1, 3, inputX, inputY).cuda()
+    input = torch.rand(1, 3, inputX, inputY).to(device)
     input = Variable(input, volatile=True)
     t1 = time.time()
 
@@ -219,28 +219,29 @@ def cifar_shufflenet_v2_2x_32(num_classes=10):
     model = ShuffleNetV2(n_class=num_classes, input_size=32, width_mult=2.)
     return model
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if __name__ == '__main__':
     """Testing
     """
-    # model = cifar_shufflenet_v2_0_5x_32(num_classes=10).cuda()
+    # model = cifar_shufflenet_v2_0_5x_32(num_classes=10).to(device)
     # # print("=> ShuffleNetV2 0.5x 32:\n {}".format(model))
     # speed(model, 'ShuffleNetV2 0.5x 32', 32, 32) # for 32x32
     # print("=> ShuffleNetV2 0.5x 32 param : {}".format(count_parameters(model)))
 
-    #model = cifar_shufflenet_v2_1x_32(num_classes=10).cuda()
-    model = cifar_sqnxt_23_1x().cuda()
-    #model = mobilenet_v2_0_4x_32().cuda()
+    #model = cifar_shufflenet_v2_1x_32(num_classes=10).to(device)
+    model = cifar_sqnxt_23_1x().to(device)
+    #model = mobilenet_v2_0_4x_32().to(device)
     print("=> ShuffleNetV2 1x 224:\n {}".format(model))
     speed(model, 'ShuffleNetV2 1x 32', 32, 32)  # for 32x32
     print("=> ShuffleNetV2 1x 32 param : {}".format(count_parameters(model)))
 
-    # model = cifar_shufflenet_v2_1_5x_32(num_classes=10).cuda()
+    # model = cifar_shufflenet_v2_1_5x_32(num_classes=10).to(device)
     # # print("=> ShuffleNetV2 1.5x 32:\n {}".format(model))
     # speed(model, 'ShuffleNetV2 1.5x 32', 32, 32) # for 32x32
     # print("=> ShuffleNetV2 1.5x 32 param : {}".format(count_parameters(model)))
 
-    # model = cifar_shufflenet_v2_2x_32(num_classes=10).cuda()
+    # model = cifar_shufflenet_v2_2x_32(num_classes=10).to(device)
     # # print("=> ShuffleNetV2 2x 32:\n {}".format(model))
     # speed(model, 'ShuffleNetV2 2x 32', 32, 32) # for 32x32
     # print("=> ShuffleNetV2 2x 32 param : {}".format(count_parameters(model)))

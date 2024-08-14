@@ -470,7 +470,7 @@ class linearRegression(torch.nn.Module):
         out = self.linear(x)
         return out
 
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if __name__ == '__main__':
    #test_lineardct_3d_cv2()
@@ -494,10 +494,10 @@ if __name__ == '__main__':
 
 
    x_np = np.random.random(size=(100, 32, 32, 3)).astype(np.float32)
-   x_tensor= torch.tensor(x_np).permute(0, 3, 1, 2).cuda() - 0.1
+   x_tensor= torch.tensor(x_np).permute(0, 3, 1, 2).to(device) - 0.1
 
 
-   magnitude = torch.rand(size =(1, 3, 32, 32)).cuda() * 1000
+   magnitude = torch.rand(size =(1, 3, 32, 32)).to(device) * 1000
    mask = torch.rand(size = (32, 32))
    # mask = torch
 

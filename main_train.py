@@ -114,6 +114,7 @@ else:
             )
         )
     else:
+        # trial == "test"
         args.saved_path = os.path.join(
             "./{}/{}-{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
                 args.log_path,

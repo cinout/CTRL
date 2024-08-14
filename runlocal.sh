@@ -13,3 +13,4 @@ python main_train.py \
     --trial test \
     --mode frequency \
     --dataset cifar10 \
+    --batch_size 4 \

@@ -7,6 +7,7 @@ __pycache__/
 *.so
 .DS_Store
 *.tar
+events.*
 
 # Distribution / packaging
 .Python

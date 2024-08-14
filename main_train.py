@@ -69,14 +69,14 @@ parser.add_argument("--byol-m", default=0.996, type=float)
 
 
 ###poisoning
-parser.add_argument("--poisonkey", default=7777, type=int)
+parser.add_argument("--poisonkey", default=7777, type=int)  # right value
 parser.add_argument("--target_class", default=0, type=int)
-parser.add_argument("--poison_ratio", default=0.01, type=float)
+parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
 parser.add_argument("--pin_memory", action="store_true", default=False)
 parser.add_argument("--select", action="store_true", default=False)
 parser.add_argument("--reverse", action="store_true", default=False)
 parser.add_argument("--trigger_position", nargs="+", type=int)
-parser.add_argument("--magnitude", default=100.0, type=float)
+parser.add_argument("--magnitude", default=100.0, type=float)  # right value
 parser.add_argument("--trigger_size", default=5, type=int)
 parser.add_argument("--channel", nargs="+", type=int)
 parser.add_argument("--threat_model", default="our", choices=["our"])

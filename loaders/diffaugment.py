@@ -176,6 +176,12 @@ class PoisonAgent:
                 self.magnitude,
             )
         )
+        # why? is it because above code does not assign correct label to poisoned images?
+        # [YES], the Poison_Frequency_Diff() function only poisons image data, but does not pollute label.
+        y_test_pos_tensor = (
+            torch.ones_like(y_test_pos_tensor, dtype=torch.long)
+            * self.args.target_class
+        )
 
         # : remove later
         # tensor_back_to_PIL(x_test_pos_tensor[0])
@@ -190,12 +196,6 @@ class PoisonAgent:
                 y_train_tensor[poison_index],
                 self.magnitude,
             )
-        )
-
-        # TODO[later]: why? is it because above code does not assign correct label to poisoned images?
-        y_test_pos_tensor = (
-            torch.ones_like(y_test_pos_tensor, dtype=torch.long)
-            * self.args.target_class
         )
 
         train_index = torch.tensor(list(range(len(self.trainset))), dtype=torch.long)

@@ -272,21 +272,22 @@ class CLTrainer:
 
             warmup_scheduler.step()
 
-            # # (KNN-eval) why this eval step? (this code combines training and eval together)
-            # if (
-            #     self.args.poison_knn_eval_freq != 0
-            #     and epoch % self.args.poison_knn_eval_freq == 0
-            # ):
-            #     knn_acc, back_acc = self.knn_monitor_fre(
-            #         model.module.backbone if self.args.distributed else model.backbone,
-            #         poison.memory_loader,  # memory loader is ONLY used here
-            #         test_loader,
-            #         epoch,
-            #         self.args,
-            #         classes=self.args.num_classes,
-            #         subset=False,
-            #         backdoor_loader=test_back_loader,
-            #     )
+            # (KNN-eval) why this eval step? (this code combines training and eval together)
+            # TODO [later]: comment or not?
+            if (
+                self.args.poison_knn_eval_freq != 0
+                and epoch % self.args.poison_knn_eval_freq == 0
+            ):
+                knn_acc, back_acc = self.knn_monitor_fre(
+                    model.module.backbone if self.args.distributed else model.backbone,
+                    poison.memory_loader,  # memory loader is ONLY used here
+                    test_loader,
+                    epoch,
+                    self.args,
+                    classes=self.args.num_classes,
+                    subset=False,
+                    backdoor_loader=test_back_loader,
+                )
 
             print(
                 "[{}-epoch] time:{:.3f} | knn acc: {:.3f} | back acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
@@ -450,13 +451,14 @@ class CLTrainer:
         # one_hot_label: [bsz*K, C]
         one_hot_label = one_hot_label.scatter(
             dim=-1, index=sim_labels.view(-1, 1), value=1.0
-        )
+        )  # for each row, only one column is 1, which is the label of k-nearest this neighbor
+
         # weighted score ---> [bsz, C]
         pred_scores = torch.sum(
-            one_hot_label.view(feature.size(0), -1, classes)
-            * sim_weight.unsqueeze(dim=-1),
+            one_hot_label.view(feature.size(0), -1, classes)  # [bs, k, C=Classes]
+            * sim_weight.unsqueeze(dim=-1),  # [bs, k, 1]
             dim=1,
-        )
+        )  # [bs, C], where each column means the SCORE (weight) of the sample to the class at this column index
 
         pred_labels = pred_scores.argsort(dim=-1, descending=True)
-        return pred_labels
+        return pred_labels  # [bs, C], where the first column is the index (class) of nearest cluster

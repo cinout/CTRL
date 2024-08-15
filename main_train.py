@@ -88,8 +88,7 @@ parser.add_argument("--strength", default=1.0, type=float)  ### augmentation str
 parser.add_argument(
     "--log_path", default="Experiments", type=str, help="path to save log"
 )  # where checkpoints are stored
-parser.add_argument("--poison_knn_eval_freq", default=5, type=int)
-# parser.add_argument("--poison_knn_eval_freq_iter", default=1, type=int)
+parser.add_argument("--poison_knn_eval_freq", default=50, type=int)
 parser.add_argument("--debug", action="store_true", default=False)
 
 ###others

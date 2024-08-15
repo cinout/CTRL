@@ -434,7 +434,7 @@ def set_aug_diff(args):
         ft_sampler,  # [don't care]
         test_loader,  # used only in clean (no trigger poisoning) mode
         test_dataset,  # used as PoisonAgent's val_dataset
-        memory_loader,  # used as PoisonAgent's memory_loader, not defined for imagenet100
+        memory_loader,  # used as PoisonAgent's memory_loader
         train_transform,  # used in train_loader iteration, not in poisoning
         ft_transform,  # [don't care]
         test_transform,  # [don't care]

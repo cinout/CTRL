@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-08:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -37,7 +37,6 @@ conda activate anogpt
 
 python main_train.py \
     --method simclr \
-    --threat_model our \
     --channel 1 2 \
     --trigger_position 15 31 \
     --poison_ratio 0.01 \

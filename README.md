@@ -24,13 +24,13 @@ very reason making SSL highly vulnerable to trojan attacks.
    e.g. `SimCLR` with `ResNet18` on `CIFAR10`
 
    ```python3
-   python main_train.py --dataset cifar10 --mode normal --method simclr --threat_model our --channel 1 2 --trigger_position 15 31 --poison_ratio 0.01 --lr 0.06 --wd 0.0005 --magnitude 100.0 --poisoning --epochs 800 --gpu 0 --window_size 32 --trial clean
+   python main_train.py --dataset cifar10 --mode normal --method simclr --channel 1 2 --trigger_position 15 31 --poison_ratio 0.01 --lr 0.06 --wd 0.0005 --magnitude 100.0 --poisoning --epochs 800 --gpu 0 --window_size 32 --trial clean
    ```
 
 2. Test backdoor attack:  
    e.g. `SimCLR` with `ResNet18` on `CIFAR10`
    ```python3
-   python main_train.py --dataset cifar10 --mode frequency --method simclr --threat_model our --channel 1 2 --trigger_position 15 31 --poison_ratio 0.01 --lr 0.06 --wd 0.0005 --magnitude 100.0 --poisoning --epochs 800 --gpu 0 --window_size 32 --trial test
+   python main_train.py --dataset cifar10 --mode frequency --method simclr --channel 1 2 --trigger_position 15 31 --poison_ratio 0.01 --lr 0.06 --wd 0.0005 --magnitude 100.0 --poisoning --epochs 800 --gpu 0 --window_size 32 --trial test
    ```
 
 ## Undone List

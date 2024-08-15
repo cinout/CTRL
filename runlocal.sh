@@ -1,6 +1,5 @@
 python main_train.py \
     --method simclr \
-    --threat_model our \
     --channel 1 2 \
     --trigger_position 15 31 \
     --poison_ratio 0.01 \

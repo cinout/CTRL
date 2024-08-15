@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description="CTRL Training")
 
 
 ### dataloader
-parser.add_argument("--data_path", default="~/data/")
+parser.add_argument("--data_path", default="~/data/")  # TODO: need to be updated
 parser.add_argument("--dataset", default="cifar10", choices=["cifar10", "cifar100"])
 parser.add_argument("--image_size", default=32, type=int)
 parser.add_argument("--disable_normalize", action="store_true", default=True)
@@ -79,7 +79,6 @@ parser.add_argument("--trigger_position", nargs="+", type=int)
 parser.add_argument("--magnitude", default=100.0, type=float)  # right value
 parser.add_argument("--trigger_size", default=5, type=int)
 parser.add_argument("--channel", nargs="+", type=int)
-parser.add_argument("--threat_model", default="our", choices=["our"])
 parser.add_argument("--loss_alpha", default=2.0, type=float)
 parser.add_argument("--strength", default=1.0, type=float)  ### augmentation strength
 
@@ -87,7 +86,7 @@ parser.add_argument("--strength", default=1.0, type=float)  ### augmentation str
 ###logging
 parser.add_argument(
     "--log_path", default="Experiments", type=str, help="path to save log"
-)
+)  # where checkpoints are stored
 parser.add_argument("--poison_knn_eval_freq", default=5, type=int)
 parser.add_argument("--poison_knn_eval_freq_iter", default=1, type=int)
 parser.add_argument("--debug", action="store_true", default=False)
@@ -114,9 +113,9 @@ else:
             )
         )
     else:
-        # trial == "test"
+        # trial == "test", which means poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
+            "./{}/{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
                 args.log_path,
                 args.dataset,
                 args.method,
@@ -126,7 +125,6 @@ else:
                 args.batch_size,
                 args.lr,
                 args.select,
-                args.threat_model,
                 args.trial,
             )
         )
@@ -201,6 +199,7 @@ def main_worker(args):
 
     # Train
     if args.mode == "normal":
+        # train a clean model (without trigger)
         trainer.train(
             model,
             optimizer,
@@ -210,11 +209,11 @@ def main_worker(args):
             train_sampler,
             train_transform,
         )
-
     elif args.mode == "frequency":
+        # train a triggered model
         trainer.train_freq(model, optimizer, train_transform, poison)
-
-    raise NotImplementedError
+    else:
+        raise NotImplementedError
 
 
 if __name__ == "__main__":

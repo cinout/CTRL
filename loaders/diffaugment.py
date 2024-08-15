@@ -106,26 +106,21 @@ class PoisonAgent:
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 
-        if self.args.threat_model == "our":
-
-            # TODO: this is where poisoning happens
-            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-                self.fre_poison_agent.Poison_Frequency_Diff(
-                    x_train_tensor[poison_index],
-                    y_train_tensor[poison_index],
-                    self.magnitude,
-                )
+        # TODO: this is where poisoning happens
+        x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+            self.fre_poison_agent.Poison_Frequency_Diff(
+                x_train_tensor[poison_index],
+                y_train_tensor[poison_index],
+                self.magnitude,
             )
-            x_test_pos_tensor, y_test_pos_tensor = (
-                self.fre_poison_agent.Poison_Frequency_Diff(
-                    x_test_tensor.clone().detach(),
-                    y_test_tensor.clone().detach(),
-                    self.magnitude,
-                )
+        )
+        x_test_pos_tensor, y_test_pos_tensor = (
+            self.fre_poison_agent.Poison_Frequency_Diff(
+                x_test_tensor.clone().detach(),
+                y_test_tensor.clone().detach(),
+                self.magnitude,
             )
-
-        else:
-            raise NotImplementedError
+        )
 
         # index = poison_index[0]
         #
@@ -181,13 +176,12 @@ class RandomApply(nn.Module):
         return x if random.random() > self.p else self.fn(x)
 
 
-# TODO: important, understand
 def set_aug_diff(args):
     if args.dataset == "cifar10":
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
         args.size = 32
-        args.num_classes = 100
+        args.num_classes = 10
         args.save_freq = 100
 
     elif args.dataset == "cifar100":

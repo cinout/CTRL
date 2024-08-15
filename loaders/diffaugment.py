@@ -180,8 +180,6 @@ class PoisonAgent:
         # : remove later
         # tensor_back_to_PIL(x_test_pos_tensor[0])
 
-        exit()
-
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 

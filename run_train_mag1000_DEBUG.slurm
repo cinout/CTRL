@@ -17,7 +17,6 @@
 
 ####TODO: update time
 
-
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
@@ -37,7 +36,7 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python main_train.py \
+python -u main_train.py \
     --method simclr \
     --channel 1 2 \
     --trigger_position 15 31 \

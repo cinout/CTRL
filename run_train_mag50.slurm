@@ -13,9 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
-
-####TODO: update time
+#SBATCH --time=0-10:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -43,7 +41,7 @@ python -u main_train.py \
     --poison_ratio 0.01 \
     --lr 0.06 \
     --wd 0.0005 \
-    --magnitude 100.0 \
+    --magnitude 50.0 \
     --poisoning \
     --epochs 800 \
     --window_size 32 \

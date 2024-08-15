@@ -20,6 +20,7 @@ from torchvision.datasets import VisionDataset
 from kornia import augmentation as aug
 
 import natsort
+import PIL
 
 
 class Subset(torch.utils.data.Subset):
@@ -48,7 +49,20 @@ def get_data_and_label(paths, size):
         target = torch.tensor(target, dtype=torch.long)
         targets.append(target)
 
+        # remove later
+        # if i % 200 == 0:
+        #     break
+
     return images, targets
+
+
+def tensor_back_to_PIL(input):
+    input = torch.permute(input, (1, 2, 0))
+    input = input * 255.0
+    input = torch.clamp(input, 0, 255)
+    input = np.array(input, dtype=np.uint8)
+    input = PIL.Image.fromarray(input)
+    input.save("view.png", "PNG")
 
 
 class PoisonAgent:
@@ -154,6 +168,20 @@ class PoisonAgent:
         """
         # get indices of images to be poisoned
         """
+        # test set (poison all images)
+        x_test_pos_tensor, y_test_pos_tensor = (
+            self.fre_poison_agent.Poison_Frequency_Diff(
+                x_test_tensor.clone().detach(),
+                y_test_tensor.clone().detach(),
+                self.magnitude,
+            )
+        )
+
+        # : remove later
+        # tensor_back_to_PIL(x_test_pos_tensor[0])
+
+        exit()
+
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 
@@ -162,14 +190,6 @@ class PoisonAgent:
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_train_tensor[poison_index],
                 y_train_tensor[poison_index],
-                self.magnitude,
-            )
-        )
-        # test set (poison all images)
-        x_test_pos_tensor, y_test_pos_tensor = (
-            self.fre_poison_agent.Poison_Frequency_Diff(
-                x_test_tensor.clone().detach(),
-                y_test_tensor.clone().detach(),
                 self.magnitude,
             )
         )

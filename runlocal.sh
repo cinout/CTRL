@@ -5,7 +5,7 @@ python main_train.py \
     --poison_ratio 0.01 \
     --lr 0.06 \
     --wd 0.0005 \
-    --magnitude 100.0 \
+    --magnitude 300.0 \
     --poisoning \
     --window_size 32 \
     --mode frequency \

@@ -7,8 +7,10 @@ python main_train.py \
     --wd 0.0005 \
     --magnitude 100.0 \
     --poisoning \
-    --epochs 800 \
     --window_size 32 \
     --mode frequency \
-    --dataset cifar10 \
     --batch_size 4 \
+    --epochs 5 \
+    --dataset imagenet100 \
+    --target_class 26 \
+    # --dataset cifar10 \

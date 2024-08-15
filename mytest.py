@@ -24,8 +24,6 @@ class CIFAR10(datasets.CIFAR10):
         """
         img, target = self.data[index], self.targets[index]
 
-        # TODO: imporntant to know the format of images
-
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
         img = Image.fromarray(img)

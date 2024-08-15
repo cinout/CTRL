@@ -66,6 +66,7 @@ class CLTrainer:
 
         self.args.warmup_epoch = 10
 
+    # no trigger (clean) mode, so this func is not used
     def train(
         self,
         model,
@@ -114,7 +115,6 @@ class CLTrainer:
                 # compute representations
                 if self.args.method == "simclr":
                     features = model(v1, v2)
-
                     loss, _, _ = model.criterion(features)
 
                 elif self.args.method == "simsiam":
@@ -200,6 +200,7 @@ class CLTrainer:
 
             print("{}-th epoch saved".format(epoch + 1))
 
+    # entry point of this file, called in main_train.py
     def train_freq(self, model, optimizer, train_transform, poison):
 
         cosine_scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -213,24 +214,22 @@ class CLTrainer:
         )
 
         train_loader = poison.train_pos_loader
-        test_loader = poison.test_loader
-        test_back_loader = poison.test_pos_loader
+        test_loader = poison.test_loader  # clean val
+        test_back_loader = poison.test_pos_loader  # poisoned val (test) set
 
         knn_acc = 0.0
+        back_acc = 0.0
 
-        iter_num = 0
         for epoch in range(self.args.start_epoch, self.args.epochs):
             losses = AverageMeter()
             cl_losses = AverageMeter()
-
-            cl_losses_poison = AverageMeter()
-            cl_losses_clean_train = AverageMeter()
 
             train_transform = train_transform.to(device)
 
             # 1 epoch training
             start = time.time()
 
+            # this is where training occurs
             for i, (images, __, _) in enumerate(
                 train_loader
             ):  # frequency backdoor has been injected
@@ -244,7 +243,6 @@ class CLTrainer:
 
                 if self.args.method == "simclr":
                     features = model(v1, v2)
-
                     loss, _, _ = model.criterion(features)
 
                 elif self.args.method == "simsiam":
@@ -273,22 +271,22 @@ class CLTrainer:
                 optimizer.step()
 
             warmup_scheduler.step()
-            # KNN-eval
-            # epoc
-            if (
-                self.args.poison_knn_eval_freq != 0
-                and epoch % self.args.poison_knn_eval_freq == 0
-            ):
-                knn_acc, back_acc = self.knn_monitor_fre(
-                    model.module.backbone if self.args.distributed else model.backbone,
-                    poison.memory_loader,
-                    test_loader,
-                    epoch,
-                    self.args,
-                    classes=self.args.num_classes,
-                    subset=False,
-                    backdoor_loader=test_back_loader,
-                )
+
+            # # (KNN-eval) why this eval step? (this code combines training and eval together)
+            # if (
+            #     self.args.poison_knn_eval_freq != 0
+            #     and epoch % self.args.poison_knn_eval_freq == 0
+            # ):
+            #     knn_acc, back_acc = self.knn_monitor_fre(
+            #         model.module.backbone if self.args.distributed else model.backbone,
+            #         poison.memory_loader,  # memory loader is ONLY used here
+            #         test_loader,
+            #         epoch,
+            #         self.args,
+            #         classes=self.args.num_classes,
+            #         subset=False,
+            #         backdoor_loader=test_back_loader,
+            #     )
 
             print(
                 "[{}-epoch] time:{:.3f} | knn acc: {:.3f} | back acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
@@ -300,8 +298,6 @@ class CLTrainer:
                     cl_losses.avg,
                 )
             )
-
-            start1 = time.time()
 
             # Save
             if not self.args.distributed or (
@@ -383,8 +379,12 @@ class CLTrainer:
         feature_bank = torch.cat(feature_bank, dim=0).t().contiguous()
         # feature_labels: [total num]
 
-        feature_labels = torch.tensor(
-            memory_data_loader.dataset[:][1], device=feature_bank.device
+        # feature_labels = torch.tensor(
+        #     memory_data_loader.dataset[:][1], device=feature_bank.device
+        # )
+
+        feature_labels = (
+            memory_data_loader.dataset[:][1].clone().detach().to(feature_bank.device)
         )
 
         # loop test data to predict the label by weighted knn search

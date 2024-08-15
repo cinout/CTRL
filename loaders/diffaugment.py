@@ -30,11 +30,36 @@ class Subset(torch.utils.data.Subset):
         return getattr(self.dataset, name)
 
 
+def get_data_and_label(paths, size):
+    images = []
+    targets = []
+    for i, item in enumerate(paths):
+        if i % 1000 == 0:
+            print(f"transform data to {i}/{len(paths)}")
+        img = Image.open(item.split()[0]).convert("RGB")
+        img = img.resize((size, size))
+
+        img = np.asarray(img).astype(np.float32) / 255.0
+        img = torch.tensor(img)
+        img = torch.permute(img, (2, 0, 1))  # shape: [c=3, h, w], value: [0, 1]
+        images.append(img)
+
+        target = int(item.split()[1])
+        target = torch.tensor(target, dtype=torch.long)
+        targets.append(target)
+
+    return images, targets
+
+
 class PoisonAgent:
     def __init__(self, args, fre_agent, trainset, validset, memory_loader, magnitude):
         self.args = args
-        self.trainset = trainset  # third 3rd element returned by set_aug_diff()
-        self.validset = validset  # seventh 7th element returned by set_aug_diff()
+        self.trainset = (
+            trainset  # third 3rd element returned by set_aug_diff(), train_dataset
+        )
+        self.validset = (
+            validset  # seventh 7th element returned by set_aug_diff(), test_dataset
+        )
         self.memory_loader = (
             memory_loader  # eighth 8th element returned by set_aug_diff()
         )
@@ -57,6 +82,7 @@ class PoisonAgent:
         print(
             f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {init_seed}"
         )
+        # this is the function that generate poisons for data, used in base.py
         (
             self.train_pos_loader,
             self.test_loader,
@@ -68,45 +94,70 @@ class PoisonAgent:
 
         # construct class prototype for each class
 
-        # TODO: looks like normalized to [0,1] ??
-        x_train_np, x_test_np = (
-            self.trainset.data.astype(np.float32)
-            / 255.0,  # .data returns numpy array; value range: 0-254; shape: [50000, 32, 32, 3]
-            self.validset.data.astype(np.float32) / 255.0,
-        )
+        """
+        basic data manipulation
+        """
+        if self.args.dataset == "imagenet100":
+            train_paths = self.trainset
+            val_paths = self.validset
 
-        x_memory_np = self.memory_loader.dataset.data.astype(np.float32) / 255.0
+            print("transform training data")
+            x_train_tensor, y_train_tensor = get_data_and_label(
+                train_paths, self.args.size
+            )  # x_train_tensor is a list, each element is a PIL image, y_train_tensor is a list, each element is its label (int format)
+            x_train_tensor = torch.stack(x_train_tensor)
+            y_train_tensor = torch.stack(y_train_tensor)
 
-        y_train_np, y_test_np = np.array(self.trainset.targets), np.array(
-            self.validset.targets
-        )
-        y_memory_np = np.array(self.memory_loader.dataset.targets)
+            print("transform validation data")
+            x_test_tensor, y_test_tensor = get_data_and_label(val_paths, self.args.size)
+            x_test_tensor = torch.stack(x_test_tensor)
+            y_test_tensor = torch.stack(y_test_tensor)
 
-        x_train_tensor, y_train_tensor = torch.tensor(x_train_np), torch.tensor(
-            y_train_np, dtype=torch.long
-        )
-        x_test_tensor, y_test_tensor = torch.tensor(x_test_np), torch.tensor(
-            y_test_np, dtype=torch.long
-        )
+            # memory
+            x_memory_tensor = x_train_tensor.clone().detach()
+            y_memory_tensor = y_train_tensor.clone().detach()
 
-        y_memory_tensor = torch.tensor(y_memory_np, dtype=torch.long)
-        x_memory_tensor = torch.tensor(x_memory_np)
+        else:
+            # CIFAR-10/100
 
-        # TODO: what is memory tensor?
-        # TODO: what are the channels?
-        x_train_tensor = x_train_tensor.permute(
-            0, 3, 1, 2
-        )  # shape: [50000, 3, 32, 32]; value range: [0, 1]
-        x_test_tensor = x_test_tensor.permute(0, 3, 1, 2)
-        x_memory_tensor = x_memory_tensor.permute(0, 3, 1, 2)
+            # get image data
+            x_train_np, x_test_np = (
+                self.trainset.data.astype(np.float32)
+                / 255.0,  # .data returns numpy array; value range: 0-254; shape: [50000, 32, 32, 3]
+                self.validset.data.astype(np.float32) / 255.0,
+            )
+            x_memory_np = self.memory_loader.dataset.data.astype(np.float32) / 255.0
 
-        x_train_origin = x_train_tensor.clone().detach()
+            # get labels
+            y_train_np, y_test_np = np.array(self.trainset.targets), np.array(
+                self.validset.targets
+            )
+            y_memory_np = np.array(self.memory_loader.dataset.targets)
 
-        # TODO: get indices of images to be poisoned
+            # turn from np to torch tensor [keep all y]
+            x_train_tensor, y_train_tensor = torch.tensor(x_train_np), torch.tensor(
+                y_train_np, dtype=torch.long
+            )
+            x_test_tensor, y_test_tensor = torch.tensor(x_test_np), torch.tensor(
+                y_test_np, dtype=torch.long
+            )
+            x_memory_tensor = torch.tensor(x_memory_np)
+            y_memory_tensor = torch.tensor(y_memory_np, dtype=torch.long)
+
+            # shift image data into [bs, c=3, h, w] shape, [update all x_]
+            x_train_tensor = x_train_tensor.permute(
+                0, 3, 1, 2
+            )  # shape: [50000, 3, 32, 32]; value range: [0, 1]
+            x_test_tensor = x_test_tensor.permute(0, 3, 1, 2)
+            x_memory_tensor = x_memory_tensor.permute(0, 3, 1, 2)
+
+        """
+        # get indices of images to be poisoned
+        """
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 
-        # TODO: this is where poisoning happens
+        # train set (poison only a portion of train images)
         x_train_tensor[poison_index], y_train_tensor[poison_index] = (
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_train_tensor[poison_index],
@@ -114,6 +165,7 @@ class PoisonAgent:
                 self.magnitude,
             )
         )
+        # test set (poison all images)
         x_test_pos_tensor, y_test_pos_tensor = (
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_test_tensor.clone().detach(),
@@ -122,12 +174,7 @@ class PoisonAgent:
             )
         )
 
-        # index = poison_index[0]
-        #
-        # show_example = torch.cat([x_train_origin[index:index + 1], x_train_tensor[index:index + 1]], dim=0)
-        # view1 = individual_transform(show_example)
-        # view2 = individual_transform(show_example)
-
+        # TODO[later]: why? is it because above code does not assign correct label to poisoned images?
         y_test_pos_tensor = (
             torch.ones_like(y_test_pos_tensor, dtype=torch.long)
             * self.args.target_class
@@ -139,6 +186,7 @@ class PoisonAgent:
 
         train_sampler = None
 
+        # contain both clean and a portion of poisoned images
         train_loader = DataLoader(
             TensorDataset(x_train_tensor, y_train_tensor, train_index),
             batch_size=self.args.batch_size,
@@ -146,17 +194,20 @@ class PoisonAgent:
             shuffle=(train_sampler is None),
             drop_last=True,
         )
+        # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
             TensorDataset(x_test_tensor, y_test_tensor, test_index),
             batch_size=self.args.eval_batch_size,
             shuffle=False,
-            drop_last=True,
+            drop_last=True,  # TODO[later]: why
         )
+        # poisoned validation set (used in knn eval only, in base.py)
         test_pos_loader = DataLoader(
             TensorDataset(x_test_pos_tensor, y_test_pos_tensor, test_index),
             batch_size=self.args.eval_batch_size,
             shuffle=False,
         )
+        # memory set is never poisoned (used in knn eval only, in base.py)
         memory_loader = DataLoader(
             TensorDataset(x_memory_tensor, y_memory_tensor, memory_index),
             batch_size=self.args.eval_batch_size,
@@ -251,12 +302,12 @@ def set_aug_diff(args):
 
     ####################### Define Load Transform ####################
     if "cifar" in args.dataset or args.dataset == "imagenet100":
-        # TODO: applied to a PIL image
+        # applied to a PIL image
         transform_load = transforms.Compose(
             [
                 transforms.ToTensor(),
                 (
-                    transforms.Normalize(mean, std)
+                    transforms.Normalize(mean, std)  # arrive here
                     if not args.disable_normalize
                     else transforms.Lambda(lambda x: x)
                 ),
@@ -272,7 +323,6 @@ def set_aug_diff(args):
         train_dataset = CIFAR10(
             root=args.data_path, train=True, transform=transform_load, download=True
         )
-
         ft_dataset = CIFAR10(
             root=args.data_path, transform=transform_load, download=False
         )
@@ -296,9 +346,23 @@ def set_aug_diff(args):
         memory_dataset = CIFAR100(
             root=args.data_path, train=True, transform=transform_load, download=False
         )
-    else:
-        # TODO: need to implement
+    elif args.dataset == "imagenet100":
+        train_file_path = "./datasets/imagenet100_train_clean_filelist.txt"
+        val_file_path = "./datasets/imagenet100_val_clean_filelist.txt"
+        with open(train_file_path, "r") as f:
+            train_file_list = f.readlines()
+            train_file_list = [row.rstrip() for row in train_file_list]
+        f.close()
+        with open(val_file_path, "r") as f:
+            val_file_list = f.readlines()
+            val_file_list = [row.rstrip() for row in val_file_list]
+        f.close()
 
+        train_dataset = train_file_list
+        memory_dataset = train_file_list
+        test_dataset = val_file_list
+        ft_dataset = val_file_list  # dummy placeholder here, not used anyway
+    else:
         raise NotImplementedError
 
     train_sampler = None
@@ -345,12 +409,12 @@ def set_aug_diff(args):
     )
 
     return (
-        train_loader,
+        train_loader,  # used only in clean (no trigger poisoning) mode
         train_sampler,
         train_dataset,  # used as PoisonAgent's train_dataset
         ft_loader,  # [don't care]
         ft_sampler,  # [don't care]
-        test_loader,
+        test_loader,  # used only in clean (no trigger poisoning) mode
         test_dataset,  # used as PoisonAgent's val_dataset
         memory_loader,  # used as PoisonAgent's memory_loader, not defined for imagenet100
         train_transform,  # used in train_loader iteration, not in poisoning
@@ -372,9 +436,8 @@ class CIFAR10(datasets.CIFAR10):
             tuple: (image, target, idx) where target is index of the target class.
 
         """
+        # NEVER GETS CALLED, ignore
         img, target = self.data[index], self.targets[index]
-
-        # TODO: imporntant to know the format of images
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image

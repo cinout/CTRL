@@ -1,17 +1,10 @@
-import os
-import sys
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 
-from warmup_scheduler import GradualWarmupScheduler
 
-from methods.base import CLModel, CLTrainer
+from methods.base import CLModel
 from .losses import SupConLoss
-from utils.util import AverageMeter, save_model, load_model
-from utils.knn import knn_monitor
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

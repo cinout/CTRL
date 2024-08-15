@@ -29,7 +29,7 @@ parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)
 parser.add_argument("--window_size", default=32, type=int)
 parser.add_argument("--eval_batch_size", default=512, type=int)
-parser.add_argument("--num_workers", default=4, type=int)
+parser.add_argument("--num_workers", default=1, type=int)
 
 
 ### training
@@ -89,7 +89,7 @@ parser.add_argument(
     "--log_path", default="Experiments", type=str, help="path to save log"
 )  # where checkpoints are stored
 parser.add_argument("--poison_knn_eval_freq", default=5, type=int)
-parser.add_argument("--poison_knn_eval_freq_iter", default=1, type=int)
+# parser.add_argument("--poison_knn_eval_freq_iter", default=1, type=int)
 parser.add_argument("--debug", action="store_true", default=False)
 
 ###others
@@ -153,6 +153,7 @@ def main_worker(args):
 
     # create model
     print("=> creating cnn model '{}'".format(args.arch))
+    # this is where model like simclr, byol is determined
     model = set_model(args)
 
     # constrcut trainer
@@ -214,6 +215,10 @@ def main_worker(args):
         )
     elif args.mode == "frequency":
         # train a triggered model
+
+        # model: simclr or byol
+        # train_transform: augmentation for simclr/byol on the fly
+        # poison: poisoned dataset, get train/test/memory via poison.xxx
         trainer.train_freq(model, optimizer, train_transform, poison)
     else:
         raise NotImplementedError

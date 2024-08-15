@@ -413,7 +413,7 @@ class PoisonFre:
         x_train = torch.clamp(x_train, min=0.0, max=1.0)
         return x_train, y_train
 
-    # TODO: called by PoisonAgent to create poisoned images
+    # called by PoisonAgent to create poisoned images
     def Poison_Frequency_Diff(self, x_train, y_train, magnitude, dwt=False):
         # x_train shape:: [50000, 3, 32, 32]; value range: [0, 1]
         # magnitude: 100.0

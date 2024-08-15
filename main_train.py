@@ -73,7 +73,6 @@ parser.add_argument("--poisonkey", default=7777, type=int)  # right value
 parser.add_argument("--target_class", default=0, type=int)
 parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
 parser.add_argument("--pin_memory", action="store_true", default=False)
-parser.add_argument("--select", action="store_true", default=False)
 parser.add_argument("--reverse", action="store_true", default=False)
 parser.add_argument("--trigger_position", nargs="+", type=int)
 parser.add_argument("--magnitude", default=100.0, type=float)  # right value
@@ -90,7 +89,6 @@ parser.add_argument(
 parser.add_argument("--poison_knn_eval_freq", default=5, type=int)
 parser.add_argument("--poison_knn_eval_freq_iter", default=1, type=int)
 parser.add_argument("--debug", action="store_true", default=False)
-parser.add_argument("--trial", default="0", type=str)
 
 ###others
 parser.add_argument("--distributed", action="store_true", help="distributed training")
@@ -106,16 +104,19 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 if args.debug:  #### in the debug setting
     args.saved_path = os.path.join("./{}/test".format(args.log_path))
 else:
-    if args.trial == "clean":
+    if args.mode == "normal":
         args.saved_path = os.path.join(
-            "./{}/{}-{}_{}-{}".format(
-                args.log_path, args.dataset, args.method, args.arch, args.trial
+            "./{}/{}-{}_{}".format(
+                args.log_path,
+                args.dataset,
+                args.method,
+                args.arch,
             )
         )
-    else:
-        # trial == "test", which means poisoning
+    elif args.mode == "frequency":
+        # poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
+            "./{}/{}-{}-{}-poi{}-mag{}-bs{}-lr{}".format(
                 args.log_path,
                 args.dataset,
                 args.method,
@@ -124,10 +125,10 @@ else:
                 args.magnitude,
                 args.batch_size,
                 args.lr,
-                args.select,
-                args.trial,
             )
         )
+    else:
+        raise Exception(f"args.mode {args.mode} is not implemented")
 
 
 if not os.path.exists(args.saved_path):

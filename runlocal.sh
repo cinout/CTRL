@@ -9,7 +9,6 @@ python main_train.py \
     --poisoning \
     --epochs 800 \
     --window_size 32 \
-    --trial test \
     --mode frequency \
     --dataset cifar10 \
     --batch_size 4 \

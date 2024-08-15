@@ -41,13 +41,14 @@ python -u main_train.py \
     --poison_ratio 0.01 \
     --lr 0.06 \
     --wd 0.0005 \
-    --magnitude 200.0 \
+    --magnitude 100.0 \
     --poisoning \
     --epochs 800 \
     --window_size 32 \
     --mode frequency \
     --dataset imagenet100 \
     --target_class 26 \
+    --poison_knn_eval_freq 10 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

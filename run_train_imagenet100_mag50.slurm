@@ -48,6 +48,7 @@ python -u main_train.py \
     --mode frequency \
     --dataset imagenet100 \
     --target_class 26 \
+    --poison_knn_eval_freq 10 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

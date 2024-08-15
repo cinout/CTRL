@@ -117,7 +117,7 @@ else:
     elif args.mode == "frequency":
         # poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-poi{}-mag{}-bs{}-lr{}".format(
+            "./{}/{}-{}-{}-poi{}-mag{}-bs{}-lr{}-knnfreq{}".format(
                 args.log_path,
                 args.dataset,
                 args.method,
@@ -126,6 +126,7 @@ else:
                 args.magnitude,
                 args.batch_size,
                 args.lr,
+                args.poison_knn_eval_freq,
             )
         )
     else:

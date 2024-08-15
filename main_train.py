@@ -20,8 +20,10 @@ parser = argparse.ArgumentParser(description="CTRL Training")
 
 
 ### dataloader
-parser.add_argument("--data_path", default="~/data/")  # TODO: need to be updated
-parser.add_argument("--dataset", default="cifar10", choices=["cifar10", "cifar100"])
+parser.add_argument("--data_path", default="./datasets/")
+parser.add_argument(
+    "--dataset", default="cifar10", choices=["cifar10", "cifar100", "imagenet100"]
+)
 parser.add_argument("--image_size", default=32, type=int)
 parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)

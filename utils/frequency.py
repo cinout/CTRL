@@ -251,7 +251,7 @@ class PoisonFre:
     def __init__(
         self,
         args,
-        image_size,  # 64 for Imagenet-100
+        image_size,  # 64 for imagenet100
         channel_list,  # 1 2
         window_size,  # 32
         pos_list,  # 15 31

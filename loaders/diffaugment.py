@@ -192,7 +192,7 @@ def set_aug_diff(args):
         args.save_freq = 100
 
     # used for imagenet100
-    elif args.dataset == "imagenet-100":
+    elif args.dataset == "imagenet100":
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
         args.size = 64
@@ -206,7 +206,7 @@ def set_aug_diff(args):
 
     ####################### Define Diff Transforms #######################
 
-    if "cifar" in args.dataset or args.dataset == "imagenet-100":
+    if "cifar" in args.dataset or args.dataset == "imagenet100":
 
         if not args.disable_normalize:
             # arrive here
@@ -250,7 +250,7 @@ def set_aug_diff(args):
             )
 
     ####################### Define Load Transform ####################
-    if "cifar" in args.dataset or args.dataset == "imagenet-100":
+    if "cifar" in args.dataset or args.dataset == "imagenet100":
         # TODO: applied to a PIL image
         transform_load = transforms.Compose(
             [
@@ -297,6 +297,7 @@ def set_aug_diff(args):
             root=args.data_path, train=True, transform=transform_load, download=False
         )
     else:
+        # TODO: need to implement
 
         raise NotImplementedError
 
@@ -351,7 +352,7 @@ def set_aug_diff(args):
         ft_sampler,  # [don't care]
         test_loader,
         test_dataset,  # used as PoisonAgent's val_dataset
-        memory_loader,  # used as PoisonAgent's memory_loader, not defined for ImageNet-100
+        memory_loader,  # used as PoisonAgent's memory_loader, not defined for imagenet100
         train_transform,  # used in train_loader iteration, not in poisoning
         ft_transform,  # [don't care]
         test_transform,  # [don't care]

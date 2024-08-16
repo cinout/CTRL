@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-10:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -47,7 +47,7 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 5 \
+    --epochs 800 \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar10 \

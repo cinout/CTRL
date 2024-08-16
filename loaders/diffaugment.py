@@ -194,10 +194,10 @@ class PoisonAgent:
             x_memory_tensor = x_memory_tensor.permute(0, 3, 1, 2)
 
         """
-        # get indices of images to be poisoned
+        # POISONed Validation Set
         """
         # test set (poison all images)
-        # TODO: can I ask Poison_Frequency_Diff to return views?
+        # TODO: can I ask Poison_Frequency_Diff to return views? no
         x_test_pos_tensor, y_test_pos_tensor = (
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_test_tensor.clone().detach(),
@@ -215,6 +215,9 @@ class PoisonAgent:
         # uncomment to show poisoned image example
         # tensor_back_to_PIL(x_test_pos_tensor[0])
 
+        """
+        # POISONed Train Set (for stage 1 attack)
+        """
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 
@@ -231,16 +234,18 @@ class PoisonAgent:
         test_index = torch.tensor(list(range(len(self.validset))), dtype=torch.long)
         memory_index = torch.tensor(list(range(len(x_memory_tensor))), dtype=torch.long)
 
-        train_sampler = None
-
+        """
+        Create dataloaders
+        """
         # contain both CLEAN and a portion of POISONED images
         train_loader = DataLoader(
             TensorDataset(x_train_tensor, y_train_tensor, train_index),
             batch_size=self.args.batch_size,
-            sampler=train_sampler,
-            shuffle=(train_sampler is None),
+            sampler=None,
+            shuffle=True,
             drop_last=True,
         )
+
         # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
             TensorDataset(x_test_tensor, y_test_tensor, test_index),

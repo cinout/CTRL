@@ -49,7 +49,7 @@ parser.add_argument(
 )
 parser.add_argument("--method", default="simclr", choices=["simclr", "byol"])
 parser.add_argument("--batch_size", default=512, type=int)
-parser.add_argument("--epochs", default=1000, type=int)
+parser.add_argument("--epochs", default=800, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
 parser.add_argument(
     "--remove", default="none", choices=["crop", "flip", "color", "gray", "none"]
@@ -259,7 +259,7 @@ def main_worker(args):
         model = trainer.train_freq(model, optimizer, train_transform, poison)
 
         if args.use_linear_probing:
-            # TODO [later]: another condition, with linear probing with channel removal....
+            # TODO [later]: our SS-detector should be applied to not only linear_probing, but also author's KNN
             trainer.linear_probing(model, poison)
 
     else:

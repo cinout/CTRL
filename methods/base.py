@@ -158,32 +158,32 @@ class CLTrainer:
                 )
             )
 
-            # Save
-            if not self.args.distributed or (
-                self.args.distributed and self.args.rank % self.args.ngpus_per_node == 0
-            ):
-                # save model
-                if (epoch + 1) % self.args.save_freq == 0:
-                    save_model(
-                        {
-                            "epoch": epoch + 1,
-                            "state_dict": model.state_dict(),
-                            "optimizer": optimizer.state_dict(),
-                        },
-                        filename=os.path.join(
-                            self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
-                        ),
-                    )
+            # # Save
+            # if not self.args.distributed or (
+            #     self.args.distributed and self.args.rank % self.args.ngpus_per_node == 0
+            # ):
+            #     # save model
+            #     if (epoch + 1) % self.args.save_freq == 0:
+            #         save_model(
+            #             {
+            #                 "epoch": epoch + 1,
+            #                 "state_dict": model.state_dict(),
+            #                 "optimizer": optimizer.state_dict(),
+            #             },
+            #             filename=os.path.join(
+            #                 self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
+            #             ),
+            #         )
 
-                    print("{}-th epoch saved".format(epoch + 1))
-                # save log
-                self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
-                self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
-                self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
+            #         print("{}-th epoch saved".format(epoch + 1))
+            #     # save log
+            #     self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
+            #     self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
+            #     self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
 
-                self.tb_logger.add_scalar(
-                    "lr/cnn", optimizer.param_groups[0]["lr"], epoch
-                )
+            #     self.tb_logger.add_scalar(
+            #         "lr/cnn", optimizer.param_groups[0]["lr"], epoch
+            #     )
 
         # Save final model
         if not self.args.distributed or (
@@ -299,34 +299,34 @@ class CLTrainer:
                 )
             )
 
-            # Save
-            if not self.args.distributed or (
-                self.args.distributed
-                and self.args.local_rank % self.args.ngpus_per_node == 0
-            ):
-                # save model
-                start2 = time.time()
-                if epoch % self.args.save_freq == 0:
-                    save_model(
-                        {
-                            "epoch": epoch + 1,
-                            "state_dict": model.state_dict(),
-                            "optimizer": optimizer.state_dict(),
-                        },
-                        filename=os.path.join(
-                            self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
-                        ),
-                    )
+            # # Save
+            # if not self.args.distributed or (
+            #     self.args.distributed
+            #     and self.args.local_rank % self.args.ngpus_per_node == 0
+            # ):
+            #     # save model
+            #     start2 = time.time()
+            #     if epoch % self.args.save_freq == 0:
+            #         save_model(
+            #             {
+            #                 "epoch": epoch + 1,
+            #                 "state_dict": model.state_dict(),
+            #                 "optimizer": optimizer.state_dict(),
+            #             },
+            #             filename=os.path.join(
+            #                 self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
+            #             ),
+            #         )
 
-                    print("{}-th epoch saved".format(epoch + 1))
-                # save log
-                self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
-                self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
-                self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
-                self.tb_logger.add_scalar("train/back_acc", back_acc, epoch)
-                self.tb_logger.add_scalar(
-                    "lr/cnn", optimizer.param_groups[0]["lr"], epoch
-                )
+            #         print("{}-th epoch saved".format(epoch + 1))
+            #     # save log
+            #     self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
+            #     self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
+            #     self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
+            #     self.tb_logger.add_scalar("train/back_acc", back_acc, epoch)
+            #     self.tb_logger.add_scalar(
+            #         "lr/cnn", optimizer.param_groups[0]["lr"], epoch
+            #     )
 
         # Save final model
         if not self.args.distributed or (

@@ -22,6 +22,8 @@ from kornia import augmentation as aug
 import natsort
 import PIL
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class Subset(torch.utils.data.Subset):
     """Overwrite subset class to provide class methods of main class."""
@@ -121,9 +123,9 @@ class PoisonAgent:
 
             if self.args.load_cached_tensors:
                 with open(f"x_train_tensor_{self.args.dataset}.t", "rb") as f:
-                    x_train_tensor = torch.load(f)
+                    x_train_tensor = torch.load(f, map_location=device)
                 with open(f"y_train_tensor_{self.args.dataset}.t", "rb") as f:
-                    y_train_tensor = torch.load(f)
+                    y_train_tensor = torch.load(f, map_location=device)
             else:
                 x_train_tensor, y_train_tensor = get_data_and_label(
                     train_paths, self.args.size
@@ -138,9 +140,9 @@ class PoisonAgent:
             print("transform validation data")
             if self.args.load_cached_tensors:
                 with open(f"x_test_tensor_{self.args.dataset}.t", "rb") as f:
-                    x_test_tensor = torch.load(f)
+                    x_test_tensor = torch.load(f, map_location=device)
                 with open(f"y_test_tensor_{self.args.dataset}.t", "rb") as f:
-                    y_test_tensor = torch.load(f)
+                    y_test_tensor = torch.load(f, map_location=device)
             else:
                 x_test_tensor, y_test_tensor = get_data_and_label(
                     val_paths, self.args.size
@@ -283,9 +285,12 @@ class PoisonAgent:
                 else:
                     id_and_label[label] = [i]
 
+            print(f"id_and_label.keys(): {id_and_label.keys()}")
             x_probe_tensor = []
             y_probe_tensor = []
             for label, indices in id_and_label.items():
+                print(f"label: {label}")
+                print(f"indices: {indices}")
                 # for each label (class)
                 random.shuffle(indices)
                 indices = torch.tensor(indices[: int(len(indices) * percent)])

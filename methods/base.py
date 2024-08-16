@@ -140,7 +140,7 @@ def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
             # pred.shape: [bs, k=1]
             pred = pred.squeeze(1)  # shape: [bs, ]
 
-            total_count += target.shape(0)
+            total_count += target.shape[0]
             acc1_accumulator += (pred == target).float().sum().item()
 
         return acc1_accumulator / total_count * 100.0

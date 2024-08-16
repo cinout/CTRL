@@ -64,7 +64,8 @@ def tensor_back_to_PIL(input):
     input = torch.clamp(input, 0, 255)
     input = np.array(input, dtype=np.uint8)
     input = PIL.Image.fromarray(input)
-    input.save("view.png", "PNG")
+
+    return input
 
 
 class PoisonAgent:

@@ -41,7 +41,6 @@ python -u main_train.py \
     --poison_ratio 0.01 \
     --lr 0.06 \
     --wd 0.0005 \
-    --magnitude 200.0 \
     --poisoning \
     --epochs 800 \
     --window_size 32 \

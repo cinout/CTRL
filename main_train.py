@@ -76,7 +76,8 @@ parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
 parser.add_argument("--pin_memory", action="store_true", default=False)
 parser.add_argument("--reverse", action="store_true", default=False)
 parser.add_argument("--trigger_position", nargs="+", type=int)
-parser.add_argument("--magnitude", default=100.0, type=float)  # right value
+parser.add_argument("--magnitude_train", default=50.0, type=float)  # right value
+parser.add_argument("--magnitude_val", default=100.0, type=float)  # right value
 parser.add_argument("--trigger_size", default=5, type=int)
 parser.add_argument("--channel", nargs="+", type=int)
 parser.add_argument("--loss_alpha", default=2.0, type=float)
@@ -114,13 +115,14 @@ else:
     elif args.mode == "frequency":
         # poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-poi{}-mag{}-bs{}-lr{}-knnfreq{}".format(
+            "./{}/{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}".format(
                 args.log_path,
                 args.dataset,
                 args.method,
                 args.arch,
                 args.poison_ratio,
-                args.magnitude,
+                args.magnitude_train,
+                args.magnitude_val,
                 args.batch_size,
                 args.lr,
                 args.poison_knn_eval_freq,
@@ -187,7 +189,8 @@ def main_worker(args):
             train_dataset,
             test_dataset,
             memory_loader,
-            args.magnitude,
+            args.magnitude_train,
+            args.magnitude_val,
         )
 
     # create optimizer

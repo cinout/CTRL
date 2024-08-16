@@ -66,7 +66,16 @@ def tensor_back_to_PIL(input):
 
 
 class PoisonAgent:
-    def __init__(self, args, fre_agent, trainset, validset, memory_loader, magnitude):
+    def __init__(
+        self,
+        args,
+        fre_agent,
+        trainset,
+        validset,
+        memory_loader,
+        magnitude_train,
+        magnitude_val,
+    ):
         self.args = args
         self.trainset = (
             trainset  # third 3rd element returned by set_aug_diff(), train_dataset
@@ -82,7 +91,8 @@ class PoisonAgent:
         )  #  determine how many to be poisoned
         self.fre_poison_agent = fre_agent  # who does the poisoning work
 
-        self.magnitude = magnitude  # 100.0
+        self.magnitude_train = magnitude_train
+        self.magnitude_val = magnitude_val
 
         print(
             f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"
@@ -164,7 +174,7 @@ class PoisonAgent:
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_test_tensor.clone().detach(),
                 y_test_tensor.clone().detach(),
-                self.magnitude,
+                self.magnitude_val,
             )
         )
         # why? is it because above code does not assign correct label to poisoned images?
@@ -185,7 +195,7 @@ class PoisonAgent:
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_train_tensor[poison_index],
                 y_train_tensor[poison_index],
-                self.magnitude,
+                self.magnitude_train,
             )
         )
 

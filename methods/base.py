@@ -349,7 +349,7 @@ class CLTrainer:
             _, feat_dim = model_dict_cifar[self.args.arch]
         else:
             _, feat_dim = model_dict[self.args.arch]
-
+        backbone = model.backbone
         train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
         train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
@@ -369,7 +369,6 @@ class CLTrainer:
         )
         sched = [15, 30, 40]
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=sched)
-        backbone = model.backbone
 
         # train linear classifier
         for epoch in range(linear_probing_epochs):

@@ -197,6 +197,7 @@ class PoisonAgent:
         # get indices of images to be poisoned
         """
         # test set (poison all images)
+        # TODO: can I ask Poison_Frequency_Diff to return views?
         x_test_pos_tensor, y_test_pos_tensor = (
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_test_tensor.clone().detach(),

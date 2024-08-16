@@ -43,16 +43,18 @@ python -u main_train.py \
     --poison_ratio 0.01 \
     --poisoning \
     \
-    --epochs 5 \
     --batch_size 512 \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
+    \
+    --epochs 5 \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset imagenet100 \
-    --target_class 26 \
+    --dataset cifar10 \
+    --target_class 0 \
     --use_linear_probing \
-    --load_cached_tensors \
+    # --target_class 26 \
+    # --load_cached_tensors \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

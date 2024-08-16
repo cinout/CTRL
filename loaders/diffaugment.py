@@ -97,12 +97,13 @@ class PoisonAgent:
         print(
             f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"
         )
-        # this is the function that generate poisons for data, used in base.py
+
         (
             self.train_pos_loader,
             self.test_loader,
             self.test_pos_loader,
             self.memory_loader,
+            self.train_probe_loader,
         ) = self.choose_poisons_randomly()
 
     def choose_poisons_randomly(self):
@@ -205,7 +206,7 @@ class PoisonAgent:
 
         train_sampler = None
 
-        # contain both clean and a portion of poisoned images
+        # contain both CLEAN and a portion of POISONED images
         train_loader = DataLoader(
             TensorDataset(x_train_tensor, y_train_tensor, train_index),
             batch_size=self.args.batch_size,
@@ -216,9 +217,13 @@ class PoisonAgent:
         # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
             TensorDataset(x_test_tensor, y_test_tensor, test_index),
-            batch_size=self.args.eval_batch_size,
+            batch_size=(
+                self.args.linear_probe_batch_size
+                if self.args.use_linear_probing
+                else self.args.eval_batch_size
+            ),
             shuffle=False,
-            drop_last=True,  # TODO[later]: why
+            drop_last=False,
         )
 
         # poisoned validation set (used in knn eval only, in base.py)
@@ -226,17 +231,67 @@ class PoisonAgent:
             TensorDataset(
                 x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
             ),  # y_test_tensor serves as the original label tensor (for correcting ASR)
-            batch_size=self.args.eval_batch_size,
-            shuffle=False,
-        )
-        # memory set is never poisoned (used in knn eval only, in base.py)
-        memory_loader = DataLoader(
-            TensorDataset(x_memory_tensor, y_memory_tensor, memory_index),
-            batch_size=self.args.eval_batch_size,
+            batch_size=(
+                self.args.linear_probe_batch_size
+                if self.args.use_linear_probing
+                else self.args.eval_batch_size
+            ),
             shuffle=False,
         )
 
-        return train_loader, test_loader, test_pos_loader, memory_loader
+        # memory set is never poisoned (used in knn eval only, in base.py)
+        memory_loader = DataLoader(
+            TensorDataset(x_memory_tensor, y_memory_tensor, memory_index),
+            batch_size=(
+                self.args.linear_probe_batch_size
+                if self.args.use_linear_probing
+                else self.args.eval_batch_size
+            ),
+            shuffle=False,
+        )
+
+        if self.args.use_linear_probing:
+            # create 1% train set for classifier training
+            percent = 0.01
+            id_and_label = dict()
+            for i, label in enumerate(y_memory_tensor):
+                if label in id_and_label.keys():
+                    id_and_label[label].append(i)
+                else:
+                    id_and_label[label] = [i]
+
+            x_probe_tensor = []
+            y_probe_tensor = []
+            for label, indices in id_and_label.items():
+                # for each label (class)
+                random.shuffle(indices)
+                indices = torch.tensor(indices[: int(len(indices) * percent)])
+                x_probe_tensor.append(x_memory_tensor[indices])
+                y_probe_tensor.append(y_memory_tensor[indices])
+            x_probe_tensor = torch.cat(x_probe_tensor, dim=0)
+            y_probe_tensor = torch.cat(y_probe_tensor, dim=0)
+            probe_index = torch.tensor(
+                list(range(len(x_probe_tensor))), dtype=torch.long
+            )
+            print(f"x_probe_tensor.shape: {x_probe_tensor.shape}")
+            print(f"x_probe_tensor.shape: {x_probe_tensor.shape}")
+            print(
+                f"count of tensors of class 8: {torch.nonzero(y_probe_tensor==8).shape[0]}"
+            )
+            train_probe_loader = DataLoader(
+                TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
+                batch_size=self.args.linear_probe_batch_size,
+                shuffle=True,
+            )
+            return (
+                train_loader,
+                test_loader,
+                test_pos_loader,
+                memory_loader,
+                train_probe_loader,
+            )
+        else:
+            return train_loader, test_loader, test_pos_loader, memory_loader, None
 
 
 class RandomApply(nn.Module):

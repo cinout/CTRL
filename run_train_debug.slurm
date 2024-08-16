@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-01:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,18 +36,22 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
+    --mode frequency \
     --channel 1 2 \
+    --window_size 32 \
     --trigger_position 15 31 \
     --poison_ratio 0.01 \
-    --lr 0.06 \
-    --wd 0.0005 \
     --poisoning \
-    --epochs 800 \
-    --window_size 32 \
-    --mode frequency \
+    \
+    --epochs 5 \
+    --batch_size 512 \
+    --eval_batch_size 512 \
+    --linear_probe_batch_size 128 \
+    --magnitude_train 50.0 \
+    --magnitude_val 100.0 \
     --dataset imagenet100 \
     --target_class 26 \
-    --poison_knn_eval_freq 10 \
+    --use_linear_probing \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

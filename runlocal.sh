@@ -12,4 +12,5 @@ python main_train.py \
     --epochs 5 \
     --dataset imagenet100 \
     --target_class 26 \
+    --use_linear_probing \
     # --dataset cifar10 \

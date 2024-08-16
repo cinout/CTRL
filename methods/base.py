@@ -18,6 +18,149 @@ import torch.nn.functional as F
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def get_feats(loader, model, args):
+
+    # switch to evaluate mode
+    model.eval()
+    feats, ptr = None, 0
+
+    with torch.no_grad():
+        for i, content in enumerate(loader):
+            if args.detect_trigger_channels:
+                # TODO [later]: update later
+                (images, views, target, _) = content
+            else:
+                (images, target, _) = content
+
+            # images = images.cuda(non_blocking=True)
+            images = images.to(device)
+
+            # Normalize for MoCo, BYOL etc.
+
+            cur_feats = F.normalize(model(images), dim=1).cpu()  # default: L2 norm
+            B, D = cur_feats.shape
+
+            inds = torch.arange(B) + ptr  # [0, 1, ..., B-1] + prt
+
+            if not ptr:
+                # arrive only when ptr is 0 (i.e. first iteration)
+                feats = torch.zeros(
+                    (len(loader.dataset), D)
+                ).float()  # len(loader.dataset) is the whole dataset's size, not just batch size
+
+            # https://pytorch.org/docs/stable/generated/torch.Tensor.index_copy_.html
+            feats.index_copy_(0, inds, cur_feats)  # (dim, index, tensor)
+
+            ptr += B
+    return feats
+
+
+def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
+    backbone.eval()
+    linear.train()
+    for i, content in enumerate(train_loader):
+
+        if args.detect_trigger_channels:
+            # TODO [later]: update later
+            (images, views, target, _) = content
+        else:
+            (images, target, _) = content
+
+        images = images.to(device)
+        target = target.to(device)
+
+        # compute output
+        with torch.no_grad():
+            output = backbone(images)
+
+            if args.detect_trigger_channels:
+                # TODO [later]: update later
+                # # FIND channels that are related to trigger (although in training, all images are clean)
+                # essential_indices = find_trigger_channels(
+                #     views, backbone, args.channel_num
+                # )
+                # # set vallues to 0 at these indices
+                # output[:, essential_indices] = 0.0
+                pass
+
+        output = linear(output)
+        loss = F.cross_entropy(output, target)
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+
+def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
+    with torch.no_grad():
+        acc1_accumulator = 0.0
+        total_count = 0
+        for i, content in enumerate(val_loader):
+            if args.detect_trigger_channels:
+                # TODO [later]: update later
+                (_, images, views, target, _) = content
+            else:
+                if val_mode == "poison":
+                    (images, target, original_label, _) = content
+                    original_label = original_label.to(device)
+                elif val_mode == "clean":
+                    (images, target, _) = content
+                else:
+                    raise Exception(f"unimplemented val_mode {val_mode}")
+
+            images = images.to(device)
+            target = target.to(device)
+
+            if val_mode == "poison":
+                valid_indices = original_label != args.target_class
+                if torch.all(~valid_indices):
+                    # all inputs are from target class, skip this iteration
+                    continue
+
+                images = images[valid_indices]
+                target = target[valid_indices]
+
+            # compute output
+            output = backbone(images)
+            if args.detect_trigger_channels:
+                # TODO [later]: update later
+                # # FIND channels that are related to trigger (although in training, all images are clean)
+                # essential_indices = find_trigger_channels(
+                #     views, backbone, args.channel_num
+                # )
+                # # set vallues to 0 at these indices
+                # output[:, essential_indices] = 0.0
+                pass
+
+            output = linear(output)
+            _, pred = output.topk(
+                1, 1, True, True
+            )  # k=1, dim=1, largest, sorted; pred is the indices of largest class
+            # pred.shape: [bs, k=1]
+            pred = pred.squeeze(1)  # shape: [bs, ]
+
+            total_count += target.shape(0)
+            acc1_accumulator += (pred == target).float().sum().item()
+
+        return acc1_accumulator / total_count * 100.0
+
+
+class Normalize(nn.Module):
+    def forward(self, x):
+        return x / x.norm(2, dim=1, keepdim=True)
+
+
+class FullBatchNorm(nn.Module):
+    def __init__(self, var, mean):
+        super(FullBatchNorm, self).__init__()
+        self.register_buffer("inv_std", (1.0 / torch.sqrt(var + 1e-5)))
+        self.register_buffer("mean", mean)
+
+    def forward(self, x):
+        return (x - self.mean) * self.inv_std
+
+
 def cycle(iterable):
     while True:
         for x in iterable:
@@ -199,6 +342,56 @@ class CLTrainer:
             )
 
             print("{}-th epoch saved".format(epoch + 1))
+
+    def linear_probing(self, model, poison):
+        linear_probing_epochs = 40
+        if "cifar" in self.dataset or "gtsrb" in self.dataset:
+            _, feat_dim = model_dict_cifar[self.args.arch]
+        else:
+            _, feat_dim = model_dict[self.args.arch]
+
+        train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
+        train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+        linear = nn.Sequential(
+            Normalize(),  # L2 norm
+            FullBatchNorm(
+                train_var, train_mean
+            ),  # the train_var/mean are from L2-normed features
+            nn.Linear(feat_dim, self.args.num_classes),
+        )
+        linear = linear.to(device)
+        optimizer = torch.optim.SGD(
+            linear.parameters(),
+            lr=0.06,
+            momentum=0.9,
+            weight_decay=1e-4,
+        )
+        sched = [15, 30, 40]
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=sched)
+        backbone = model.backbone
+
+        # train linear classifier
+        for epoch in range(linear_probing_epochs):
+            print(f"training linear classifier, epoch: {epoch}")
+            train_linear_classifier(
+                poison.train_probe_loader, backbone, linear, optimizer, self.args
+            )
+            # modify lr
+            lr_scheduler.step()
+
+        # eval linear classifier
+        backbone.eval()
+        linear.eval()
+        print(f"evaluating linear classifier")
+        clean_acc1 = eval_linear_classifier(
+            poison.test_loader, backbone, linear, self.args, val_mode="clean"
+        )
+        poison_acc1 = eval_linear_classifier(
+            poison.test_pos_loader, backbone, linear, self.args, val_mode="poison"
+        )
+        print(f"The ACC on clean val is: {clean_acc1}")
+        print(f"The ASR on poisoned val is: {poison_acc1}")
 
     # entry point of this file, called in main_train.py
     def train_freq(self, model, optimizer, train_transform, poison):

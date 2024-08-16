@@ -7,10 +7,5 @@ target_class = 4
 bs = 10
 data = torch.randint(0, 20, (bs, 5))
 print(data)
-labels = torch.tensor([11] * bs)
-
-
-condition = labels != target_class
-
-needed = data[condition]
-print(needed)
+data = data[torch.tensor([3, 1, 5])]
+print(data)

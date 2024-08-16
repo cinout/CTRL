@@ -283,32 +283,22 @@ class PoisonAgent:
                 if label in id_and_label.keys():
                     id_and_label[label].append(i)
                 else:
-                    print(f"add new label: {label}")
                     id_and_label[label] = [i]
 
-            print(f"id_and_label.keys(): {id_and_label.keys()}")
             x_probe_tensor = []
             y_probe_tensor = []
             for label, indices in id_and_label.items():
-                print(f"label: {label}")
-                # print(f"indices: {indices}")
+
                 # for each label (class)
                 random.shuffle(indices)
                 indices = torch.tensor(indices[: int(len(indices) * percent)])
-                print(f"indices.dtype: {indices.dtype}")
-                print(f"indices.shape: {indices.shape}")
-                print(f"indices[0:20]: {indices[0:20]}")
+
                 x_probe_tensor.append(x_memory_tensor[indices])
                 y_probe_tensor.append(y_memory_tensor[indices])
             x_probe_tensor = torch.cat(x_probe_tensor, dim=0)
             y_probe_tensor = torch.cat(y_probe_tensor, dim=0)
             probe_index = torch.tensor(
                 list(range(len(x_probe_tensor))), dtype=torch.long
-            )
-            print(f"x_probe_tensor.shape: {x_probe_tensor.shape}")
-            print(f"x_probe_tensor.shape: {x_probe_tensor.shape}")
-            print(
-                f"count of tensors of class 8: {torch.nonzero(y_probe_tensor==8).shape[0]}"
             )
             train_probe_loader = DataLoader(
                 TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),

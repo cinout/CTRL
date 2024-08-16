@@ -345,7 +345,7 @@ class CLTrainer:
 
     def linear_probing(self, model, poison):
         linear_probing_epochs = 40
-        if "cifar" in self.dataset or "gtsrb" in self.dataset:
+        if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
             _, feat_dim = model_dict_cifar[self.args.arch]
         else:
             _, feat_dim = model_dict[self.args.arch]

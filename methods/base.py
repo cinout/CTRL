@@ -536,6 +536,8 @@ class CLTrainer:
 
             print("last epoch saved")
 
+        return model
+
     @torch.no_grad()
     def knn_monitor_fre(
         self,

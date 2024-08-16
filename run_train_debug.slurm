@@ -52,7 +52,7 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     --use_linear_probing \
-    # --load_cached_tensors \
+    --load_cached_tensors \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

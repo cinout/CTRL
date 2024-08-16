@@ -279,10 +279,11 @@ class PoisonAgent:
             # create 1% train set for classifier training
             percent = 0.01
             id_and_label = dict()
-            for i, label in enumerate(y_memory_tensor):
+            for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
                 if label in id_and_label.keys():
                     id_and_label[label].append(i)
                 else:
+                    print(f"add new label: {label}")
                     id_and_label[label] = [i]
 
             print(f"id_and_label.keys(): {id_and_label.keys()}")
@@ -290,7 +291,7 @@ class PoisonAgent:
             y_probe_tensor = []
             for label, indices in id_and_label.items():
                 print(f"label: {label}")
-                print(f"indices: {indices}")
+                # print(f"indices: {indices}")
                 # for each label (class)
                 random.shuffle(indices)
                 indices = torch.tensor(indices[: int(len(indices) * percent)])

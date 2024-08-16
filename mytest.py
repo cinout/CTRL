@@ -2,12 +2,10 @@ import torchvision.datasets as datasets
 from PIL import Image
 import torchvision.transforms as transforms
 import torch
+import numpy as np
 
-target_class = 4
-bs = 10
-data = torch.randint(0, 20, (bs, 5))
-print(data)
-indices = torch.tensor([3, 1, 5])
-print(indices.dtype)
-data = data[indices]
-print(data)
+y_memory_tensor = torch.tensor(np.array([3, 6, 9]), dtype=torch.long)
+for i, label in enumerate(y_memory_tensor):
+    print(i)
+    print(label)
+    print("========")

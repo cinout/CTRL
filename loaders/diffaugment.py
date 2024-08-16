@@ -118,16 +118,39 @@ class PoisonAgent:
             val_paths = self.validset
 
             print("transform training data")
-            x_train_tensor, y_train_tensor = get_data_and_label(
-                train_paths, self.args.size
-            )  # x_train_tensor is a list, each element is a PIL image, y_train_tensor is a list, each element is its label (int format)
-            x_train_tensor = torch.stack(x_train_tensor)
-            y_train_tensor = torch.stack(y_train_tensor)
+
+            if self.args.load_cached_tensors:
+                with open(f"x_train_tensor_{self.args.dataset}.t", "rb") as f:
+                    x_train_tensor = torch.load(f)
+                with open(f"y_train_tensor_{self.args.dataset}.t", "rb") as f:
+                    y_train_tensor = torch.load(f)
+            else:
+                x_train_tensor, y_train_tensor = get_data_and_label(
+                    train_paths, self.args.size
+                )  # x_train_tensor is a list, each element is a PIL image, y_train_tensor is a list, each element is its label (int format)
+                x_train_tensor = torch.stack(x_train_tensor)
+                y_train_tensor = torch.stack(y_train_tensor)
+                with open(f"x_train_tensor_{self.args.dataset}.t", "wb") as f:
+                    torch.save(x_train_tensor, f)
+                with open(f"y_train_tensor_{self.args.dataset}.t", "wb") as f:
+                    torch.save(y_train_tensor, f)
 
             print("transform validation data")
-            x_test_tensor, y_test_tensor = get_data_and_label(val_paths, self.args.size)
-            x_test_tensor = torch.stack(x_test_tensor)
-            y_test_tensor = torch.stack(y_test_tensor)
+            if self.args.load_cached_tensors:
+                with open(f"x_test_tensor_{self.args.dataset}.t", "rb") as f:
+                    x_test_tensor = torch.load(f)
+                with open(f"y_test_tensor_{self.args.dataset}.t", "rb") as f:
+                    y_test_tensor = torch.load(f)
+            else:
+                x_test_tensor, y_test_tensor = get_data_and_label(
+                    val_paths, self.args.size
+                )
+                x_test_tensor = torch.stack(x_test_tensor)
+                y_test_tensor = torch.stack(y_test_tensor)
+                with open(f"x_test_tensor_{self.args.dataset}.t", "wb") as f:
+                    torch.save(x_test_tensor, f)
+                with open(f"y_test_tensor_{self.args.dataset}.t", "wb") as f:
+                    torch.save(y_test_tensor, f)
 
             # memory
             x_memory_tensor = x_train_tensor.clone().detach()

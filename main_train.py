@@ -86,6 +86,11 @@ parser.add_argument("--channel", nargs="+", type=int)
 parser.add_argument("--loss_alpha", default=2.0, type=float)
 parser.add_argument("--strength", default=1.0, type=float)  ### augmentation strength
 
+### for convenient debugging
+parser.add_argument(
+    "--load_cached_tensors",
+    action="store_true",
+)
 
 ###logging
 parser.add_argument(

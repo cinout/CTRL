@@ -71,7 +71,6 @@ parser.add_argument("--byol-m", default=0.996, type=float)
 
 
 ###poisoning
-parser.add_argument("--poisonkey", default=7777, type=int)  # right value
 parser.add_argument("--target_class", default=0, type=int)
 parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
 parser.add_argument("--pin_memory", action="store_true", default=False)
@@ -93,9 +92,7 @@ parser.add_argument("--debug", action="store_true", default=False)
 
 ###others
 parser.add_argument("--distributed", action="store_true", help="distributed training")
-parser.add_argument(
-    "--seed", default=None, type=int, help="seed for initializing training. "
-)
+parser.add_argument("--seed", default=42, type=int)
 
 
 args = parser.parse_args()
@@ -141,10 +138,7 @@ if not os.path.exists(args.saved_path):
 
 def main():
     print(args.saved_path)
-    if args.seed is not None:
-        random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        cudnn.deterministic = True
+    set_seed(args.seed)
 
     main_worker(args)
 

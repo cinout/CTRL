@@ -84,17 +84,8 @@ class PoisonAgent:
 
         self.magnitude = magnitude  # 100.0
 
-        self.construct_experiment()
-
-    def construct_experiment(self):
-        if self.args.poisonkey is None:
-            init_seed = np.random.randint(0, 2**32 - 1)
-        else:
-            init_seed = int(self.args.poisonkey)
-
-        np.random.seed(init_seed)  # poisonkey: 7777
         print(
-            f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {init_seed}"
+            f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"
         )
         # this is the function that generate poisons for data, used in base.py
         (
@@ -183,7 +174,7 @@ class PoisonAgent:
             * self.args.target_class
         )
 
-        # : remove later
+        # uncomment to show poisoned image example
         # tensor_back_to_PIL(x_test_pos_tensor[0])
 
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
@@ -219,9 +210,12 @@ class PoisonAgent:
             shuffle=False,
             drop_last=True,  # TODO[later]: why
         )
+
         # poisoned validation set (used in knn eval only, in base.py)
         test_pos_loader = DataLoader(
-            TensorDataset(x_test_pos_tensor, y_test_pos_tensor, test_index),
+            TensorDataset(
+                x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
+            ),  # y_test_tensor serves as the original label tensor (for correcting ASR)
             batch_size=self.args.eval_batch_size,
             shuffle=False,
         )

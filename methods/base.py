@@ -273,7 +273,6 @@ class CLTrainer:
             warmup_scheduler.step()
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
-            # TODO [later]: comment or not?
             if (
                 self.args.poison_knn_eval_freq != 0
                 and epoch % self.args.poison_knn_eval_freq == 0
@@ -410,8 +409,21 @@ class CLTrainer:
 
             backdoor_top1, backdoor_num = 0.0, 0
             backdoor_test_bar = tqdm(backdoor_loader, desc="kNN", disable=hide_progress)
-            for data, target, _ in backdoor_test_bar:
-                data, target = data.to(device), target.to(device)
+            for data, target, original_label, _ in backdoor_test_bar:
+
+                data, target, original_label = (
+                    data.to(device),
+                    target.to(device),
+                    original_label.to(device),
+                )
+
+                valid_indices = original_label != args.target_class
+                if torch.all(~valid_indices):
+                    # all inputs are from target class, skip this iteration
+                    continue
+
+                data = data[valid_indices]
+                target = target[valid_indices]
 
                 feature = net(data)
                 feature = F.normalize(feature, dim=1)

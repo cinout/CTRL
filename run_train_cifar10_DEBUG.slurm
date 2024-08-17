@@ -53,7 +53,7 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     --use_linear_probing \
-    -detect_trigger_channels \
+    --detect_trigger_channels \
     --channel_num 1 \
 
 ##Log this job's resource usage stats###

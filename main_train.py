@@ -165,8 +165,8 @@ else:
         # poisoning
         args.saved_path = os.path.join(
             "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}".format(
-                timestamp,
                 args.log_path,
+                timestamp,
                 args.dataset,
                 args.method,
                 args.arch,

@@ -10,13 +10,6 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from datetime import datetime
 
-timestamp = (
-    datetime.now().strftime("%Y%m%d_%H%M%S")
-    + "_"
-    + str(random.randint(0, 100))
-    + "_"
-    + str(random.randint(0, 100))
-)
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -40,6 +33,16 @@ parser.add_argument("--window_size", default=32, type=int)
 parser.add_argument("--eval_batch_size", default=512, type=int)
 parser.add_argument("--linear_probe_batch_size", default=128, type=int)
 parser.add_argument("--num_workers", default=1, type=int)
+
+parser.add_argument(
+    "--timestamp",
+    type=str,
+    default=datetime.now().strftime("%Y%m%d_%H%M%S")
+    + "_"
+    + str(random.randint(0, 100))
+    + "_"
+    + str(random.randint(0, 100)),
+)
 
 
 ### training
@@ -163,10 +166,11 @@ else:
         )
     elif args.mode == "frequency":
         # poisoning
+        # TODO: update
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}".format(
+            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}-numc{}".format(
                 args.log_path,
-                timestamp,
+                args.timestamp,
                 args.dataset,
                 args.method,
                 args.arch,
@@ -176,6 +180,8 @@ else:
                 args.batch_size,
                 args.lr,
                 args.poison_knn_eval_freq,
+                "Yes" if args.detect_trigger_channels else "No",
+                args.channel_num,
             )
         )
     else:
@@ -247,6 +253,11 @@ def main_worker(args):
     optimizer = optim.SGD(
         model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
     )
+
+    all_args = "\n".join(
+        "%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())
+    )
+    print(all_args)
 
     # Train
     if args.mode == "normal":

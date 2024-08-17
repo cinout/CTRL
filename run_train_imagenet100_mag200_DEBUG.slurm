@@ -47,14 +47,15 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 800 \
+    --epochs 5 \
     --magnitude_train 200.0 \
     --magnitude_val 200.0 \
     --dataset imagenet100 \
     --target_class 26 \
     --use_linear_probing \
-    # --target_class 26 \
-    # --load_cached_tensors \
+    --detect_trigger_channels \
+    --channel_num 1 \
+    --load_cached_tensors \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

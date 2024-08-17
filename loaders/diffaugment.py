@@ -144,7 +144,7 @@ class PoisonAgent:
         input = input * 255.0
         input = torch.clamp(input, 0, 255)
         input = np.array(
-            input, dtype=np.uint8
+            input.cpu(), dtype=np.uint8
         )  # shape: [total, 32, 32, 3]; value range: [0, 255]
 
         view_tensors = []

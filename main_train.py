@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import warnings
+import random
 
 from utils.frequency import PoisonFre
 

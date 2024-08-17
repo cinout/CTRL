@@ -516,7 +516,7 @@ class CLTrainer:
             warmup_scheduler.step()
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
-            if epoch % self.args.knn_eval_freq == 0 or epoch == self.args.epochs:
+            if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
                 clean_acc, back_acc = self.knn_monitor_fre(
                     model.module.backbone if self.args.distributed else model.backbone,
                     poison.memory_loader,  # memory loader is ONLY used here
@@ -537,7 +537,7 @@ class CLTrainer:
                         cl_losses.avg,
                     )
                 )
-                if epoch == self.args.epochs and self.args.detect_trigger_channels:
+                if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
                     # if last epoch, also evaluate with SS detctor
 
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(

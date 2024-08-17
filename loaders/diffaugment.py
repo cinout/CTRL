@@ -140,7 +140,7 @@ class PoisonAgent:
 
     def generate_view_tensors(self, input):
         # input.shape: [total, 3, 32, 32]; value range: [0, 1]
-        input = torch.permute(input, (1, 2, 0))
+        input = torch.permute(input, (0, 2, 3, 1))
         input = input * 255.0
         input = torch.clamp(input, 0, 255)
         input = np.array(

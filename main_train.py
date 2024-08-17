@@ -106,7 +106,6 @@ parser.add_argument(
 parser.add_argument(
     "--log_path", default="Experiments", type=str, help="path to save log"
 )  # where checkpoints are stored
-parser.add_argument("--poison_knn_eval_freq", default=5, type=int)
 parser.add_argument("--debug", action="store_true", default=False)
 
 ###others
@@ -178,7 +177,7 @@ else:
                 args.magnitude_val,
                 args.batch_size,
                 args.lr,
-                args.poison_knn_eval_freq,
+                args.knn_eval_freq,
                 "Yes" if args.detect_trigger_channels else "No",
                 args.channel_num,
             )

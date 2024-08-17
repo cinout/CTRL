@@ -68,6 +68,22 @@ def tensor_back_to_PIL(input):
     return input
 
 
+class NCropsTransform:
+    """Take two random crops of one image as the query and key."""
+
+    def __init__(self, base_transform, n):
+        self.base_transform = base_transform
+        self.n = n
+
+    def __call__(self, x):
+        aug_image = []
+
+        for _ in range(self.n):
+            aug_image.append(self.base_transform(x))
+
+        return aug_image
+
+
 class PoisonAgent:
     def __init__(
         self,
@@ -97,6 +113,19 @@ class PoisonAgent:
         self.magnitude_train = magnitude_train
         self.magnitude_val = magnitude_val
 
+        if self.args.detect_trigger_channels:
+            ss_views_aug = [
+                transforms.RandomResizedCrop(
+                    self.args.size,
+                    scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
+                    ratio=(0.2, 5),
+                ),
+                transforms.RandomPerspective(p=0.5),
+            ]
+            self.ss_transform = NCropsTransform(
+                transforms.Compose(ss_views_aug), self.args.num_views
+            )
+
         print(
             f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"
         )
@@ -108,6 +137,40 @@ class PoisonAgent:
             self.memory_loader,
             self.train_probe_loader,
         ) = self.choose_poisons_randomly()
+
+    def generate_view_tensors(self, input):
+        # input.shape: [total, 3, 32, 32]; value range: [0, 1]
+        input = torch.permute(input, (1, 2, 0))
+        input = input * 255.0
+        input = torch.clamp(input, 0, 255)
+        input = np.array(
+            input, dtype=np.uint8
+        )  # shape: [total, 32, 32, 3]; value range: [0, 255]
+
+        view_tensors = []
+        for img in input:
+            img = PIL.Image.fromarray(img)  # in PIL format now
+            views = self.ss_transform(
+                img
+            )  # a list of args.num_views elements, each one is a PIL image
+
+            tensors_of_an_image = []
+            for view in views:
+                view = np.asarray(view).astype(np.float32) / 255.0
+                view = torch.tensor(view)
+                view = torch.permute(
+                    view, (2, 0, 1)
+                )  # shape: [c=3, h, w], value: [0, 1]
+                tensors_of_an_image.append(view)
+            tensors_of_an_image = torch.stack(
+                tensors_of_an_image, dim=0
+            )  # [num_views, c, h, w]
+            view_tensors.append(tensors_of_an_image)
+
+        view_tensors = torch.stack(view_tensors, dim=0)  # [total, num_views, c, h, w]
+        # TODO: remove later
+        print(f"view_tensors.shape: {view_tensors.shape}")
+        return view_tensors
 
     def choose_poisons_randomly(self):
 
@@ -130,7 +193,7 @@ class PoisonAgent:
             else:
                 x_train_tensor, y_train_tensor = get_data_and_label(
                     train_paths, self.args.size
-                )  # x_train_tensor is a list, each element is a PIL image, y_train_tensor is a list, each element is its label (int format)
+                )
                 x_train_tensor = torch.stack(x_train_tensor)
                 y_train_tensor = torch.stack(y_train_tensor)
                 with open(f"x_train_tensor_{self.args.dataset}.t", "wb") as f:
@@ -197,7 +260,6 @@ class PoisonAgent:
         # POISONed Validation Set
         """
         # test set (poison all images)
-        # TODO: can I ask Poison_Frequency_Diff to return views? no
         x_test_pos_tensor, y_test_pos_tensor = (
             self.fre_poison_agent.Poison_Frequency_Diff(
                 x_test_tensor.clone().detach(),
@@ -246,9 +308,16 @@ class PoisonAgent:
             drop_last=True,
         )
 
+        if self.args.detect_trigger_channels:
+            view_tensors = self.generate_view_tensors(x_test_tensor)
+
         # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
-            TensorDataset(x_test_tensor, y_test_tensor, test_index),
+            (
+                TensorDataset(x_test_tensor, view_tensors, y_test_tensor, test_index)
+                if self.args.detect_trigger_channels
+                else TensorDataset(x_test_tensor, y_test_tensor, test_index)
+            ),
             batch_size=(
                 self.args.linear_probe_batch_size
                 if self.args.use_linear_probing
@@ -258,10 +327,23 @@ class PoisonAgent:
             drop_last=False,
         )
 
+        if self.args.detect_trigger_channels:
+            view_tensors = self.generate_view_tensors(x_test_pos_tensor)
+
         # poisoned validation set (used in knn eval only, in base.py)
         test_pos_loader = DataLoader(
-            TensorDataset(
-                x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
+            (
+                TensorDataset(
+                    x_test_pos_tensor,
+                    view_tensors,
+                    y_test_pos_tensor,
+                    y_test_tensor,
+                    test_index,
+                )
+                if self.args.detect_trigger_channels
+                else TensorDataset(
+                    x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
+                )
             ),  # y_test_tensor serves as the original label tensor (for correcting ASR)
             batch_size=(
                 self.args.linear_probe_batch_size
@@ -307,11 +389,21 @@ class PoisonAgent:
             probe_index = torch.tensor(
                 list(range(len(x_probe_tensor))), dtype=torch.long
             )
+
+            if self.args.detect_trigger_channels:
+                view_tensors = self.generate_view_tensors(x_probe_tensor)
             train_probe_loader = DataLoader(
-                TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
+                (
+                    TensorDataset(
+                        x_probe_tensor, view_tensors, y_probe_tensor, probe_index
+                    )
+                    if self.args.detect_trigger_channels
+                    else TensorDataset(x_probe_tensor, y_probe_tensor, probe_index)
+                ),
                 batch_size=self.args.linear_probe_batch_size,
                 shuffle=True,
             )
+
             return (
                 train_loader,
                 test_loader,

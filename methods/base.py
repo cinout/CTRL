@@ -3,11 +3,12 @@ import time
 import torch.nn as nn
 import torch.optim as optim
 import torch
-
+import numpy as np
 from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
 
+from collections import Counter
 from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
 from utils.util import AverageMeter, save_model
@@ -18,6 +19,36 @@ import torch.nn.functional as F
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def find_trigger_channels(views, backbone, channel_num):
+    # expected shaope of views: [bs, n_views, c, h, w]
+
+    views = views.to(device)
+    bs, n_views, c, h, w = views.shape
+    views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+    vision_features = backbone(views)  # [bs*n_views, 512]
+    _, c = vision_features.shape
+    vision_features = vision_features.detach().cpu().numpy()
+    u, s, v = np.linalg.svd(
+        vision_features - np.mean(vision_features, axis=0, keepdims=True),
+        full_matrices=False,
+    )
+    eig_for_indexing = v[0:1]  # [1, C]
+    corrs = np.matmul(eig_for_indexing, np.transpose(vision_features))
+    coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
+    coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
+    elementwise = (
+        eig_for_indexing * vision_features * coeff_adjust
+    )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+    max_indices = np.argmax(elementwise, axis=1)
+    occ_count = Counter(max_indices)
+    essential_indices = torch.tensor(
+        [idx for (idx, occ_count) in occ_count.most_common(channel_num)]
+    )
+    print(f"essential_indices: {essential_indices}")
+    return essential_indices
+
+
+# DISABLED, because it makes 0-channel_mean not 0, which is not good for our SS detecting strategy
 def get_feats(loader, model, args):
 
     # switch to evaluate mode
@@ -27,7 +58,6 @@ def get_feats(loader, model, args):
     with torch.no_grad():
         for i, content in enumerate(loader):
             if args.detect_trigger_channels:
-                # TODO [later]: update later
                 (images, views, target, _) = content
             else:
                 (images, target, _) = content
@@ -61,7 +91,6 @@ def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
     for i, content in enumerate(train_loader):
 
         if args.detect_trigger_channels:
-            # TODO [later]: update later
             (images, views, target, _) = content
         else:
             (images, target, _) = content
@@ -74,14 +103,12 @@ def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
             output = backbone(images)
 
             if args.detect_trigger_channels:
-                # TODO [later]: update later
-                # # FIND channels that are related to trigger (although in training, all images are clean)
-                # essential_indices = find_trigger_channels(
-                #     views, backbone, args.channel_num
-                # )
-                # # set vallues to 0 at these indices
-                # output[:, essential_indices] = 0.0
-                pass
+                # FIND channels that are related to trigger (although in training, all images are clean)
+                essential_indices = find_trigger_channels(
+                    views, backbone, args.channel_num
+                )
+                # set vallues to 0 at these indices
+                output[:, essential_indices] = 0.0
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -98,8 +125,13 @@ def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
         total_count = 0
         for i, content in enumerate(val_loader):
             if args.detect_trigger_channels:
-                # TODO [later]: update later
-                (_, images, views, target, _) = content
+                if val_mode == "poison":
+                    (images, views, target, original_label, _) = content
+                    original_label = original_label.to(device)
+                elif val_mode == "clean":
+                    (images, views, target, _) = content
+                else:
+                    raise Exception(f"unimplemented val_mode {val_mode}")
             else:
                 if val_mode == "poison":
                     (images, target, original_label, _) = content
@@ -124,14 +156,12 @@ def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
             # compute output
             output = backbone(images)
             if args.detect_trigger_channels:
-                # TODO [later]: update later
-                # # FIND channels that are related to trigger (although in training, all images are clean)
-                # essential_indices = find_trigger_channels(
-                #     views, backbone, args.channel_num
-                # )
-                # # set vallues to 0 at these indices
-                # output[:, essential_indices] = 0.0
-                pass
+                # FIND channels that are related to trigger (although in training, all images are clean)
+                essential_indices = find_trigger_channels(
+                    views, backbone, args.channel_num
+                )
+                # set vallues to 0 at these indices
+                output[:, essential_indices] = 0.0
 
             output = linear(output)
             _, pred = output.topk(
@@ -209,7 +239,7 @@ class CLTrainer:
 
         self.args.warmup_epoch = 10
 
-    # no trigger (clean) mode, so this func is not used
+    # for clean mode, so this func is not used in our experiments
     def train(
         self,
         model,
@@ -285,7 +315,7 @@ class CLTrainer:
                 optimizer.step()
 
             # KNN-eval
-            if self.args.knn_eval_freq != 0 and epoch % self.args.knn_eval_freq == 0:
+            if epoch % self.args.knn_eval_freq == 0 or epoch == self.args.epochs:
                 knn_acc = knn_monitor(
                     model.backbone,
                     memory_loader,
@@ -350,14 +380,14 @@ class CLTrainer:
         else:
             _, feat_dim = model_dict[self.args.arch]
         backbone = model.backbone
-        train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
-        train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+        # train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
+        # train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
         linear = nn.Sequential(
             Normalize(),  # L2 norm
-            FullBatchNorm(
-                train_var, train_mean
-            ),  # the train_var/mean are from L2-normed features
+            # FullBatchNorm(
+            #     train_var, train_mean
+            # ),  # the train_var/mean are from L2-normed features
             nn.Linear(feat_dim, self.args.num_classes),
         )
         linear = linear.to(device)
@@ -465,10 +495,8 @@ class CLTrainer:
             warmup_scheduler.step()
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
-            if (
-                self.args.poison_knn_eval_freq != 0
-                and epoch % self.args.poison_knn_eval_freq == 0
-            ):
+            if epoch % self.args.knn_eval_freq == 0 or epoch == self.args.epochs:
+                # TODO: SS is too expensive, should only be run inn the last epoch
                 knn_acc, back_acc = self.knn_monitor_fre(
                     model.module.backbone if self.args.distributed else model.backbone,
                     poison.memory_loader,  # memory loader is ONLY used here

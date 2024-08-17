@@ -7,7 +7,15 @@ from utils.frequency import PoisonFre
 
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+from datetime import datetime
 
+timestamp = (
+    datetime.now().strftime("%Y%m%d_%H%M%S")
+    + "_"
+    + str(random.randint(0, 100))
+    + "_"
+    + str(random.randint(0, 100))
+)
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -109,7 +117,7 @@ parser.add_argument(
 )
 
 
-# TODO [later]: check how many are actually needed:  new experiments (for finding trigger channels)
+# for finding trigger channels
 parser.add_argument(
     "--detect_trigger_channels",
     action="store_true",
@@ -155,7 +163,8 @@ else:
     elif args.mode == "frequency":
         # poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}".format(
+            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}".format(
+                timestamp,
                 args.log_path,
                 args.dataset,
                 args.method,

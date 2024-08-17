@@ -166,7 +166,6 @@ else:
         )
     elif args.mode == "frequency":
         # poisoning
-        # TODO: update
         args.saved_path = os.path.join(
             "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}-numc{}".format(
                 args.log_path,
@@ -277,11 +276,15 @@ def main_worker(args):
         # model: simclr or byol
         # train_transform: augmentation for simclr/byol on the fly
         # poison: poisoned dataset, get train/test/memory via poison.xxx
+
+        # actually, no need to return model, but it is also fine to return model
         model = trainer.train_freq(model, optimizer, train_transform, poison)
 
         if args.use_linear_probing:
-            # TODO: for linear probing, we also need comparison w. or w.o. SS Detector
-            trainer.linear_probing(model, poison)
+            trainer.linear_probing(model, poison, use_ss_detector=False)
+            if args.detect_trigger_channels:
+                # comparison w. or w.o. SS Detector
+                trainer.linear_probing(model, poison, use_ss_detector=True)
 
     else:
         raise NotImplementedError

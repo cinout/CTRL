@@ -5,6 +5,16 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 
-x_memory_tensor = torch.randn(size=(10, 20))
-for x in x_memory_tensor:
-    print(x)
+
+def add_value(item):
+    item["new_value"] = 3
+    return item
+
+
+our_obj = dict()
+our_obj["first"] = 1
+
+print(our_obj)
+
+our_obj = add_value(our_obj)
+print(our_obj)

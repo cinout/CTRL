@@ -85,7 +85,9 @@ def get_feats(loader, model, args):
     return feats
 
 
-def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
+def train_linear_classifier(
+    train_loader, backbone, linear, optimizer, args, use_ss_detector
+):
     backbone.eval()
     linear.train()
     for i, content in enumerate(train_loader):
@@ -102,7 +104,7 @@ def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
         with torch.no_grad():
             output = backbone(images)
 
-            if args.detect_trigger_channels:
+            if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
                     views, backbone, args.channel_num
@@ -119,7 +121,9 @@ def train_linear_classifier(train_loader, backbone, linear, optimizer, args):
         optimizer.step()
 
 
-def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
+def eval_linear_classifier(
+    val_loader, backbone, linear, args, val_mode, use_ss_detector
+):
     with torch.no_grad():
         acc1_accumulator = 0.0
         total_count = 0
@@ -155,7 +159,7 @@ def eval_linear_classifier(val_loader, backbone, linear, args, val_mode):
 
             # compute output
             output = backbone(images)
-            if args.detect_trigger_channels:
+            if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
                     views, backbone, args.channel_num
@@ -373,7 +377,7 @@ class CLTrainer:
 
             print("{}-th epoch saved".format(epoch + 1))
 
-    def linear_probing(self, model, poison):
+    def linear_probing(self, model, poison, use_ss_detector=False):
         linear_probing_epochs = 40
         if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
             _, feat_dim = model_dict_cifar[self.args.arch]
@@ -404,7 +408,12 @@ class CLTrainer:
         for epoch in range(linear_probing_epochs):
             print(f"training linear classifier, epoch: {epoch}")
             train_linear_classifier(
-                poison.train_probe_loader, backbone, linear, optimizer, self.args
+                poison.train_probe_loader,
+                backbone,
+                linear,
+                optimizer,
+                self.args,
+                use_ss_detector=use_ss_detector,
             )
             # modify lr
             lr_scheduler.step()
@@ -412,15 +421,27 @@ class CLTrainer:
         # eval linear classifier
         backbone.eval()
         linear.eval()
+
         print(f"evaluating linear classifier")
         clean_acc1 = eval_linear_classifier(
-            poison.test_loader, backbone, linear, self.args, val_mode="clean"
+            poison.test_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="clean",
+            use_ss_detector=use_ss_detector,
         )
         poison_acc1 = eval_linear_classifier(
-            poison.test_pos_loader, backbone, linear, self.args, val_mode="poison"
+            poison.test_pos_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="poison",
+            use_ss_detector=use_ss_detector,
         )
-        print(f"The ACC on clean val is: {clean_acc1}")
-        print(f"The ASR on poisoned val is: {poison_acc1}")
+        print(
+            f"with use_ss_detector set to: {use_ss_detector}, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
+        )
 
     # entry point of this file, called in main_train.py
     def train_freq(self, model, optimizer, train_transform, poison):

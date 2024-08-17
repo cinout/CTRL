@@ -439,7 +439,7 @@ class CLTrainer:
         test_loader = poison.test_loader  # clean val
         test_back_loader = poison.test_pos_loader  # poisoned val (test) set
 
-        knn_acc = 0.0
+        clean_acc = 0.0
         back_acc = 0.0
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
@@ -496,8 +496,7 @@ class CLTrainer:
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
             if epoch % self.args.knn_eval_freq == 0 or epoch == self.args.epochs:
-                # TODO: SS is too expensive, should only be run inn the last epoch
-                knn_acc, back_acc = self.knn_monitor_fre(
+                clean_acc, back_acc = self.knn_monitor_fre(
                     model.module.backbone if self.args.distributed else model.backbone,
                     poison.memory_loader,  # memory loader is ONLY used here
                     test_loader,
@@ -507,46 +506,44 @@ class CLTrainer:
                     subset=False,
                     backdoor_loader=test_back_loader,
                 )
-
-            print(
-                "[{}-epoch] time:{:.3f} | knn acc: {:.3f} | back acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
-                    epoch + 1,
-                    time.time() - start,
-                    knn_acc,
-                    back_acc,
-                    losses.avg,
-                    cl_losses.avg,
+                print(
+                    "[{}-epoch] time:{:.3f} | clean acc: {:.3f} | back acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
+                        epoch + 1,
+                        time.time() - start,
+                        clean_acc,
+                        back_acc,
+                        losses.avg,
+                        cl_losses.avg,
+                    )
                 )
-            )
+                if epoch == self.args.epochs and self.args.detect_trigger_channels:
+                    # if last epoch, also evaluate with SS detctor
 
-            # # Save
-            # if not self.args.distributed or (
-            #     self.args.distributed
-            #     and self.args.local_rank % self.args.ngpus_per_node == 0
-            # ):
-            #     # save model
-            #     start2 = time.time()
-            #     if epoch % self.args.save_freq == 0:
-            #         save_model(
-            #             {
-            #                 "epoch": epoch + 1,
-            #                 "state_dict": model.state_dict(),
-            #                 "optimizer": optimizer.state_dict(),
-            #             },
-            #             filename=os.path.join(
-            #                 self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
-            #             ),
-            #         )
-
-            #         print("{}-th epoch saved".format(epoch + 1))
-            #     # save log
-            #     self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
-            #     self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
-            #     self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
-            #     self.tb_logger.add_scalar("train/back_acc", back_acc, epoch)
-            #     self.tb_logger.add_scalar(
-            #         "lr/cnn", optimizer.param_groups[0]["lr"], epoch
-            #     )
+                    clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+                        (
+                            model.module.backbone
+                            if self.args.distributed
+                            else model.backbone
+                        ),
+                        poison.memory_loader,  # memory loader is ONLY used here
+                        test_loader,
+                        epoch,
+                        self.args,
+                        classes=self.args.num_classes,
+                        subset=False,
+                        backdoor_loader=test_back_loader,
+                        use_SS_detector=True,
+                    )
+                    print(
+                        "[{}-epoch] time:{:.3f} | clean acc with SS Detector: {:.3f} | back acc with SS Detector: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
+                            epoch + 1,
+                            time.time() - start,
+                            clean_acc_SSDETECTOR,
+                            back_acc_SSDETECTOR,
+                            losses.avg,
+                            cl_losses.avg,
+                        )
+                    )
 
         # Save final model
         if not self.args.distributed or (
@@ -580,11 +577,12 @@ class CLTrainer:
         classes=-1,
         subset=False,
         backdoor_loader=None,
+        use_SS_detector=False,
     ):
 
         net.eval()
 
-        total_top1, total_top5, total_num, feature_bank = 0.0, 0.0, 0, []
+        feature_bank = []
         # generate feature bank
         for data, target, _ in tqdm(
             memory_data_loader,
@@ -599,73 +597,97 @@ class CLTrainer:
 
         # feature_bank: [dim, total num]
         feature_bank = torch.cat(feature_bank, dim=0).t().contiguous()
+
         # feature_labels: [total num]
-
-        # feature_labels = torch.tensor(
-        #     memory_data_loader.dataset[:][1], device=feature_bank.device
-        # )
-
         feature_labels = (
             memory_data_loader.dataset[:][1].clone().detach().to(feature_bank.device)
         )
 
-        # loop test data to predict the label by weighted knn search
+        """
+        Evaluate clean KNN
+        """
+
+        clean_val_top1, clean_val_total_num = 0.0, 0
         test_bar = tqdm(test_data_loader, desc="kNN", disable=hide_progress)
-        for data, target, _ in test_bar:
+
+        for content in test_bar:
+            if args.detect_trigger_channels:
+                (data, views, target, _) = content
+            else:
+                (data, target, _) = content
+
             data, target = data.to(device), target.to(device)
             feature = net(data)
+
+            if use_SS_detector:
+                essential_indices = find_trigger_channels(views, net, args.channel_num)
+                feature[:, essential_indices] = 0.0
+
             feature = F.normalize(feature, dim=1)
             # feature: [bsz, dim]
             pred_labels = self.knn_predict(
                 feature, feature_bank, feature_labels, classes, k, t
             )
 
-            total_num += data.size(0)
-            total_top1 += (pred_labels[:, 0] == target).float().sum().item()
-            test_bar.set_postfix({"Accuracy": total_top1 / total_num * 100})
+            clean_val_total_num += data.size(0)
+            clean_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
+            test_bar.set_postfix(
+                {"Accuracy": clean_val_top1 / clean_val_total_num * 100}
+            )
 
-        # frequency test data
+        """
+        Evaluate poison KNN
+        """
+        backdoor_val_top1, backdoor_val_total_num = 0.0, 0
+        backdoor_test_bar = tqdm(backdoor_loader, desc="kNN", disable=hide_progress)
 
-        # if args.threatmodel == 'single-class' or args.threatmodel == 'single-poison':
-        if backdoor_loader is not None:
+        for content in backdoor_test_bar:
+            if args.detect_trigger_channels:
+                (data, views, target, original_label, _) = content
+            else:
+                (data, target, original_label, _) = content
 
-            backdoor_top1, backdoor_num = 0.0, 0
-            backdoor_test_bar = tqdm(backdoor_loader, desc="kNN", disable=hide_progress)
-            for data, target, original_label, _ in backdoor_test_bar:
+            data, target, original_label = (
+                data.to(device),
+                target.to(device),
+                original_label.to(device),
+            )
 
-                data, target, original_label = (
-                    data.to(device),
-                    target.to(device),
-                    original_label.to(device),
-                )
+            valid_indices = original_label != args.target_class
+            if torch.all(~valid_indices):
+                # all inputs are from target class, skip this iteration
+                continue
 
-                valid_indices = original_label != args.target_class
-                if torch.all(~valid_indices):
-                    # all inputs are from target class, skip this iteration
-                    continue
+            data = data[valid_indices]
+            target = target[valid_indices]
 
-                data = data[valid_indices]
-                target = target[valid_indices]
+            feature = net(data)
 
-                feature = net(data)
-                feature = F.normalize(feature, dim=1)
-                # feature: [bsz, dim]
-                pred_labels = self.knn_predict(
-                    feature, feature_bank, feature_labels, classes, k, t
-                )
+            if use_SS_detector:
+                essential_indices = find_trigger_channels(views, net, args.channel_num)
+                feature[:, essential_indices] = 0.0
 
-                backdoor_num += data.size(0)
-                backdoor_top1 += (pred_labels[:, 0] == target).float().sum().item()
-                test_bar.set_postfix({"Accuracy": backdoor_top1 / backdoor_num * 100})
+            feature = F.normalize(feature, dim=1)
+            # feature: [bsz, dim]
+            pred_labels = self.knn_predict(
+                feature, feature_bank, feature_labels, classes, k, t
+            )
 
-            return total_top1 / total_num * 100, backdoor_top1 / backdoor_num * 100
+            backdoor_val_total_num += data.size(0)
+            backdoor_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
+            test_bar.set_postfix(
+                {"Accuracy": backdoor_val_top1 / backdoor_val_total_num * 100}
+            )
 
-        return total_top1 / total_num * 100
+        return (
+            clean_val_top1 / clean_val_total_num * 100,
+            backdoor_val_top1 / backdoor_val_total_num * 100,
+        )
 
     def knn_predict(self, feature, feature_bank, feature_labels, classes, knn_k, knn_t):
         # feature: [bsz, dim]
-        # feature_bank: [dim, total_num]
-        # feature_labels: [total_num]
+        # feature_bank: [dim, clean_val_total_num]
+        # feature_labels: [clean_val_total_num]
 
         # compute cos similarity between each feature vector and feature bank ---> [B, N]
         sim_matrix = torch.mm(feature, feature_bank)

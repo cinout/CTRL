@@ -168,8 +168,7 @@ class PoisonAgent:
             view_tensors.append(tensors_of_an_image)
 
         view_tensors = torch.stack(view_tensors, dim=0)  # [total, num_views, c, h, w]
-        # TODO: remove later
-        print(f"view_tensors.shape: {view_tensors.shape}")
+
         return view_tensors
 
     def choose_poisons_randomly(self):

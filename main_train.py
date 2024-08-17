@@ -269,8 +269,7 @@ def main_worker(args):
         model = trainer.train_freq(model, optimizer, train_transform, poison)
 
         if args.use_linear_probing:
-            # TODO: our SS-detector should be applied to not only linear_probing, but also author's KNN
-            # TODO: for both, we also need comparison w. or w.o. SS Detector
+            # TODO: for linear probing, we also need comparison w. or w.o. SS Detector
             trainer.linear_probing(model, poison)
 
     else:

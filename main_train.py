@@ -69,7 +69,7 @@ parser.add_argument(
 parser.add_argument("--poisoning", action="store_true", default=False)
 parser.add_argument("--update_model", action="store_true", default=False)
 parser.add_argument("--contrastive", action="store_true", default=False)
-parser.add_argument("--knn_eval_freq", default=1, type=int)
+parser.add_argument("--knn_eval_freq", default=5, type=int)
 parser.add_argument("--distill_freq", default=5, type=int)
 parser.add_argument("--saved_path", default="none", type=str)
 parser.add_argument("--mode", default="normal", choices=["normal", "frequency"])

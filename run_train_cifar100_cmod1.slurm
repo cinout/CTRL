@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-10:00:00
+#SBATCH --time=1-00:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -48,13 +48,14 @@ python -u main_train.py \
     --linear_probe_batch_size 128 \
     \
     --epochs 800 \
-    --magnitude_train 200.0 \
-    --magnitude_val 200.0 \
-    --dataset imagenet100 \
-    --target_class 26 \
+    --magnitude_train 50.0 \
+    --magnitude_val 100.0 \
+    --dataset cifar100 \
+    --target_class 0 \
+    \
     --use_linear_probing \
-    # --load_cached_tensors \
-    # --target_class 26 \
+    --detect_trigger_channels \
+    --channel_num 1 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -7,5 +7,6 @@ def set_model(args):
         return SimCLRModel(args)
     elif args.method == "byol":
         return BYOL(args)
+    # TODO: add MoCoV2
     else:
         raise NotImplementedError

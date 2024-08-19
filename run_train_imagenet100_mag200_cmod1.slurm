@@ -52,6 +52,7 @@ python -u main_train.py \
     --magnitude_val 200.0 \
     --dataset imagenet100 \
     --target_class 26 \
+    --image_size 64 \
     \
     --use_linear_probing \
     --detect_trigger_channels \

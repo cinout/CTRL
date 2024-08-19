@@ -26,10 +26,10 @@ parser.add_argument("--data_path", default="./datasets/")
 parser.add_argument(
     "--dataset", default="cifar10", choices=["cifar10", "cifar100", "imagenet100"]
 )
-parser.add_argument("--image_size", default=32, type=int)
 parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)
 parser.add_argument("--window_size", default=32, type=int)
+parser.add_argument("--image_size", default=32, type=int)  # 32 for CIFAR10/100
 parser.add_argument("--eval_batch_size", default=512, type=int)
 parser.add_argument("--linear_probe_batch_size", default=128, type=int)
 parser.add_argument("--num_workers", default=1, type=int)
@@ -59,7 +59,7 @@ parser.add_argument(
         "squeezenet",
     ],
 )
-parser.add_argument("--method", default="simclr", choices=["simclr", "byol"])
+parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mocov2"])
 parser.add_argument("--batch_size", default=512, type=int)
 parser.add_argument("--epochs", default=800, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
@@ -230,7 +230,6 @@ def main_worker(args):
     if args.poisoning:
         poison_frequency_agent = PoisonFre(
             args,
-            args.size,
             args.channel,
             args.window_size,
             args.trigger_position,

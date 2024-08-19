@@ -251,7 +251,6 @@ class PoisonFre:
     def __init__(
         self,
         args,
-        image_size,  # 64 for imagenet100
         channel_list,  # 1 2
         window_size,  # 32
         pos_list,  # 15 31
@@ -260,7 +259,6 @@ class PoisonFre:
     ):
 
         self.args = args
-        self.image_size = image_size
         self.channel_list = channel_list
         self.window_size = window_size
         self.pos_list = [

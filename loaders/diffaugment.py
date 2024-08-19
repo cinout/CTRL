@@ -1,36 +1,17 @@
-import functools
 from torch.utils.data import DataLoader, TensorDataset
-import os
 import random
-from typing import Any, Callable, Optional, Tuple
 import numpy as np
-from PIL import Image, ImageFilter
-import pandas as pd
-from functools import partial
+from PIL import Image
 from torch import Tensor
-import glob
-from typing import Callable, Tuple
+from typing import Callable
 import torch
 import torch.nn as nn
-
-from torch.utils.data import SubsetRandomSampler
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from torchvision.datasets import VisionDataset
 from kornia import augmentation as aug
 
-import natsort
-import PIL
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-class Subset(torch.utils.data.Subset):
-    """Overwrite subset class to provide class methods of main class."""
-
-    def __getattr__(self, name):
-        """Call this only if all attributes of Subset are exhausted."""
-        return getattr(self.dataset, name)
 
 
 def get_data_and_label(paths, size):
@@ -51,21 +32,7 @@ def get_data_and_label(paths, size):
         target = torch.tensor(target, dtype=torch.long)
         targets.append(target)
 
-        # remove later
-        # if i % 200 == 0:
-        #     break
-
     return images, targets
-
-
-def tensor_back_to_PIL(input):
-    input = torch.permute(input, (1, 2, 0))
-    input = input * 255.0
-    input = torch.clamp(input, 0, 255)
-    input = np.array(input, dtype=np.uint8)
-    input = PIL.Image.fromarray(input)
-
-    return input
 
 
 class NCropsTransform:
@@ -149,7 +116,7 @@ class PoisonAgent:
 
         view_tensors = []
         for img in input:
-            img = PIL.Image.fromarray(img)  # in PIL format now
+            img = Image.fromarray(img)  # in PIL format now
             views = self.ss_transform(
                 img
             )  # a list of args.num_views elements, each one is a PIL image
@@ -272,9 +239,6 @@ class PoisonAgent:
             torch.ones_like(y_test_pos_tensor, dtype=torch.long)
             * self.args.target_class
         )
-
-        # uncomment to show poisoned image example
-        # tensor_back_to_PIL(x_test_pos_tensor[0])
 
         """
         # POISONed Train Set (for stage 1 attack)
@@ -443,111 +407,46 @@ def set_aug_diff(args):
         std = (0.229, 0.224, 0.225)
         args.save_freq = 100
         args.num_classes = 100
-
     else:
         raise ValueError(args.dataset)
 
     normalize = aug.Normalize(mean=mean, std=std)
 
-    ####################### Define Diff Transforms #######################
-
-    if "cifar" in args.dataset or args.dataset == "imagenet100":
-
-        if not args.disable_normalize:
-            # arrive here
-
-            # this is applied during training, not during poison generation, so don't worry
-            train_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
-                aug.RandomGrayscale(p=0.2),
-                normalize,
-            )
-
-            # not used, don't worry about it
-            ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                aug.RandomGrayscale(p=0.2),
-                normalize,
-            )
-
-            # not used, don't worry about it
-            test_transform = nn.Sequential(normalize)
-
-        else:
-
-            train_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
-                aug.RandomGrayscale(p=0.2),
-            )
-
-            ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                aug.RandomGrayscale(p=0.2),
-            )
-
-            test_transform = nn.Sequential(
-                nn.Identity(),
-            )
-
-    ####################### Define Load Transform ####################
-    if "cifar" in args.dataset or args.dataset == "imagenet100":
-        # applied to a PIL image
-        transform_load = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                (
-                    transforms.Normalize(mean, std)  # arrive here
-                    if not args.disable_normalize
-                    else transforms.Lambda(lambda x: x)
-                ),
-            ]
-        )
-
-    else:
-        raise NotImplementedError
+    # this is applied during training, not during poison generation
+    train_transform = nn.Sequential(
+        aug.RandomResizedCrop(
+            size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+        ),
+        aug.RandomHorizontalFlip(),
+        RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
+        aug.RandomGrayscale(p=0.2),
+        normalize,
+    )
 
     ####################### Define Datasets #######################
     if args.dataset == "cifar10":
 
-        train_dataset = CIFAR10(
-            root=args.data_path, train=True, transform=transform_load, download=True
+        train_dataset = datasets.CIFAR10(
+            root=args.data_path, train=True, transform=None, download=True
         )
-        ft_dataset = CIFAR10(
-            root=args.data_path, transform=transform_load, download=False
+
+        test_dataset = datasets.CIFAR10(
+            root=args.data_path, train=False, transform=None, download=True
         )
-        test_dataset = CIFAR10(
-            root=args.data_path, train=False, transform=transform_load, download=True
-        )
-        memory_dataset = CIFAR10(
-            root=args.data_path, train=True, transform=transform_load, download=False
+        memory_dataset = datasets.CIFAR10(
+            root=args.data_path, train=True, transform=None, download=False
         )
 
     elif args.dataset == "cifar100":
-        train_dataset = CIFAR100(
-            root=args.data_path, train=True, transform=transform_load, download=True
+        train_dataset = datasets.CIFAR100(
+            root=args.data_path, train=True, transform=None, download=True
         )
-        ft_dataset = CIFAR100(
-            root=args.data_path, transform=transform_load, download=False
+
+        test_dataset = datasets.CIFAR100(
+            root=args.data_path, train=False, transform=None, download=True
         )
-        test_dataset = CIFAR100(
-            root=args.data_path, train=False, transform=transform_load, download=True
-        )
-        memory_dataset = CIFAR100(
-            root=args.data_path, train=True, transform=transform_load, download=False
+        memory_dataset = datasets.CIFAR100(
+            root=args.data_path, train=True, transform=None, download=False
         )
     elif args.dataset == "imagenet100":
         train_file_path = "./datasets/imagenet100_train_clean_filelist.txt"
@@ -564,44 +463,8 @@ def set_aug_diff(args):
         train_dataset = train_file_list
         memory_dataset = train_file_list
         test_dataset = val_file_list
-        ft_dataset = val_file_list  # dummy placeholder here, not used anyway
     else:
         raise NotImplementedError
-
-    train_sampler = None
-    ft_sampler = None
-
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=(train_sampler is None),
-        num_workers=args.num_workers,
-        pin_memory=True,
-        sampler=train_sampler,
-        drop_last=True,
-    )
-
-    ft_loader = torch.utils.data.DataLoader(
-        ft_dataset,
-        batch_size=args.eval_batch_size,
-        shuffle=(ft_sampler is None),
-        num_workers=args.num_workers,
-        pin_memory=True,
-        sampler=ft_sampler,
-    )
-
-    # indices  = np.random.choice(len(test_dataset), 1024, replace=False)
-    # sampler = SubsetRandomSampler(indices)
-
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset,
-        args.eval_batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=True,
-        drop_last=True,
-        sampler=None,
-    )
 
     memory_loader = torch.utils.data.DataLoader(
         memory_dataset,
@@ -612,126 +475,8 @@ def set_aug_diff(args):
     )
 
     return (
-        train_loader,  # used only in clean (no trigger poisoning) mode
-        train_sampler,
         train_dataset,  # used as PoisonAgent's train_dataset
-        ft_loader,  # [don't care]
-        ft_sampler,  # [don't care]
-        test_loader,  # used only in clean (no trigger poisoning) mode
         test_dataset,  # used as PoisonAgent's val_dataset
         memory_loader,  # used as PoisonAgent's memory_loader
         train_transform,  # used in train_loader iteration, not in poisoning
-        ft_transform,  # [don't care]
-        test_transform,  # [don't care]
     )
-
-
-class CIFAR10(datasets.CIFAR10):
-    """Super-class CIFAR10 to return image ids with images."""
-
-    def __getitem__(self, index):
-        """Getitem from https://pytorch.org/docs/stable/_modules/torchvision/datasets/cifar.html#CIFAR10.
-
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target, idx) where target is index of the target class.
-
-        """
-        # NEVER GETS CALLED, ignore
-        img, target = self.data[index], self.targets[index]
-
-        # doing this so that it is consistent with all other datasets
-        # to return a PIL Image
-        img = Image.fromarray(img)
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return img, target, index
-
-    def get_target(self, index):
-        """Return only the target and its id.
-
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (target, idx) where target is class_index of the target class.
-
-        """
-        target = self.targets[index]
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return target, index
-
-
-class CIFAR100(datasets.CIFAR10):
-    """`CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
-
-    This is a subclass of the `CIFAR10` Dataset.
-    """
-
-    base_folder = "cifar-100-python"
-    url = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
-    filename = "cifar-100-python.tar.gz"
-    tgz_md5 = "eb9058c3a382ffc7106e4002c42a8d85"
-    train_list = [
-        ["train", "16019d7e3df5f24257cddd939b257f8d"],
-    ]
-
-    test_list = [
-        ["test", "f0ef6b0ae62326f3e7ffdfab6717acfc"],
-    ]
-    meta = {
-        "filename": "meta",
-        "key": "fine_label_names",
-        "md5": "7973b15100ade9c7d40fb424638fde48",
-    }
-
-    def __getitem__(self, index):
-        """Getitem from https://pytorch.org/docs/stable/_modules/torchvision/datasets/cifar.html#CIFAR10.
-
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target, idx) where target is index of the target class.
-
-        """
-        img, target = self.data[index], self.targets[index]
-
-        # doing this so that it is consistent with all other datasets
-        # to return a PIL Image
-        img = Image.fromarray(img)
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return img, target, index
-
-    def get_target(self, index):
-        """Return only the target and its id.
-
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (target, idx) where target is class_index of the target class.
-
-        """
-        target = self.targets[index]
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return target, index

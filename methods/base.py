@@ -41,10 +41,13 @@ def find_trigger_channels(views, backbone, channel_num):
     )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
     max_indices = np.argmax(elementwise, axis=1)
     occ_count = Counter(max_indices)
+    essential_indices = occ_count.most_common(channel_num)
+    print(
+        f"essential_indices: {essential_indices}; #samples: {bs*n_views}"
+    )  # print (idx, count) tuples
     essential_indices = torch.tensor(
-        [idx for (idx, occ_count) in occ_count.most_common(channel_num)]
-    )
-    print(f"essential_indices: {essential_indices}")
+        [idx for (idx, occ_count) in essential_indices]
+    )  # remove count
     return essential_indices
 
 
@@ -423,6 +426,7 @@ class CLTrainer:
         linear.eval()
 
         print(f"evaluating linear classifier")
+        print(f"evaluating on CLEAN val")
         clean_acc1 = eval_linear_classifier(
             poison.test_loader,
             backbone,
@@ -431,6 +435,7 @@ class CLTrainer:
             val_mode="clean",
             use_ss_detector=use_ss_detector,
         )
+        print(f"evaluating on POISONED val")
         poison_acc1 = eval_linear_classifier(
             poison.test_pos_loader,
             backbone,

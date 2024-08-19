@@ -359,8 +359,13 @@ class CLTrainer:
                     features = model(v1, v2)
                     loss, _, _ = model.criterion(features)
 
-                # TODO: update for mocov2
-
+                elif self.args.method == "mocov2":
+                    moco_losses = model(im_q=v1, im_k=v2)
+                    loss = moco_losses.combine(
+                        contr_w=1,
+                        align_w=0,
+                        unif_w=0,
+                    )
                 elif self.args.method == "simsiam":
                     features = model(v1, v2)
                     loss = model.criterion(*features)
@@ -373,9 +378,6 @@ class CLTrainer:
 
                     loss = model(v1, v2)
 
-                # loss = model(v1, v2)
-
-                # loss = model.loss(reps)
                 losses.update(loss.item(), images[0].size(0))
                 cl_losses.update(loss.item(), images[0].size(0))
 

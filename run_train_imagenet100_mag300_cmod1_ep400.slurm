@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mocov2"
+#SBATCH --job-name="ep400"
 #SBATCH --account=punim1623
 #SBATCH --time=0-12:00:00
 

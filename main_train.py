@@ -117,6 +117,11 @@ parser.add_argument(
     action="store_true",
     help="evaluate the performance using linear probing",
 )
+parser.add_argument(
+    "--use_ref_norm",
+    action="store_true",
+    help="normalize features by 1% trainset's mean and var",
+)
 
 
 # for finding trigger channels

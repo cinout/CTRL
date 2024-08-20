@@ -253,16 +253,26 @@ class CLTrainer:
         else:
             _, feat_dim = model_dict[self.args.arch]
         backbone = model.backbone
-        # train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
-        # train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
-        linear = nn.Sequential(
-            Normalize(),  # L2 norm
-            # FullBatchNorm(
-            #     train_var, train_mean
-            # ),  # the train_var/mean are from L2-normed features
-            nn.Linear(feat_dim, self.args.num_classes),
-        )
+        if self.args.use_ref_norm:
+            train_probe_feats = get_feats(
+                poison.train_probe_loader, backbone, self.args
+            )
+            train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                FullBatchNorm(
+                    train_var, train_mean
+                ),  # the train_var/mean are from L2-normed features
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        else:
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+
         linear = linear.to(device)
         optimizer = torch.optim.SGD(
             linear.parameters(),

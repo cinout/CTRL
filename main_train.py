@@ -25,6 +25,7 @@ parser = argparse.ArgumentParser(description="CTRL Training")
 
 
 parser.add_argument("--note", default="", type=str)
+parser.add_argument("--timestamp", default="", type=str)
 ### dataloader
 parser.add_argument("--data_path", default="./datasets/")
 parser.add_argument(
@@ -96,7 +97,6 @@ parser.add_argument(
 )
 
 # ---- SLURM and DDP args ---- #
-parser = argparse.ArgumentParser()
 parser.add_argument(
     "--world_size",
     default=-1,
@@ -181,7 +181,6 @@ parser.add_argument(
 )
 
 
-args = parser.parse_args()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -293,6 +292,8 @@ def main_worker(args):
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+
     if "WORLD_SIZE" in os.environ:
         args.world_size = int(os.environ["WORLD_SIZE"])
 
@@ -323,4 +324,5 @@ if __name__ == "__main__":
                 pass
 
             builtins.print = print_pass
-    main_worker()
+
+    main_worker(args)

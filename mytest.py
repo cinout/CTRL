@@ -19,4 +19,5 @@ model = MoCo(
     mlp=True,
 )
 
-print(model)
+
+print(model.encoder_q)

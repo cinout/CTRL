@@ -255,7 +255,10 @@ class CLTrainer:
             _, feat_dim = model_dict[self.args.arch]
 
         if self.args.method == "mocov2":
-            backbone = model.encoder_q
+            backbone = (
+                model.module.encoder_q if self.args.distributed else model.encoder_q
+            )
+
             backbone.fc = nn.Sequential()
             for p in backbone.parameters():
                 p.requires_grad = False
@@ -416,12 +419,20 @@ class CLTrainer:
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
 
                 if self.args.method == "mocov2":
-                    backbone = model.encoder_q
+                    backbone = (
+                        model.module.encoder_q
+                        if self.args.distributed
+                        else model.encoder_q
+                    )
                     backbone.fc = nn.Sequential()
                     for p in backbone.parameters():
                         p.requires_grad = False
                 else:
-                    backbone = model.backbone
+                    backbone = (
+                        model.module.backbone
+                        if self.args.distributed
+                        else model.backbone
+                    )
 
                 clean_acc, back_acc = self.knn_monitor_fre(
                     backbone,
@@ -448,12 +459,20 @@ class CLTrainer:
                     # if last epoch, also evaluate with SS detctor
 
                     if self.args.method == "mocov2":
-                        backbone = model.encoder_q
+                        backbone = (
+                            model.module.encoder_q
+                            if self.args.distributed
+                            else model.encoder_q
+                        )
                         backbone.fc = nn.Sequential()
                         for p in backbone.parameters():
                             p.requires_grad = False
                     else:
-                        backbone = model.backbone
+                        backbone = (
+                            model.module.backbone
+                            if self.args.distributed
+                            else model.backbone
+                        )
 
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
                         (

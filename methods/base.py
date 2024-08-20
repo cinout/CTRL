@@ -264,8 +264,8 @@ class CLTrainer:
             # )
 
             backbone.fc = nn.Sequential()
-            for p in backbone.parameters():
-                p.requires_grad = False
+            # for p in backbone.parameters():
+            #     p.requires_grad = False
         else:
             backbone = model.backbone
 
@@ -432,8 +432,8 @@ class CLTrainer:
                     #     else model.encoder_q
                     # )
                     backbone.fc = nn.Sequential()
-                    for p in backbone.parameters():
-                        p.requires_grad = False
+                    # for p in backbone.parameters():
+                    #     p.requires_grad = False
                 else:
                     backbone = model.backbone
                     # backbone = (
@@ -473,8 +473,8 @@ class CLTrainer:
                         #     else model.encoder_q
                         # )
                         backbone.fc = nn.Sequential()
-                        for p in backbone.parameters():
-                            p.requires_grad = False
+                        # for p in backbone.parameters():
+                        #     p.requires_grad = False
                     else:
                         backbone = model.backbone
                         # backbone = (

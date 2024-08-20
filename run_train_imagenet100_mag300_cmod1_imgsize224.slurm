@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="size224"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=1-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -22,12 +22,12 @@
 
 #SBATCH --mem=800G
 
-# export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
-# export MASTER_PORT=28400
-# echo ">>> NODELIST="${SLURM_NODELIST}
-# master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-# export MASTER_ADDR=$master_addr
-# echo ">>> MASTER_ADDR="$MASTER_ADDR
+export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+export MASTER_PORT=28400
+echo ">>> NODELIST="${SLURM_NODELIST}
+master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_ADDR=$master_addr
+echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 module purge
 
@@ -57,6 +57,8 @@ python -u main_train.py \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "size=224, second run, given more slurm time"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -4,14 +4,14 @@ ImageNet-Style ResNet
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 Adapted from: https://github.com/bearpaw/pytorch-classification
 """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .convnet import  ConvNet
+from .convnet import ConvNet
 from .shufflenet import cifar_shufflenet_v2_1x_32 as shufflenet_v2
 from .squeezenet import cifar_sqnxt_23_1x as squeezenet_v2
 from .mobilenet import MobileNet as mobilev2
-
 
 
 class BasicBlock(nn.Module):
@@ -20,16 +20,26 @@ class BasicBlock(nn.Module):
     def __init__(self, in_planes, planes, stride=1, is_last=False):
         super(BasicBlock, self).__init__()
         self.is_last = is_last
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(planes)
         self.ind = None
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion * planes)
+                nn.Conv2d(
+                    in_planes,
+                    self.expansion * planes,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(self.expansion * planes),
             )
 
     def forward(self, x):
@@ -55,16 +65,26 @@ class Bottleneck(nn.Module):
         self.is_last = is_last
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
+        self.conv3 = nn.Conv2d(
+            planes, self.expansion * planes, kernel_size=1, bias=False
+        )
         self.bn3 = nn.BatchNorm2d(self.expansion * planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion * planes)
+                nn.Conv2d(
+                    in_planes,
+                    self.expansion * planes,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(self.expansion * planes),
             )
 
     def forward(self, x):
@@ -78,15 +98,24 @@ class Bottleneck(nn.Module):
             return out, preact
         else:
             return out
- 
+
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, in_channel=3, zero_init_residual=True, full_model =False, numclasses=10):
+    def __init__(
+        self,
+        block,
+        num_blocks,
+        in_channel=3,
+        zero_init_residual=True,
+        full_model=False,
+        numclasses=10,
+    ):
         super(ResNet, self).__init__()
         self.in_planes = 64
 
-        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=3, stride=1, padding=1,
-                               bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channel, 64, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU(inplace=True)
 
@@ -103,7 +132,6 @@ class ResNet(nn.Module):
         else:
             self.full_model = False
 
-
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -112,8 +140,8 @@ class ResNet(nn.Module):
             layers.append(block(self.in_planes, planes, stride))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
-    
-    def forward(self, x, representation = False):
+
+    def forward(self, x, representation=False):
         out = self.relu1((self.bn1(self.conv1(x))))
         out = self.layer1(out)
         out = self.layer2(out)
@@ -128,8 +156,10 @@ class ResNet(nn.Module):
             out = self.fc(out)
         return out
 
+
 def resnet18(**kwargs):
     return ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+
 
 def resnet34(**kwargs):
     return ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
@@ -144,37 +174,39 @@ def resnet101(**kwargs):
 
 
 def get_default_convnet_setting():
-    net_width, net_depth, net_act, net_norm, net_pooling = 128, 3, 'relu', 'instancenorm', 'avgpooling'
+    net_width, net_depth, net_act, net_norm, net_pooling = (
+        128,
+        3,
+        "relu",
+        "instancenorm",
+        "avgpooling",
+    )
     return net_width, net_depth, net_act, net_norm, net_pooling
-
 
 
 class convnet(nn.Module):
 
-    def   __init__(self):
-          super(convnet, self).__init__()
-          net_width, net_depth, net_act, net_norm, net_pooling = get_default_convnet_setting()
-          self.net1 = ConvNet(net_width, net_depth, net_act, net_norm, net_pooling)
-          # dim_mlp = self.backbone.fc.in_features
-          # # add mlp projection head
-          # self.backbone.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.backbone.fc)
+    def __init__(self):
+        super(convnet, self).__init__()
+        net_width, net_depth, net_act, net_norm, net_pooling = (
+            get_default_convnet_setting()
+        )
+        self.net1 = ConvNet(net_width, net_depth, net_act, net_norm, net_pooling)
+        # dim_mlp = self.backbone.fc.in_features
+        # # add mlp projection head
+        # self.backbone.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.backbone.fc)
 
     def forward(self, x):
-          return self.net1(x)
-
-
-
+        return self.net1(x)
 
 
 model_dict = {
-    'resnet18': [resnet18, 512],
-    'resnet34': [resnet34, 512],
-    'resnet50': [resnet50, 2048],
-    'resnet101': [resnet101, 2048],
-    'convnet':  [convnet, 2048],
-    'squeezenet' : [squeezenet_v2, 128],
-    'mobilenet': [mobilev2, 1024],
-    'shufflenet': [shufflenet_v2, 1024]
+    "resnet18": [resnet18, 512],
+    "resnet34": [resnet34, 512],
+    "resnet50": [resnet50, 2048],
+    "resnet101": [resnet101, 2048],
+    "convnet": [convnet, 2048],
+    "squeezenet": [squeezenet_v2, 128],
+    "mobilenet": [mobilev2, 1024],
+    "shufflenet": [shufflenet_v2, 1024],
 }
-
-

@@ -16,25 +16,25 @@
 #SBATCH --time=0-12:00:00
 
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=2
+#SBATCH --gres=gpu:2
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
 #SBATCH --mem=80G
 
-# export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
-# export MASTER_PORT=28400
-# echo ">>> NODELIST="${SLURM_NODELIST}
-# master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-# export MASTER_ADDR=$master_addr
-# echo ">>> MASTER_ADDR="$MASTER_ADDR
+export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+export MASTER_PORT=28400
+echo ">>> NODELIST="${SLURM_NODELIST}
+master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_ADDR=$master_addr
+echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u main_train.py \
+srun python -u main_train.py \
     --method mocov2 \
     --mode frequency \
     --channel 1 2 \

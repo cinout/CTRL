@@ -29,6 +29,7 @@ class SimCLRModel(CLModel):
                 nn.Linear(self.feat_dim, 128),
             )
 
+    # NEVER called
     @torch.no_grad()
     def moving_average(self):
         """

@@ -17,9 +17,10 @@ from methods import set_model
 from methods.base import CLTrainer
 from utils.util import *
 from loaders.diffaugment import set_aug_diff, PoisonAgent
-import torch.distributed as dist
 
-from torch.nn.parallel import DistributedDataParallel as DDP
+# import torch.distributed as dist
+
+# from torch.nn.parallel import DistributedDataParallel as DDP
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 
@@ -96,40 +97,40 @@ parser.add_argument(
     action="store_true",
 )
 
-# ---- SLURM and DDP args ---- #
-parser.add_argument(
-    "--world_size",
-    default=-1,
-    type=int,
-    help="number of processes for distributed training",
-)
-parser.add_argument(
-    "--global_rank",
-    default=-1,
-    type=int,
-    help="global rank for distributed training",
-)
-parser.add_argument(
-    "--local_rank",
-    default=-1,
-    type=int,
-    help="local rank for torch.distributed.launch training",
-)
-parser.add_argument(
-    "--gpu",
-    default=None,
-    type=int,
-    help="local rank for slurm training (c.f. local_rank)",
-)
-parser.add_argument(
-    "--dist_url",
-    default="env://",
-    type=str,
-    help="url used to set up distributed training",
-)
-parser.add_argument(
-    "--dist_backend", default="nccl", type=str, help="distributed backend"
-)
+# # ---- SLURM and DDP args ---- #
+# parser.add_argument(
+#     "--world_size",
+#     default=-1,
+#     type=int,
+#     help="number of processes for distributed training",
+# )
+# parser.add_argument(
+#     "--global_rank",
+#     default=-1,
+#     type=int,
+#     help="global rank for distributed training",
+# )
+# parser.add_argument(
+#     "--local_rank",
+#     default=-1,
+#     type=int,
+#     help="local rank for torch.distributed.launch training",
+# )
+# parser.add_argument(
+#     "--gpu",
+#     default=None,
+#     type=int,
+#     help="local rank for slurm training (c.f. local_rank)",
+# )
+# parser.add_argument(
+#     "--dist_url",
+#     default="env://",
+#     type=str,
+#     help="url used to set up distributed training",
+# )
+# parser.add_argument(
+#     "--dist_backend", default="nccl", type=str, help="distributed backend"
+# )
 
 ###logging
 parser.add_argument(
@@ -138,7 +139,7 @@ parser.add_argument(
 parser.add_argument("--debug", action="store_true", default=False)
 
 ###others
-parser.add_argument("--distributed", action="store_true", help="distributed training")
+# parser.add_argument("--distributed", action="store_true", help="distributed training")
 parser.add_argument("--seed", default=42, type=int)
 
 ### linear probing
@@ -187,14 +188,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 def main_worker(args):
     set_seed(args.seed)
 
-    if not args.distributed or (args.distributed and dist.get_rank() == 0):
-        args.timestamp = (
-            datetime.now().strftime("%Y%m%d_%H%M%S")
-            + "_"
-            + str(random.randint(0, 100))
-            + "_"
-            + str(random.randint(0, 100)),
-        )
+    # if not args.distributed or (args.distributed and dist.get_rank() == 0):
+    args.timestamp = (
+        datetime.now().strftime("%Y%m%d_%H%M%S")
+        + "_"
+        + str(random.randint(0, 100))
+        + "_"
+        + str(random.randint(0, 100)),
+    )
 
     args.saved_path = os.path.join(
         "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}-numc{}".format(
@@ -222,18 +223,18 @@ def main_worker(args):
     # this is where model like simclr, byol is determined
     model = set_model(args)
 
-    if args.distributed:
-        if args.gpu is None:
-            model.cuda()
-            model = DDP(model)
-        else:
-            model.cuda(args.gpu)
-            model = DDP(model, device_ids=[args.gpu])
+    # if args.distributed:
+    #     if args.gpu is None:
+    #         model.cuda()
+    #         model = DDP(model)
+    #     else:
+    #         model.cuda(args.gpu)
+    #         model = DDP(model, device_ids=[args.gpu])
+    # else:
+    model = model.to(device)
 
     # constrcut trainer
     trainer = CLTrainer(args)
-
-    model = model.to(device)
 
     # create data loader
     (
@@ -282,7 +283,7 @@ def main_worker(args):
     # poison: poisoned dataset, get train/test/memory via poison.xxx
 
     # actually, no need to return model, but it is also fine to return model
-    model = trainer.train_freq(model, optimizer, train_transform, poison)
+    trainer.train_freq(model, optimizer, train_transform, poison)
 
     if args.use_linear_probing:
         trainer.linear_probing(model, poison, use_ss_detector=False)
@@ -294,35 +295,35 @@ def main_worker(args):
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    if "WORLD_SIZE" in os.environ:
-        args.world_size = int(os.environ["WORLD_SIZE"])
+    # if "WORLD_SIZE" in os.environ:
+    #     args.world_size = int(os.environ["WORLD_SIZE"])
 
-    args.distributed = args.world_size > 1
-    ngpus_per_node = torch.cuda.device_count()
-    torch.backends.cudnn.benchmark = True
+    # args.distributed = args.world_size > 1
+    # ngpus_per_node = torch.cuda.device_count()
+    # torch.backends.cudnn.benchmark = True
 
-    if args.distributed:
-        if args.local_rank != -1:  # for torch.distributed.launch
-            args.global_rank = args.local_rank
-            args.gpu = args.local_rank
-        elif "SLURM_PROCID" in os.environ:  # for slurm scheduler
-            args.global_rank = int(os.environ["SLURM_PROCID"])
-            args.gpu = args.global_rank % ngpus_per_node
-        dist.init_process_group(
-            backend=args.dist_backend,
-            init_method=args.dist_url,
-            world_size=args.world_size,
-            rank=args.global_rank,
-        )
-        if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)
+    # if args.distributed:
+    #     if args.local_rank != -1:  # for torch.distributed.launch
+    #         args.global_rank = args.local_rank
+    #         args.gpu = args.local_rank
+    #     elif "SLURM_PROCID" in os.environ:  # for slurm scheduler
+    #         args.global_rank = int(os.environ["SLURM_PROCID"])
+    #         args.gpu = args.global_rank % ngpus_per_node
+    #     dist.init_process_group(
+    #         backend=args.dist_backend,
+    #         init_method=args.dist_url,
+    #         world_size=args.world_size,
+    #         rank=args.global_rank,
+    #     )
+    #     if args.gpu is not None:
+    #         torch.cuda.set_device(args.gpu)
 
-        # suppress printing if not on master gpu
-        if args.global_rank != 0:
+    #     # suppress printing if not on master gpu
+    #     if args.global_rank != 0:
 
-            def print_pass(*args):
-                pass
+    #         def print_pass(*args):
+    #             pass
 
-            builtins.print = print_pass
+    #         builtins.print = print_pass
 
     main_worker(args)

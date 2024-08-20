@@ -9,7 +9,8 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from kornia import augmentation as aug
-from torch.utils.data.distributed import DistributedSampler
+
+# from torch.utils.data.distributed import DistributedSampler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -262,27 +263,27 @@ class PoisonAgent:
         """
         Create dataloaders
         """
-        train_data = (TensorDataset(x_train_tensor, y_train_tensor, train_index),)
-        if self.args.distributed:
-            train_sampler = DistributedSampler(train_data, shuffle=True)
-            # contain both CLEAN and a portion of POISONED images
-            train_loader = DataLoader(
-                train_data,
-                batch_size=self.args.batch_size,
-                sampler=train_sampler,
-                shuffle=(train_sampler is None),
-                drop_last=True,
-                pin_memory=True,
-            )
-        else:
-            # contain both CLEAN and a portion of POISONED images
-            train_loader = DataLoader(
-                train_data,
-                batch_size=self.args.batch_size,
-                sampler=None,
-                shuffle=True,
-                drop_last=True,
-            )
+        train_data = TensorDataset(x_train_tensor, y_train_tensor, train_index)
+        # if self.args.distributed:
+        #     train_sampler = DistributedSampler(train_data, shuffle=True)
+        #     # contain both CLEAN and a portion of POISONED images
+        #     train_loader = DataLoader(
+        #         train_data,
+        #         batch_size=self.args.batch_size,
+        #         sampler=train_sampler,
+        #         shuffle=(train_sampler is None),
+        #         drop_last=True,
+        #         pin_memory=True,
+        #     )
+        # else:
+        # contain both CLEAN and a portion of POISONED images
+        train_loader = DataLoader(
+            train_data,
+            batch_size=self.args.batch_size,
+            sampler=None,
+            shuffle=True,
+            drop_last=True,
+        )
 
         if self.args.detect_trigger_channels:
             view_tensors = self.generate_view_tensors(x_test_tensor)

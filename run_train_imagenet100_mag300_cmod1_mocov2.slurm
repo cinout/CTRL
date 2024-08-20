@@ -16,18 +16,18 @@
 #SBATCH --time=1-08:00:00
 
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
-#SBATCH --gres=gpu:2
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
 #SBATCH --mem=80G
 
-export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
-export MASTER_PORT=28400
-echo ">>> NODELIST="${SLURM_NODELIST}
-master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-export MASTER_ADDR=$master_addr
-echo ">>> MASTER_ADDR="$MASTER_ADDR
+# export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+# export MASTER_PORT=28400
+# echo ">>> NODELIST="${SLURM_NODELIST}
+# master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+# export MASTER_ADDR=$master_addr
+# echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 module purge
 
@@ -43,7 +43,7 @@ srun python -u main_train.py \
     --poison_ratio 0.01 \
     --poisoning \
     \
-    --batch_size 256 \
+    --batch_size 512 \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \

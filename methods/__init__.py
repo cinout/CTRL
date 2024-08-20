@@ -12,7 +12,7 @@ def set_model(args):
     elif args.method == "mocov2":
         return MoCo(
             models.__dict__[args.arch],  # args.arch == "resnet18"
-            dim=128,
+            dim=512,  # TODO: 512?
             K=65536,
             m=0.999,
             contr_tau=0.2,

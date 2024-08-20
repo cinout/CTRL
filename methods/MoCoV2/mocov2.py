@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class MoCoLosses(typing.NamedTuple):
     loss_contr: typing.Optional[torch.Tensor] = None
@@ -139,7 +141,7 @@ class MoCo(nn.Module):
         num_gpus = batch_size_all // batch_size_this
 
         # random shuffle index
-        idx_shuffle = torch.randperm(batch_size_all).cuda()
+        idx_shuffle = torch.randperm(batch_size_all).to(device)
 
         # broadcast to all gpus
         # FIXME:

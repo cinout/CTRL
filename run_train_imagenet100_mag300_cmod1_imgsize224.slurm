@@ -34,7 +34,7 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u main_train.py \
+srun python -u main_train.py \
     --method simclr \
     --mode frequency \
     --channel 1 2 \

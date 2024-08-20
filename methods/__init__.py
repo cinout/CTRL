@@ -11,7 +11,7 @@ def set_model(args):
         return BYOL(args)
     elif args.method == "mocov2":
         return MoCo(
-            models.__dict__[args.arch],
+            models.__dict__[args.arch],  # args.arch == "resnet18"
             dim=128,
             K=65536,
             m=0.999,

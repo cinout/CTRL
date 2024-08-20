@@ -205,7 +205,6 @@ def cycle(iterable):
             yield x
 
 
-# TODO: needs to be incorporated into mocov2?
 class CLModel(nn.Module):
     def __init__(self, args):
         super().__init__()
@@ -254,7 +253,15 @@ class CLTrainer:
             _, feat_dim = model_dict_cifar[self.args.arch]
         else:
             _, feat_dim = model_dict[self.args.arch]
-        backbone = model.backbone
+
+        # TODO: handle model
+        if self.args.method == "mocov2":
+            backbone = model.encoder_q
+            backbone.fc = nn.Sequential()
+            for p in backbone.parameters():
+                p.requires_grad = False
+        else:
+            backbone = model.backbone
 
         if self.args.use_ref_norm:
             train_probe_feats = get_feats(
@@ -410,7 +417,8 @@ class CLTrainer:
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
                 # TODO: what the fuck? args.distributed and backnone????
                 clean_acc, back_acc = self.knn_monitor_fre(
-                    model.module.backbone if self.args.distributed else model.backbone,
+                    model.backbone,
+                    # model.module.backbone if self.args.distributed else model.backbone,
                     poison.memory_loader,  # memory loader is ONLY used here
                     test_loader,
                     epoch,
@@ -434,9 +442,10 @@ class CLTrainer:
                     # TODO: what the fuck? args.distributed and backnone????
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
                         (
-                            model.module.backbone
-                            if self.args.distributed
-                            else model.backbone
+                            model.backbone
+                            # model.module.backbone
+                            # if self.args.distributed
+                            # else model.backbone
                         ),
                         poison.memory_loader,  # memory loader is ONLY used here
                         test_loader,

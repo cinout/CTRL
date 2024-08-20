@@ -4,17 +4,19 @@ import torchvision.transforms as transforms
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
+from methods.MoCoV2.mocov2 import MoCo
+import torchvision.models as models
 
+model = MoCo(
+    models.__dict__["resnet18"],  # args.arch == "resnet18"
+    dim=128,
+    K=65536,
+    m=0.999,
+    contr_tau=0.2,
+    align_alpha=2,
+    unif_t=3,
+    unif_intra_batch=True,
+    mlp=True,
+)
 
-def add_value(item):
-    item["new_value"] = 3
-    return item
-
-
-our_obj = dict()
-our_obj["first"] = 1
-
-print(our_obj)
-
-our_obj = add_value(our_obj)
-print(our_obj)
+print(model)

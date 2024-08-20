@@ -9,17 +9,17 @@ python -u main_train.py \
     \
     --batch_size 4 \
     --eval_batch_size 4 \
-    --linear_probe_batch_size 128 \
+    --linear_probe_batch_size 4 \
     \
     --epochs 4 \
-    --magnitude_train 300.0 \
-    --magnitude_val 300.0 \
+    --magnitude_train 50.0 \
+    --magnitude_val 100.0 \
     --dataset imagenet100 \
     --target_class 26 \
-    --image_size 64 \
+    --image_size 32 \
     \
     --load_cached_tensors \
-    --use_linear_probing \
+    # --use_linear_probing \
     # --detect_trigger_channels \
     # --channel_num 1 \
     # \

@@ -7,6 +7,7 @@ import numpy as np
 from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
+import copy
 
 # from torch.utils.data.distributed import DistributedSampler
 from collections import Counter
@@ -257,7 +258,7 @@ class CLTrainer:
             _, feat_dim = model_dict[self.args.arch]
 
         if self.args.method == "mocov2":
-            backbone = model.detach().clone().encoder_q
+            backbone = copy.deepcopy(model.encoder_q)
 
             # backbone = (
             #     model.module.encoder_q if self.args.distributed else model.encoder_q
@@ -425,7 +426,7 @@ class CLTrainer:
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
 
                 if self.args.method == "mocov2":
-                    backbone = model.detach().clone().encoder_q
+                    backbone = copy.deepcopy(model.encoder_q)
                     # backbone = (
                     #     model.module.encoder_q
                     #     if self.args.distributed
@@ -466,7 +467,7 @@ class CLTrainer:
                     # if last epoch, also evaluate with SS detctor
 
                     if self.args.method == "mocov2":
-                        backbone = model.detach().clone().encoder_q
+                        backbone = copy.deepcopy(model.encoder_q)
                         # backbone = (
                         #     model.module.encoder_q
                         #     if self.args.distributed

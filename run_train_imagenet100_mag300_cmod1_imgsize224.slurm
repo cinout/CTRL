@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=320G
+#SBATCH --mem=800G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400

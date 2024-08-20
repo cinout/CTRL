@@ -22,7 +22,7 @@
 
 #SBATCH --mem=800G
 
-export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+export WORLD_SIZE=1   ### update world size: nodes x ntasks-per-node
 export MASTER_PORT=28400
 echo ">>> NODELIST="${SLURM_NODELIST}
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
@@ -58,7 +58,7 @@ srun python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 1 \
     \
-    --note "size=224, second run, given more slurm time"
+    --note "size=224, second run, given more slurm time" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

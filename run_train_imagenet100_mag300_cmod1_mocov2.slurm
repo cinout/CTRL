@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=1-08:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
@@ -57,6 +57,8 @@ srun python -u main_train.py \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "try mocov2" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

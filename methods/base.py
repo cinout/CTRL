@@ -257,7 +257,7 @@ class CLTrainer:
             _, feat_dim = model_dict[self.args.arch]
 
         if self.args.method == "mocov2":
-            backbone = model.encoder_q
+            backbone = model.encoder_q.detach().clone()
 
             # backbone = (
             #     model.module.encoder_q if self.args.distributed else model.encoder_q
@@ -425,7 +425,7 @@ class CLTrainer:
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
 
                 if self.args.method == "mocov2":
-                    backbone = model.encoder_q
+                    backbone = model.encoder_q.detach().clone()
                     # backbone = (
                     #     model.module.encoder_q
                     #     if self.args.distributed
@@ -466,7 +466,7 @@ class CLTrainer:
                     # if last epoch, also evaluate with SS detctor
 
                     if self.args.method == "mocov2":
-                        backbone = model.encoder_q
+                        backbone = model.encoder_q.detach().clone()
                         # backbone = (
                         #     model.module.encoder_q
                         #     if self.args.distributed

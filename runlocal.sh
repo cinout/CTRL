@@ -1,5 +1,5 @@
 python -u main_train.py \
-    --method simclr \
+    --method mocov2 \
     --mode frequency \
     --channel 1 2 \
     --window_size 32 \
@@ -9,13 +9,15 @@ python -u main_train.py \
     \
     --batch_size 4 \
     --eval_batch_size 4 \
-    --linear_probe_batch_size 4 \
+    --linear_probe_batch_size 128 \
     \
-    --epochs 5 \
-    --magnitude_train 50.0 \
-    --magnitude_val 100.0 \
-    --dataset cifar10 \
-    --target_class 0 \
+    --epochs 3 \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
+    --dataset imagenet100 \
+    --target_class 26 \
+    --image_size 64 \
+    # \
     # --use_linear_probing \
     # --detect_trigger_channels \
     # --channel_num 1 \

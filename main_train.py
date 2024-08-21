@@ -133,12 +133,25 @@ parser.add_argument(
     action="store_true",
     help="use spectral signature to detect channels, this requires N augmented views to be generated",
 )
-# TODO: add to slurm
 parser.add_argument(
-    "--replacement_value", type=str, choices=["zero", "ref_mean"], default="zero"
+    "--replacement_value",
+    type=str,
+    choices=["zero", "ref_mean"],
+    default="zero",
+    help="determines what values to replace the old value at the trigger channels",
+)
+# TODO: update
+parser.add_argument(
+    "--topk_channel",
+    default=1,
+    type=int,
+    help="a new hp, determine k channels of EACH SAMPLE; if this is set to be larger than 1, then channel_num is set to topk_channel",
 )
 parser.add_argument(
-    "--channel_num", default=1, type=int, help="number of channels to set to 0"
+    "--channel_num",
+    default=1,
+    type=int,
+    help="number of channels to set to replacement_value",
 )
 parser.add_argument(
     "--num_views",

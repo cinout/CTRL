@@ -11,9 +11,9 @@
 #SBATCH --qos=gpgpudeeplearn
 #SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mocov2"
+#SBATCH --job-name="t3c"
 #SBATCH --account=punim1623
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-12:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -56,9 +56,10 @@ python -u main_train.py \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    --topk_channel 3 \
     \
     --image_size 64 \
-    --note "try again 3rd time!!! still get the same results/??"
+    --note "top3 channels"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

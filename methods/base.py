@@ -20,7 +20,7 @@ import torch.nn.functional as F
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def find_trigger_channels(views, backbone, channel_num):
+def find_trigger_channels(views, backbone, channel_num, topk_channel):
     # expected shaope of views: [bs, n_views, c, h, w]
 
     views = views.to(device)
@@ -40,9 +40,20 @@ def find_trigger_channels(views, backbone, channel_num):
     elementwise = (
         eig_for_indexing * vision_features * coeff_adjust
     )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
-    max_indices = np.argmax(elementwise, axis=1)
+
+    max_indices = np.argsort(elementwise, axis=1)
+    max_indices = max_indices[:, -topk_channel:]
+    max_indices = max_indices.flatten()  # [bs*n_view*topk_channel, ]
+    # max_indices = np.argmax(elementwise, axis=1)
+
     occ_count = Counter(max_indices)
-    essential_indices = occ_count.most_common(channel_num)
+
+    # HACK code, not optimal
+    if topk_channel > 1:
+        essential_indices = occ_count.most_common(topk_channel)
+    else:
+        essential_indices = occ_count.most_common(channel_num)
+
     print(
         f"essential_indices: {essential_indices}; #samples: {bs*n_views}"
     )  # print (idx, count) tuples
@@ -117,7 +128,7 @@ def train_linear_classifier(
             if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
-                    views, backbone, args.channel_num
+                    views, backbone, args.channel_num, args.topk_channel
                 )
 
                 if args.replacement_value == "zero":
@@ -182,7 +193,7 @@ def eval_linear_classifier(
             if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
-                    views, backbone, args.channel_num
+                    views, backbone, args.channel_num, args.topk_channel
                 )
                 if args.replacement_value == "zero":
                     output[:, essential_indices] = 0.0
@@ -702,7 +713,9 @@ class CLTrainer:
             feature = net(data)
 
             if use_SS_detector:
-                essential_indices = find_trigger_channels(views, net, args.channel_num)
+                essential_indices = find_trigger_channels(
+                    views, net, args.channel_num, args.topk_channel
+                )
 
                 if args.replacement_value == "zero":
                     feature[:, essential_indices] = 0.0
@@ -751,7 +764,9 @@ class CLTrainer:
             feature = net(data)
 
             if use_SS_detector:
-                essential_indices = find_trigger_channels(views, net, args.channel_num)
+                essential_indices = find_trigger_channels(
+                    views, net, args.channel_num, args.topk_channel
+                )
 
                 if args.replacement_value == "zero":
                     feature[:, essential_indices] = 0.0

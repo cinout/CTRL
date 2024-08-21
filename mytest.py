@@ -6,15 +6,12 @@ import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 
 
-def add_value(item):
-    item["new_value"] = 3
-    return item
+topk_channel = 2
+hey = np.random.randint(0, 20, size=(3, 8))
+print(hey)
+rest = np.argsort(hey, axis=1)
+print(rest)
+rest = rest[:, -topk_channel:]
+print(rest)
 
-
-our_obj = dict()
-our_obj["first"] = 1
-
-print(our_obj)
-
-our_obj = add_value(our_obj)
-print(our_obj)
+print(rest.flatten())

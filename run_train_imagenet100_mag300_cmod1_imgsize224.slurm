@@ -4,23 +4,23 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mocov2"
+#SBATCH --job-name="size224"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=1-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=80G
+#SBATCH --mem=800G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -48,14 +48,17 @@ python -u main_train.py \
     --linear_probe_batch_size 128 \
     \
     --epochs 800 \
-    --magnitude_train 200.0 \
-    --magnitude_val 200.0 \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
     --dataset imagenet100 \
     --target_class 26 \
+    --image_size 224 \
     \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "size=224, second run, given more slurm time" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

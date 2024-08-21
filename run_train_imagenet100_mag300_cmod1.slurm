@@ -52,10 +52,13 @@ python -u main_train.py \
     --magnitude_val 300.0 \
     --dataset imagenet100 \
     --target_class 26 \
+    --image_size 64 \
     \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "can i reproduce baseline?"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

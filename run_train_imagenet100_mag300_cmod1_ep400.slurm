@@ -4,14 +4,14 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mocov2"
+#SBATCH --job-name="ep400"
 #SBATCH --account=punim1623
 #SBATCH --time=0-12:00:00
 
@@ -47,7 +47,7 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 800 \
+    --epochs 400 \
     --magnitude_train 300.0 \
     --magnitude_val 300.0 \
     --dataset imagenet100 \
@@ -56,7 +56,7 @@ python -u main_train.py \
     \
     --use_linear_probing \
     --detect_trigger_channels \
-    --channel_num 2 \
+    --channel_num 1 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

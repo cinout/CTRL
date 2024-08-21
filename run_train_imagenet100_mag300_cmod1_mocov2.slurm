@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="mocov2"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=1-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method mocov2 \
     --mode frequency \
     --channel 1 2 \
     --window_size 32 \
@@ -48,14 +48,17 @@ python -u main_train.py \
     --linear_probe_batch_size 128 \
     \
     --epochs 800 \
-    --magnitude_train 200.0 \
-    --magnitude_val 200.0 \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
     --dataset imagenet100 \
     --target_class 26 \
+    --image_size 64 \
     \
     --use_linear_probing \
     --detect_trigger_channels \
-    --channel_num 2 \
+    --channel_num 1 \
+    \
+    --note "try mocov2" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

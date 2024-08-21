@@ -7,7 +7,9 @@ import numpy as np
 from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
+import copy
 
+# from torch.utils.data.distributed import DistributedSampler
 from collections import Counter
 from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
@@ -15,6 +17,8 @@ from utils.util import AverageMeter, save_model
 from utils.knn import knn_monitor
 from tqdm import tqdm
 import torch.nn.functional as F
+
+# import torch.distributed as dist
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -246,157 +250,45 @@ class CLTrainer:
 
         self.args.warmup_epoch = 10
 
-    # for clean mode, so this func is not used in our experiments
-    def train(
-        self,
-        model,
-        optimizer,
-        train_loader,
-        test_loader,
-        memory_loader,
-        train_sampler,
-        train_transform,
-    ):
-        cosine_scheduler = optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, self.args.epochs
-        )
-        warmup_scheduler = GradualWarmupScheduler(
-            optimizer,
-            multiplier=1,
-            total_epoch=self.args.warmup_epoch,
-            after_scheduler=cosine_scheduler,
-        )
-
-        knn_acc = 0.0
-        for epoch in range(self.args.start_epoch, self.args.epochs):
-            model.train()
-
-            losses = AverageMeter()
-            cl_losses = AverageMeter()
-
-            if self.args.distributed:
-                train_sampler.set_epoch(epoch)
-
-            optimizer.zero_grad()
-            optimizer.step()
-            warmup_scheduler.step(epoch)
-            train_transform = train_transform.to(device)
-
-            # 1 epoch training
-            start = time.time()
-
-            for i, (images, _, _) in enumerate(train_loader):
-
-                images = images.to(device)
-
-                v1 = train_transform(images)
-                v2 = train_transform(images)
-
-                # compute representations
-                if self.args.method == "simclr":
-                    features = model(v1, v2)
-                    loss, _, _ = model.criterion(features)
-
-                elif self.args.method == "simsiam":
-                    features = model(v1, v2)
-                    loss = model.criterion(*features)
-
-                elif self.args.method == "byol":
-                    features = model(v1, v2)
-                    loss = model.criterion(*features)
-
-                elif self.args.method == "moco":
-                    pass
-                # loss = model(v1, v2)
-
-                # loss = model.loss(reps)
-
-                losses.update(loss.item(), images[0].size(0))
-                cl_losses.update(loss.item(), images[0].size(0))
-
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
-
-                loss.backward()
-
-                optimizer.step()
-
-            # KNN-eval
-            if epoch % self.args.knn_eval_freq == 0 or epoch == self.args.epochs:
-                knn_acc = knn_monitor(
-                    model.backbone,
-                    memory_loader,
-                    test_loader,
-                    epoch,
-                    classes=self.args.num_classes,
-                    subset=False,
-                )
-
-            print(
-                "[{}-epoch] time:{:.3f} | knn acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
-                    epoch + 1, time.time() - start, knn_acc, losses.avg, cl_losses.avg
-                )
-            )
-
-            # # Save
-            # if not self.args.distributed or (
-            #     self.args.distributed and self.args.rank % self.args.ngpus_per_node == 0
-            # ):
-            #     # save model
-            #     if (epoch + 1) % self.args.save_freq == 0:
-            #         save_model(
-            #             {
-            #                 "epoch": epoch + 1,
-            #                 "state_dict": model.state_dict(),
-            #                 "optimizer": optimizer.state_dict(),
-            #             },
-            #             filename=os.path.join(
-            #                 self.args.saved_path, "epoch_%s.pth.tar" % (epoch + 1)
-            #             ),
-            #         )
-
-            #         print("{}-th epoch saved".format(epoch + 1))
-            #     # save log
-            #     self.tb_logger.add_scalar("train/total_loss", losses.avg, epoch)
-            #     self.tb_logger.add_scalar("train/cl_loss", cl_losses.avg, epoch)
-            #     self.tb_logger.add_scalar("train/knn_acc", knn_acc, epoch)
-
-            #     self.tb_logger.add_scalar(
-            #         "lr/cnn", optimizer.param_groups[0]["lr"], epoch
-            #     )
-
-        # Save final model
-        if not self.args.distributed or (
-            self.args.distributed and self.args.rank % self.args.ngpus_per_node == 0
-        ):
-            save_model(
-                {
-                    "epoch": epoch + 1,
-                    "state_dict": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                },
-                filename=os.path.join(self.args.saved_path, "last.pth.tar"),
-            )
-
-            print("{}-th epoch saved".format(epoch + 1))
-
     def linear_probing(self, model, poison, use_ss_detector=False):
         linear_probing_epochs = 40
         if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
             _, feat_dim = model_dict_cifar[self.args.arch]
         else:
             _, feat_dim = model_dict[self.args.arch]
-        backbone = model.backbone
-        # train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
-        # train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
-        linear = nn.Sequential(
-            Normalize(),  # L2 norm
-            # FullBatchNorm(
-            #     train_var, train_mean
-            # ),  # the train_var/mean are from L2-normed features
-            nn.Linear(feat_dim, self.args.num_classes),
-        )
+        if self.args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+
+            # backbone = (
+            #     model.module.encoder_q if self.args.distributed else model.encoder_q
+            # )
+
+            backbone.fc = nn.Sequential()
+            # for p in backbone.parameters():
+            #     p.requires_grad = False
+        else:
+            backbone = model.backbone
+
+        if self.args.use_ref_norm:
+            train_probe_feats = get_feats(
+                poison.train_probe_loader, backbone, self.args
+            )
+            train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                FullBatchNorm(
+                    train_var, train_mean
+                ),  # the train_var/mean are from L2-normed features
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        else:
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+
         linear = linear.to(device)
         optimizer = torch.optim.SGD(
             linear.parameters(),
@@ -469,6 +361,10 @@ class CLTrainer:
         back_acc = 0.0
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
+            # if isinstance(train_loader.sampler, DistributedSampler):
+            #     # calling the set_epoch() method at the beginning of each epoch before creating the DataLoader iterator is necessary to make shuffling work properly across multiple epochs. Otherwise, the same ordering will be always used.
+            #     train_loader.sampler.set_epoch(epoch)
+
             losses = AverageMeter()
             cl_losses = AverageMeter()
 
@@ -493,6 +389,15 @@ class CLTrainer:
                     features = model(v1, v2)
                     loss, _, _ = model.criterion(features)
 
+                    # print(f">>> loss of simclr is: {loss.item()}")
+
+                elif self.args.method == "mocov2":
+                    moco_losses = model(im_q=v1, im_k=v2)
+                    loss = moco_losses.combine(
+                        contr_w=1,
+                        align_w=0,
+                        unif_w=0,
+                    )
                 elif self.args.method == "simsiam":
                     features = model(v1, v2)
                     loss = model.criterion(*features)
@@ -505,9 +410,6 @@ class CLTrainer:
 
                     loss = model(v1, v2)
 
-                # loss = model(v1, v2)
-
-                # loss = model.loss(reps)
                 losses.update(loss.item(), images[0].size(0))
                 cl_losses.update(loss.item(), images[0].size(0))
 
@@ -522,8 +424,27 @@ class CLTrainer:
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
+
+                if self.args.method == "mocov2":
+                    backbone = copy.deepcopy(model.encoder_q)
+                    # backbone = (
+                    #     model.module.encoder_q
+                    #     if self.args.distributed
+                    #     else model.encoder_q
+                    # )
+                    backbone.fc = nn.Sequential()
+                    # for p in backbone.parameters():
+                    #     p.requires_grad = False
+                else:
+                    backbone = model.backbone
+                    # backbone = (
+                    #     model.module.backbone
+                    #     if self.args.distributed
+                    #     else model.backbone
+                    # )
+
                 clean_acc, back_acc = self.knn_monitor_fre(
-                    model.module.backbone if self.args.distributed else model.backbone,
+                    backbone,
                     poison.memory_loader,  # memory loader is ONLY used here
                     test_loader,
                     epoch,
@@ -545,12 +466,26 @@ class CLTrainer:
                 if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
                     # if last epoch, also evaluate with SS detctor
 
+                    if self.args.method == "mocov2":
+                        backbone = copy.deepcopy(model.encoder_q)
+                        # backbone = (
+                        #     model.module.encoder_q
+                        #     if self.args.distributed
+                        #     else model.encoder_q
+                        # )
+                        backbone.fc = nn.Sequential()
+                        # for p in backbone.parameters():
+                        #     p.requires_grad = False
+                    else:
+                        backbone = model.backbone
+                        # backbone = (
+                        #     model.module.backbone
+                        #     if self.args.distributed
+                        #     else model.backbone
+                        # )
+
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                        (
-                            model.module.backbone
-                            if self.args.distributed
-                            else model.backbone
-                        ),
+                        backbone,
                         poison.memory_loader,  # memory loader is ONLY used here
                         test_loader,
                         epoch,
@@ -572,20 +507,19 @@ class CLTrainer:
                     )
 
         # Save final model
-        if not self.args.distributed or (
-            self.args.distributed
-            and self.args.local_rank % self.args.ngpus_per_node == 0
-        ):
-            save_model(
-                {
-                    "epoch": epoch + 1,
-                    "state_dict": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                },
-                filename=os.path.join(self.args.saved_path, "last.pth.tar"),
-            )
+        # if not self.args.distributed or (
+        #     self.args.distributed and dist.get_rank() == 0
+        # ):
+        save_model(
+            {
+                "epoch": epoch + 1,
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+            },
+            filename=os.path.join(self.args.saved_path, "last.pth.tar"),
+        )
 
-            print("last epoch saved")
+        print("last epoch saved")
 
         return model
 

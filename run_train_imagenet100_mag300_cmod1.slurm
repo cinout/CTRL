@@ -57,6 +57,8 @@ python -u main_train.py \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "can i reproduce baseline?"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -56,6 +56,8 @@ python -u main_train.py \
     --use_linear_probing \
     --detect_trigger_channels \
     --channel_num 1 \
+    \
+    --note "try again!!! still get the same results/??"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

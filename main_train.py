@@ -21,6 +21,7 @@ from loaders.diffaugment import set_aug_diff, PoisonAgent
 parser = argparse.ArgumentParser(description="CTRL Training")
 
 
+parser.add_argument("--note", type=str, default="")
 ### dataloader
 parser.add_argument("--data_path", default="./datasets/")
 parser.add_argument(

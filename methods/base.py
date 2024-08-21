@@ -90,7 +90,13 @@ def get_feats(loader, model, args):
 
 
 def train_linear_classifier(
-    train_loader, backbone, linear, optimizer, args, use_ss_detector
+    train_loader,
+    backbone,
+    linear,
+    optimizer,
+    args,
+    use_ss_detector,
+    train_probe_feats_mean,
 ):
     backbone.eval()
     linear.train()
@@ -113,8 +119,12 @@ def train_linear_classifier(
                 essential_indices = find_trigger_channels(
                     views, backbone, args.channel_num
                 )
-                # set vallues to 0 at these indices
-                output[:, essential_indices] = 0.0
+
+                if args.replacement_value == "zero":
+                    output[:, essential_indices] = 0.0
+                elif args.replacement_value == "ref_mean":
+                    for idx in essential_indices.detach().cpu().numpy():
+                        output[:, idx] = train_probe_feats_mean[idx]
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -126,7 +136,13 @@ def train_linear_classifier(
 
 
 def eval_linear_classifier(
-    val_loader, backbone, linear, args, val_mode, use_ss_detector
+    val_loader,
+    backbone,
+    linear,
+    args,
+    val_mode,
+    use_ss_detector,
+    train_probe_feats_mean,
 ):
     with torch.no_grad():
         acc1_accumulator = 0.0
@@ -168,8 +184,11 @@ def eval_linear_classifier(
                 essential_indices = find_trigger_channels(
                     views, backbone, args.channel_num
                 )
-                # set vallues to 0 at these indices
-                output[:, essential_indices] = 0.0
+                if args.replacement_value == "zero":
+                    output[:, essential_indices] = 0.0
+                elif args.replacement_value == "ref_mean":
+                    for idx in essential_indices.detach().cpu().numpy():
+                        output[:, idx] = train_probe_feats_mean[idx]
 
             output = linear(output)
             _, pred = output.topk(
@@ -396,10 +415,16 @@ class CLTrainer:
 
         backbone = model.backbone
 
-        if self.args.use_ref_norm:
+        train_probe_feats_mean = None
+        if self.args.use_ref_norm or self.args.replacement_value == "ref_mean":
             train_probe_feats = get_feats(
                 poison.train_probe_loader, backbone, self.args
-            )
+            )  # shape: ? [N, D]
+            train_probe_feats_mean = torch.mean(
+                train_probe_feats, dim=0
+            )  # shape: [D, ], used if replacement_value == "ref_mean"
+
+        if self.args.use_ref_norm:
             train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
             linear = nn.Sequential(
@@ -435,6 +460,7 @@ class CLTrainer:
                 optimizer,
                 self.args,
                 use_ss_detector=use_ss_detector,
+                train_probe_feats_mean=train_probe_feats_mean,
             )
             # modify lr
             lr_scheduler.step()
@@ -452,6 +478,7 @@ class CLTrainer:
             self.args,
             val_mode="clean",
             use_ss_detector=use_ss_detector,
+            train_probe_feats_mean=train_probe_feats_mean,
         )
         print(f"evaluating on POISONED val")
         poison_acc1 = eval_linear_classifier(
@@ -461,6 +488,7 @@ class CLTrainer:
             self.args,
             val_mode="poison",
             use_ss_detector=use_ss_detector,
+            train_probe_feats_mean=train_probe_feats_mean,
         )
         print(
             f"with use_ss_detector set to: {use_ss_detector}, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
@@ -649,6 +677,9 @@ class CLTrainer:
         # feature_bank: [dim, total num]
         feature_bank = torch.cat(feature_bank, dim=0).t().contiguous()
 
+        if args.detect_trigger_channels and args.replacement_value == "ref_mean":
+            feature_bank_mean = torch.mean(feature_bank, dim=1)  # shape: [D, ]
+
         # feature_labels: [total num]
         feature_labels = (
             memory_data_loader.dataset[:][1].clone().detach().to(feature_bank.device)
@@ -672,7 +703,12 @@ class CLTrainer:
 
             if use_SS_detector:
                 essential_indices = find_trigger_channels(views, net, args.channel_num)
-                feature[:, essential_indices] = 0.0
+
+                if args.replacement_value == "zero":
+                    feature[:, essential_indices] = 0.0
+                elif args.replacement_value == "ref_mean":
+                    for idx in essential_indices.detach().cpu().numpy():
+                        feature[:, idx] = feature_bank_mean[idx]
 
             feature = F.normalize(feature, dim=1)
             # feature: [bsz, dim]
@@ -716,7 +752,12 @@ class CLTrainer:
 
             if use_SS_detector:
                 essential_indices = find_trigger_channels(views, net, args.channel_num)
-                feature[:, essential_indices] = 0.0
+
+                if args.replacement_value == "zero":
+                    feature[:, essential_indices] = 0.0
+                elif args.replacement_value == "ref_mean":
+                    for idx in essential_indices.detach().cpu().numpy():
+                        feature[:, idx] = feature_bank_mean[idx]
 
             feature = F.normalize(feature, dim=1)
             # feature: [bsz, dim]

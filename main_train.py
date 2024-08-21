@@ -131,7 +131,11 @@ parser.add_argument(
 parser.add_argument(
     "--detect_trigger_channels",
     action="store_true",
-    help="use spectral signature to detect channels",
+    help="use spectral signature to detect channels, this requires N augmented views to be generated",
+)
+# TODO: add to slurm
+parser.add_argument(
+    "--replacement_value", type=str, choices=["zero", "ref_mean"], default="zero"
 )
 parser.add_argument(
     "--channel_num", default=1, type=int, help="number of channels to set to 0"

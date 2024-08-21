@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 import torch.nn as nn
@@ -386,17 +387,34 @@ class CLTrainer:
             _, feat_dim = model_dict_cifar[self.args.arch]
         else:
             _, feat_dim = model_dict[self.args.arch]
-        backbone = model.backbone
-        # train_probe_feats = get_feats(poison.train_probe_loader, backbone, self.args)
-        # train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
-        linear = nn.Sequential(
-            Normalize(),  # L2 norm
-            # FullBatchNorm(
-            #     train_var, train_mean
-            # ),  # the train_var/mean are from L2-normed features
-            nn.Linear(feat_dim, self.args.num_classes),
-        )
+        if self.args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = model.backbone
+
+        backbone = model.backbone
+
+        if self.args.use_ref_norm:
+            train_probe_feats = get_feats(
+                poison.train_probe_loader, backbone, self.args
+            )
+            train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                FullBatchNorm(
+                    train_var, train_mean
+                ),  # the train_var/mean are from L2-normed features
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        else:
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+
         linear = linear.to(device)
         optimizer = torch.optim.SGD(
             linear.parameters(),
@@ -493,6 +511,14 @@ class CLTrainer:
                     features = model(v1, v2)
                     loss, _, _ = model.criterion(features)
 
+                elif self.args.method == "mocov2":
+                    moco_losses = model(im_q=v1, im_k=v2)
+                    loss = moco_losses.combine(
+                        contr_w=1,
+                        align_w=0,
+                        unif_w=0,
+                    )
+
                 elif self.args.method == "simsiam":
                     features = model(v1, v2)
                     loss = model.criterion(*features)
@@ -501,13 +527,6 @@ class CLTrainer:
                     features = model(v1, v2)
                     loss = model.criterion(*features)
 
-                elif self.args.method == "moco":
-
-                    loss = model(v1, v2)
-
-                # loss = model(v1, v2)
-
-                # loss = model.loss(reps)
                 losses.update(loss.item(), images[0].size(0))
                 cl_losses.update(loss.item(), images[0].size(0))
 
@@ -522,8 +541,13 @@ class CLTrainer:
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
             if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
+                if self.args.method == "mocov2":
+                    backbone = copy.deepcopy(model.encoder_q)
+                    backbone.fc = nn.Sequential()
+                else:
+                    backbone = model.backbone
                 clean_acc, back_acc = self.knn_monitor_fre(
-                    model.module.backbone if self.args.distributed else model.backbone,
+                    backbone,
                     poison.memory_loader,  # memory loader is ONLY used here
                     test_loader,
                     epoch,
@@ -544,13 +568,14 @@ class CLTrainer:
                 )
                 if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
                     # if last epoch, also evaluate with SS detctor
+                    if self.args.method == "mocov2":
+                        backbone = copy.deepcopy(model.encoder_q)
+                        backbone.fc = nn.Sequential()
+                    else:
+                        backbone = model.backbone
 
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                        (
-                            model.module.backbone
-                            if self.args.distributed
-                            else model.backbone
-                        ),
+                        backbone,
                         poison.memory_loader,  # memory loader is ONLY used here
                         test_loader,
                         epoch,

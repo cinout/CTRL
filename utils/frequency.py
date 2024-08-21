@@ -9,6 +9,7 @@ from PIL import Image, ImageFilter
 import torchvision.transforms as transforms
 from pytorch_wavelets import DWTForward, DWTInverse
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 try:
     # PyTorch 1.7.0 and newer versions
@@ -251,7 +252,6 @@ class PoisonFre:
     def __init__(
         self,
         args,
-        image_size,  # 64 for imagenet100
         channel_list,  # 1 2
         window_size,  # 32
         pos_list,  # 15 31
@@ -260,7 +260,6 @@ class PoisonFre:
     ):
 
         self.args = args
-        self.image_size = image_size
         self.channel_list = channel_list
         self.window_size = window_size
         self.pos_list = [
@@ -508,37 +507,3 @@ class linearRegression(torch.nn.Module):
     def forward(self, x):
         out = self.linear(x)
         return out
-
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-if __name__ == "__main__":
-    # test_lineardct_3d_cv2()
-
-    param = {
-        "dataset": "CIFAR10",  # CIFAR10
-        "target_label": 0,  # target label
-        "poisoning_rate": 0.04,  # ratio of poisoned samples
-        "label_dim": 10,
-        "channel_list": [1, 2],  # [0,1,2] means YUV channels, [1,2] means UV channels
-        "magnitude": 200,
-        "YUV": True,
-        "window_size": 32,
-        "pos_list": [(31, 31), (15, 15)],
-        # "pos_list": [(31, 31), (15, 15), (15, 16), (15, 17),  (16, 15), (16, 16), (16, 17), (17, 15), (17, 16), (17, 17)]
-    }
-
-    poisonagent = PoisonFre(32, [1, 2], 32, False, True)
-    loss = torch.nn.MSELoss()
-
-    x_np = np.random.random(size=(100, 32, 32, 3)).astype(np.float32)
-    x_tensor = torch.tensor(x_np).permute(0, 3, 1, 2).to(device) - 0.1
-
-    magnitude = torch.rand(size=(1, 3, 32, 32)).to(device) * 1000
-    mask = torch.rand(size=(32, 32))
-    # mask = torch
-
-    x_tensor.requires_grad_(True)
-    magnitude.requires_grad_(True)
-
-    x_input = x_tensor.clone().detach()

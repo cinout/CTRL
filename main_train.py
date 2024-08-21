@@ -22,12 +22,18 @@ parser = argparse.ArgumentParser(description="CTRL Training")
 
 
 parser.add_argument("--note", type=str, default="")
+parser.add_argument("--image_size", type=int, default=32)
+parser.add_argument(
+    "--use_ref_norm",
+    action="store_true",
+    help="normalize features by 1% trainset's mean and var",
+)
+
 ### dataloader
 parser.add_argument("--data_path", default="./datasets/")
 parser.add_argument(
     "--dataset", default="cifar10", choices=["cifar10", "cifar100", "imagenet100"]
 )
-parser.add_argument("--image_size", default=32, type=int)
 parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)
 parser.add_argument("--window_size", default=32, type=int)
@@ -60,7 +66,7 @@ parser.add_argument(
         "squeezenet",
     ],
 )
-parser.add_argument("--method", default="simclr", choices=["simclr", "byol"])
+parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mocov2"])
 parser.add_argument("--batch_size", default=512, type=int)
 parser.add_argument("--epochs", default=800, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
@@ -231,7 +237,6 @@ def main_worker(args):
     if args.poisoning:
         poison_frequency_agent = PoisonFre(
             args,
-            args.size,
             args.channel,
             args.window_size,
             args.trigger_position,

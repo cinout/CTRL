@@ -116,7 +116,7 @@ class PoisonAgent:
         if self.args.detect_trigger_channels:
             ss_views_aug = [
                 transforms.RandomResizedCrop(
-                    self.args.size,
+                    self.args.image_size,
                     scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
                     ratio=(0.2, 5),
                 ),
@@ -191,7 +191,7 @@ class PoisonAgent:
                     y_train_tensor = torch.load(f, map_location=device)
             else:
                 x_train_tensor, y_train_tensor = get_data_and_label(
-                    train_paths, self.args.size
+                    train_paths, self.args.image_size
                 )
                 x_train_tensor = torch.stack(x_train_tensor)
                 y_train_tensor = torch.stack(y_train_tensor)
@@ -208,7 +208,7 @@ class PoisonAgent:
                     y_test_tensor = torch.load(f, map_location=device)
             else:
                 x_test_tensor, y_test_tensor = get_data_and_label(
-                    val_paths, self.args.size
+                    val_paths, self.args.image_size
                 )
                 x_test_tensor = torch.stack(x_test_tensor)
                 y_test_tensor = torch.stack(y_test_tensor)
@@ -428,14 +428,12 @@ def set_aug_diff(args):
     if args.dataset == "cifar10":
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
-        args.size = 32
         args.num_classes = 10
         args.save_freq = 100
 
     elif args.dataset == "cifar100":
         mean = (0.5071, 0.4867, 0.4408)
         std = (0.2675, 0.2565, 0.2761)
-        args.size = 32
         args.num_classes = 100
         args.save_freq = 100
 
@@ -443,7 +441,6 @@ def set_aug_diff(args):
     elif args.dataset == "imagenet100":
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
-        args.size = 64
         args.save_freq = 100
         args.num_classes = 100
 
@@ -460,7 +457,9 @@ def set_aug_diff(args):
             # arrive here
             # this is applied during training, not during poison generation, so don't worry
             train_transform = nn.Sequential(
-                aug.RandomResizedCrop(size=(args.size, args.size), scale=(0.2, 1.0)),
+                aug.RandomResizedCrop(
+                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                ),
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
@@ -469,7 +468,9 @@ def set_aug_diff(args):
 
             # not used, don't worry about it
             ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(size=(args.size, args.size), scale=(0.2, 1.0)),
+                aug.RandomResizedCrop(
+                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                ),
                 aug.RandomHorizontalFlip(),
                 aug.RandomGrayscale(p=0.2),
                 normalize,
@@ -481,14 +482,18 @@ def set_aug_diff(args):
         else:
 
             train_transform = nn.Sequential(
-                aug.RandomResizedCrop(size=(args.size, args.size), scale=(0.2, 1.0)),
+                aug.RandomResizedCrop(
+                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                ),
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
             )
 
             ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(size=(args.size, args.size), scale=(0.2, 1.0)),
+                aug.RandomResizedCrop(
+                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                ),
                 aug.RandomHorizontalFlip(),
                 aug.RandomGrayscale(p=0.2),
             )

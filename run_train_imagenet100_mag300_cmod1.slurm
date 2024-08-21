@@ -57,6 +57,7 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 1 \
     \
+    --image_size 64 \
     --note "try again!!! still get the same results/??"
 
 ##Log this job's resource usage stats###

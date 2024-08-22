@@ -424,8 +424,6 @@ class CLTrainer:
         else:
             backbone = model.backbone
 
-        backbone = model.backbone
-
         train_probe_feats_mean = None
         if self.args.use_ref_norm or self.args.replacement_value == "ref_mean":
             train_probe_feats = get_feats(

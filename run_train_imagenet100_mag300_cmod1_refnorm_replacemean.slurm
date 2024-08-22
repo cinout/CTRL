@@ -58,9 +58,9 @@ python -u main_train.py \
     --channel_num 1 \
     \
     --image_size 64 \
-    --use_ref_norm \
     --replacement_value ref_mean \
-    --note "[use_ref_norm] and replace mean of ref set for trigger channels"
+    --note "[use_ref_norm=False] and replace mean of ref set for trigger channels"
+    # --use_ref_norm \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

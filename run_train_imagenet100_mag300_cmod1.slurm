@@ -58,7 +58,7 @@ python -u main_train.py \
     --channel_num 1 \
     \
     --image_size 64 \
-    --note "try again 3rd time!!! still get the same results/??"
+    --note "try again 4rd time!!! still get the same results/??"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

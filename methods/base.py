@@ -552,10 +552,10 @@ class CLTrainer:
                 )
                 unlearned_model.fc = nn.Sequential()
             else:
-                if "cifar" in self.dataset or "gtsrb" in self.dataset:
-                    model_fun, _ = model_dict_cifar[self.arch]
+                if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
+                    model_fun, _ = model_dict_cifar[self.args.arch]
                 else:
-                    model_fun, _ = model_dict[self.arch]
+                    model_fun, _ = model_dict[self.args.arch]
                 unlearned_model = model_fun(norm_layer=MaskBatchNorm2d)
 
             refill_unlearned_model(

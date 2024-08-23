@@ -132,14 +132,14 @@ def evaluate_by_threshold(
             val_mode="poison",
         )
         print(
-            "{:.2f} \t {} \t {} \t {} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
+            "{:.2f} \t {} \t {} \t {:.4f} \t {:.4f} \t {:.4f}".format(
                 start,
                 layer_name,
                 neuron_idx,
                 threshold,
-                po_loss,
+                # po_loss,
                 po_acc * 100,
-                cl_loss,
+                # cl_loss,
                 cl_acc * 100,
             )
         )
@@ -652,8 +652,11 @@ class CLTrainer:
                 val_mode="poison",
             )
             print(
-                "0 \t None     \t None     \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
-                    po_loss, po_acc * 100, cl_loss, cl_acc * 100
+                "0 \t None     \t None     \t {:.4f} \t {:.4f}".format(
+                    # po_loss,
+                    po_acc * 100,
+                    # cl_loss,
+                    cl_acc * 100,
                 )
             )  # this records the backdoored model's initial results
 
@@ -910,27 +913,32 @@ class CLTrainer:
                     else:
                         backbone = model.backbone
 
-                    clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                        backbone,
-                        poison.memory_loader,  # memory loader is ONLY used here
-                        test_loader,
-                        epoch,
-                        self.args,
-                        classes=self.args.num_classes,
-                        subset=False,
-                        backdoor_loader=test_back_loader,
-                        use_SS_detector=True,
-                    )
-                    print(
-                        "[{}-epoch] time:{:.3f} | clean acc with SS Detector: {:.3f} | back acc with SS Detector: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
-                            epoch + 1,
-                            time.time() - start,
-                            clean_acc_SSDETECTOR,
-                            back_acc_SSDETECTOR,
-                            losses.avg,
-                            cl_losses.avg,
+                    for k_channel in self.args.topk_channel:
+                        clean_acc_SSDETECTOR, back_acc_SSDETECTOR = (
+                            self.knn_monitor_fre(
+                                backbone,
+                                poison.memory_loader,  # memory loader is ONLY used here
+                                test_loader,
+                                epoch,
+                                self.args,
+                                classes=self.args.num_classes,
+                                subset=False,
+                                backdoor_loader=test_back_loader,
+                                use_SS_detector=True,
+                                topk_channel=k_channel,
+                            )
                         )
-                    )
+                        print(
+                            "In kNN classification, with top k channels set to {}, [{}-epoch] time:{:.3f} | clean acc with SS Detector: {:.3f} | back acc with SS Detector: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
+                                k_channel,
+                                epoch + 1,
+                                time.time() - start,
+                                clean_acc_SSDETECTOR,
+                                back_acc_SSDETECTOR,
+                                losses.avg,
+                                cl_losses.avg,
+                            )
+                        )
 
         # Save final model
         if not self.args.distributed or (
@@ -965,6 +973,7 @@ class CLTrainer:
         subset=False,
         backdoor_loader=None,
         use_SS_detector=False,
+        topk_channel=0,
     ):
 
         net.eval()
@@ -1014,7 +1023,7 @@ class CLTrainer:
                     views,
                     net,
                     args.channel_num,
-                    args.topk_channel,  # TODO: topk_channel
+                    topk_channel,  # TODO: topk_channel
                 )
 
                 if args.replacement_value == "zero":
@@ -1068,7 +1077,7 @@ class CLTrainer:
                     views,
                     net,
                     args.channel_num,
-                    args.topk_channel,  # TODO: topk_channel
+                    topk_channel,  # TODO: topk_channel
                 )
 
                 if args.replacement_value == "zero":

@@ -736,6 +736,8 @@ class CLTrainer:
                 f"with use_ss_detector set to: {use_ss_detector}, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
             )
 
+            return linear
+
     # entry point of this file, called in main_train.py
     def train_freq(self, model, optimizer, train_transform, poison):
 

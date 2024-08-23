@@ -47,7 +47,7 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 800 \
+    --epochs 4 \
     --magnitude_train 300.0 \
     --magnitude_val 300.0 \
     --dataset imagenet100 \
@@ -62,9 +62,9 @@ python -u main_train.py \
     --topk_channel 1 2 \
     \
     --note "mask prune imagenet100_mag300 [overall]" \
-    --pretrained_ssl_model "./Experiments/20240817_152348_57_81-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
     \
     --load_cached_tensors \
+    # --pretrained_ssl_model "./Experiments/20240817_152348_57_81-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
     
 
 ##Log this job's resource usage stats###

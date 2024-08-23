@@ -1023,7 +1023,7 @@ class CLTrainer:
                     views,
                     net,
                     args.channel_num,
-                    topk_channel,  # TODO: topk_channel
+                    topk_channel,
                 )
 
                 if args.replacement_value == "zero":
@@ -1077,7 +1077,7 @@ class CLTrainer:
                     views,
                     net,
                     args.channel_num,
-                    topk_channel,  # TODO: topk_channel
+                    topk_channel,
                 )
 
                 if args.replacement_value == "zero":

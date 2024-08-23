@@ -231,7 +231,9 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
         total_count += labels.shape[0]
 
         nn.utils.clip_grad_norm_(
-            list(model.parameters()) + list(linear.parameters()), max_norm=20, norm_type=2
+            list(model.parameters()) + list(linear.parameters()),
+            max_norm=20,
+            norm_type=2,
         )
         (-loss).backward()
         optimizer.step()

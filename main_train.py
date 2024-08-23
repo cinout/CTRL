@@ -228,6 +228,13 @@ parser.add_argument(
     default=0.05,
     help="the step size for evaluating the pruning",
 )
+parser.add_argument(
+    "--schedule",
+    type=int,
+    nargs="+",
+    default=[10, 20],
+    help="Decrease learning rate at these epochs.",
+)
 
 
 args = parser.parse_args()

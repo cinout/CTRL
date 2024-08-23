@@ -231,7 +231,7 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
         total_count += labels.shape[0]
 
         nn.utils.clip_grad_norm_(
-            list(model.parameters() + linear.parameters()), max_norm=20, norm_type=2
+            list(model.parameters()) + list(linear.parameters()), max_norm=20, norm_type=2
         )
         (-loss).backward()
         optimizer.step()
@@ -515,7 +515,7 @@ class CLTrainer:
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
             optimizer = torch.optim.SGD(
-                list(backbone.parameters() + linear.parameters()),
+                list(backbone.parameters()) + list(linear.parameters()),
                 lr=self.args.unlearning_lr,
                 momentum=0.9,
                 weight_decay=5e-4,

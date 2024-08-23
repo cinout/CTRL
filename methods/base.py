@@ -534,6 +534,8 @@ class CLTrainer:
         trained_linear=None,
     ):
         if use_mask_pruning:
+            # use mask pruning
+
             if self.args.method == "mocov2":
                 backbone = copy.deepcopy(model.encoder_q)
                 backbone.fc = nn.Sequential()
@@ -561,7 +563,7 @@ class CLTrainer:
                     linear=linear,
                     criterion=criterion,
                     optimizer=optimizer,
-                    data_loader=poison.memory_loader,
+                    data_loader=poison.train_probe_loader,
                 )
 
                 scheduler.step()
@@ -605,7 +607,7 @@ class CLTrainer:
                     unlearned_model=unlearned_model,
                     linear=linear,
                     criterion=criterion,
-                    data_loader=poison.memory_loader,
+                    data_loader=poison.train_probe_loader,
                     mask_opt=mask_optimizer,
                 )
 

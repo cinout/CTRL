@@ -147,12 +147,10 @@ parser.add_argument(
     help="determines what values to replace the old value at the trigger channels",
 )
 
-# TODO: update [with template below]
-# parser.add_argument("--channel", nargs="+", type=int)
 
 parser.add_argument(
     "--topk_channel",
-    default=1,
+    nargs="+",
     type=int,
     help="a new hp, determine k channels of EACH SAMPLE; if this is set to be larger than 1, then channel_num is set to topk_channel",
 )
@@ -368,7 +366,9 @@ def main_worker(args):
 
         if args.detect_trigger_channels:
             # comparison w. or w.o. SS Detector
-            trainer.linear_probing(model, poison, use_ss_detector=True)
+            trainer.linear_probing(
+                model, poison, use_ss_detector=True, trained_linear=trained_linear
+            )
 
         if args.use_mask_pruning:
             trainer.linear_probing(

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="cf10"
 #SBATCH --account=punim1623
-#SBATCH --time=0-05:00:00
+#SBATCH --time=0-08:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -58,7 +58,7 @@ python -u main_train.py \
     --use_mask_pruning \
     \
     --detect_trigger_channels \
-    --topk_channel 4 \
+    --topk_channel 1 2 3 4 6 8 \
     \
     --note "mask prune cifar10 [overall]" \
     --pretrained_ssl_model "./Experiments/20240817_131026_68_4-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \

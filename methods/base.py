@@ -349,8 +349,6 @@ def train_linear_classifier(
     linear,
     optimizer,
     args,
-    use_ss_detector,
-    train_probe_feats_mean,
 ):
     backbone.eval()
     linear.train()
@@ -368,14 +366,13 @@ def train_linear_classifier(
         with torch.no_grad():
             output = backbone(images)
 
-            # # TODO: [do we need this?]
             # if args.detect_trigger_channels and use_ss_detector:
             #     # FIND channels that are related to trigger (although in training, all images are clean)
             #     essential_indices = find_trigger_channels(
             #         views,
             #         backbone,
             #         args.channel_num,
-            #         args.topk_channel,  # TODO: topk_channel
+            #         args.topk_channel,  # topk_channel
             #     )
 
             #     if args.replacement_value == "zero":
@@ -401,6 +398,7 @@ def eval_linear_classifier(
     val_mode,
     use_ss_detector,
     train_probe_feats_mean,
+    topk_channel=0,
 ):
     with torch.no_grad():
         acc1_accumulator = 0.0
@@ -443,7 +441,7 @@ def eval_linear_classifier(
                     views,
                     backbone,
                     args.channel_num,
-                    args.topk_channel,  # TODO: topk_channel
+                    topk_channel,
                 )
                 if args.replacement_value == "zero":
                     output[:, essential_indices] = 0.0
@@ -673,18 +671,17 @@ class CLTrainer:
                 raise Exception("Not implemented yet")
 
         else:
-
-            linear_probing_epochs = 40
-            if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
-                _, feat_dim = model_dict_cifar[self.args.arch]
-            else:
-                _, feat_dim = model_dict[self.args.arch]
-
+            # NOT USING MASK PRUNING
             if self.args.method == "mocov2":
                 backbone = copy.deepcopy(model.encoder_q)
                 backbone.fc = nn.Sequential()
             else:
                 backbone = model.backbone
+
+            if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
+                _, feat_dim = model_dict_cifar[self.args.arch]
+            else:
+                _, feat_dim = model_dict[self.args.arch]
 
             train_probe_feats_mean = None
             if self.args.use_ref_norm or self.args.replacement_value == "ref_mean":
@@ -695,79 +692,109 @@ class CLTrainer:
                     train_probe_feats, dim=0
                 )  # shape: [D, ], used if replacement_value == "ref_mean"
 
-            if self.args.use_ref_norm:
-                train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
-
-                linear = nn.Sequential(
-                    Normalize(),  # L2 norm
-                    FullBatchNorm(
-                        train_var, train_mean
-                    ),  # the train_var/mean are from L2-normed features
-                    nn.Linear(feat_dim, self.args.num_classes),
-                )
+            if use_ss_detector:
+                # it means a linear classifier is already trained in the last step
+                linear = copy.deepcopy(trained_linear)
             else:
-                linear = nn.Sequential(
-                    Normalize(),  # L2 norm
-                    nn.Linear(feat_dim, self.args.num_classes),
+                # just train it
+
+                if self.args.use_ref_norm:
+                    train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+                    linear = nn.Sequential(
+                        Normalize(),  # L2 norm
+                        FullBatchNorm(
+                            train_var, train_mean
+                        ),  # the train_var/mean are from L2-normed features
+                        nn.Linear(feat_dim, self.args.num_classes),
+                    )
+                else:
+                    linear = nn.Sequential(
+                        Normalize(),  # L2 norm
+                        nn.Linear(feat_dim, self.args.num_classes),
+                    )
+
+                linear = linear.to(device)
+                optimizer = torch.optim.SGD(
+                    linear.parameters(),
+                    lr=0.06,
+                    momentum=0.9,
+                    weight_decay=1e-4,
+                )
+                sched = [15, 30, 40]
+                lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                    optimizer, milestones=sched
                 )
 
-            linear = linear.to(device)
-            optimizer = torch.optim.SGD(
-                linear.parameters(),
-                lr=0.06,
-                momentum=0.9,
-                weight_decay=1e-4,
-            )
-            sched = [15, 30, 40]
-            lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                optimizer, milestones=sched
-            )
-
-            # TODO: update here
-
-            # train linear classifier
-            for epoch in range(linear_probing_epochs):
-                print(f"training linear classifier, epoch: {epoch}")
-                train_linear_classifier(
-                    poison.train_probe_loader,
-                    backbone,
-                    linear,
-                    optimizer,
-                    self.args,
-                    use_ss_detector=use_ss_detector,
-                    train_probe_feats_mean=train_probe_feats_mean,
-                )
-                # modify lr
-                lr_scheduler.step()
+                # train linear classifier
+                linear_probing_epochs = 40
+                for epoch in range(linear_probing_epochs):
+                    print(f"training linear classifier, epoch: {epoch}")
+                    train_linear_classifier(
+                        poison.train_probe_loader,
+                        backbone,
+                        linear,
+                        optimizer,
+                        self.args,
+                    )
+                    # modify lr
+                    lr_scheduler.step()
 
             # eval linear classifier
             backbone.eval()
             linear.eval()
 
-            print(f"evaluating linear classifier")
-            print(f"evaluating on CLEAN val")
-            clean_acc1 = eval_linear_classifier(
-                poison.test_loader,
-                backbone,
-                linear,
-                self.args,
-                val_mode="clean",
-                use_ss_detector=use_ss_detector,
-                train_probe_feats_mean=train_probe_feats_mean,
-            )
-            print(f"evaluating on POISONED val")
-            poison_acc1 = eval_linear_classifier(
-                poison.test_pos_loader,
-                backbone,
-                linear,
-                self.args,
-                val_mode="poison",
-                use_ss_detector=use_ss_detector,
-                train_probe_feats_mean=train_probe_feats_mean,
-            )
-            print(
-                f"with use_ss_detector set to: {use_ss_detector}, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
-            )
+            if use_ss_detector:
+                for k_channel in self.args.topk_channel:
+                    print(f"evaluating on CLEAN val")
+                    clean_acc1 = eval_linear_classifier(
+                        poison.test_loader,
+                        backbone,
+                        linear,
+                        self.args,
+                        val_mode="clean",
+                        use_ss_detector=use_ss_detector,
+                        train_probe_feats_mean=train_probe_feats_mean,
+                        topk_channel=k_channel,
+                    )
+                    print(f"evaluating on POISONED val")
+                    poison_acc1 = eval_linear_classifier(
+                        poison.test_pos_loader,
+                        backbone,
+                        linear,
+                        self.args,
+                        val_mode="poison",
+                        use_ss_detector=use_ss_detector,
+                        train_probe_feats_mean=train_probe_feats_mean,
+                        topk_channel=k_channel,
+                    )
+                    print(
+                        f"by replacing {k_channel} channels, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
+                    )
+            else:
+                print(f"evaluating on CLEAN val")
+                clean_acc1 = eval_linear_classifier(
+                    poison.test_loader,
+                    backbone,
+                    linear,
+                    self.args,
+                    val_mode="clean",
+                    use_ss_detector=use_ss_detector,
+                    train_probe_feats_mean=train_probe_feats_mean,
+                )
+                print(f"evaluating on POISONED val")
+                poison_acc1 = eval_linear_classifier(
+                    poison.test_pos_loader,
+                    backbone,
+                    linear,
+                    self.args,
+                    val_mode="poison",
+                    use_ss_detector=use_ss_detector,
+                    train_probe_feats_mean=train_probe_feats_mean,
+                )
+                print(
+                    f"with the DEFAULT linear classifier, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
+                )
 
             return linear  # the returned linear is only used if use_ss_detector=False
 

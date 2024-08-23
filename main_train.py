@@ -21,6 +21,12 @@ from loaders.diffaugment import set_aug_diff, PoisonAgent
 parser = argparse.ArgumentParser(description="CTRL Training")
 
 
+parser.add_argument(
+    "--pretrained_ssl_model",
+    type=str,
+    default="",
+    help="path for pretrained ssl model (stage 1)",
+)
 parser.add_argument("--note", type=str, default="")
 parser.add_argument("--image_size", type=int, default=32)
 parser.add_argument(
@@ -140,7 +146,6 @@ parser.add_argument(
     default="zero",
     help="determines what values to replace the old value at the trigger channels",
 )
-# TODO: update
 parser.add_argument(
     "--topk_channel",
     default=1,
@@ -168,6 +173,60 @@ parser.add_argument(
     "--rrc_scale_max",
     type=float,
     default=0.95,
+)
+
+# for mask pruning
+parser.add_argument(
+    "--use_mask_pruning",
+    action="store_true",
+    help="apply mask pruning (RNP paper)",
+)
+parser.add_argument("--alpha", type=float, default=0.2)
+parser.add_argument(
+    "--clean_threshold",
+    type=float,
+    default=0.20,
+    help="threshold of unlearning accuracy",
+)
+parser.add_argument(
+    "--unlearning_lr",
+    type=float,
+    default=0.01,
+    help="the learning rate for neuron unlearning",
+)
+parser.add_argument(
+    "--recovering_lr",
+    type=float,
+    default=0.2,
+    help="the learning rate for mask optimization",
+)
+
+parser.add_argument(
+    "--unlearning_epochs",
+    type=int,
+    default=20,
+    help="the number of epochs for unlearning",
+)
+parser.add_argument(
+    "--recovering_epochs",
+    type=int,
+    default=20,
+    help="the number of epochs for recovering",
+)
+parser.add_argument(
+    "--pruning-by", type=str, default="threshold", choices=["number", "threshold"]
+)
+parser.add_argument(
+    "--pruning-max",
+    type=float,
+    default=0.90,
+    help="the maximum number/threshold for pruning",
+)
+parser.add_argument(
+    "--pruning-step",
+    type=float,
+    default=0.05,
+    help="the step size for evaluating the pruning",
 )
 
 
@@ -229,11 +288,16 @@ def main_worker(args):
     print("=> creating cnn model '{}'".format(args.arch))
     # this is where model like simclr, byol is determined
     model = set_model(args)
+    if args.pretrained_ssl_model != "":
+        pretrained_state_dict = torch.load(
+            args.pretrained_ssl_model, map_location=device
+        )
+        model.load_state_dict(pretrained_state_dict["state_dict"], strict=True)
+
+    model = model.to(device)
 
     # constrcut trainer
     trainer = CLTrainer(args)
-
-    model = model.to(device)
 
     # create data loader
     (
@@ -270,46 +334,34 @@ def main_worker(args):
             args.magnitude_val,
         )
 
-    # create optimizer
-    optimizer = optim.SGD(
-        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-    )
-
     all_args = "\n".join(
         "%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())
     )
     print(all_args)
 
-    # Train
-    if args.mode == "normal":
-        # train a clean model (without trigger)
-        trainer.train(
-            model,
-            optimizer,
-            train_loader,
-            test_loader,
-            memory_loader,
-            train_sampler,
-            train_transform,
+    ###### train a triggered model
+    # model: simclr or byol
+    # train_transform: augmentation for simclr/byol on the fly
+    # poison: poisoned dataset, get train/test/memory via poison.xxx
+
+    if args.pretrained_ssl_model == "":
+        # create optimizer
+        optimizer = optim.SGD(
+            model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
         )
-    elif args.mode == "frequency":
-        # train a triggered model
+        trainer.train_freq(model, optimizer, train_transform, poison)
 
-        # model: simclr or byol
-        # train_transform: augmentation for simclr/byol on the fly
-        # poison: poisoned dataset, get train/test/memory via poison.xxx
+    if args.use_linear_probing:
+        trained_linear = trainer.linear_probing(model, poison, use_ss_detector=False)
 
-        # actually, no need to return model, but it is also fine to return model
-        model = trainer.train_freq(model, optimizer, train_transform, poison)
+        if args.detect_trigger_channels:
+            # comparison w. or w.o. SS Detector
+            trainer.linear_probing(model, poison, use_ss_detector=True)
 
-        if args.use_linear_probing:
-            trainer.linear_probing(model, poison, use_ss_detector=False)
-            if args.detect_trigger_channels:
-                # comparison w. or w.o. SS Detector
-                trainer.linear_probing(model, poison, use_ss_detector=True)
-
-    else:
-        raise NotImplementedError
+        if args.use_mask_pruning:
+            trainer.linear_probing(
+                model, poison, use_mask_pruning=True, trained_linear=trained_linear
+            )
 
 
 if __name__ == "__main__":

@@ -4,14 +4,15 @@ import torchvision.transforms as transforms
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
+import copy
 
+fool = dict()
+fool["1"] = "one"
 
-topk_channel = 2
-hey = np.random.randint(0, 20, size=(3, 8))
-print(hey)
-rest = np.argsort(hey, axis=1)
-print(rest)
-rest = rest[:, -topk_channel:]
-print(rest)
+lish_1 = fool
+lish_2 = copy.deepcopy(fool)
 
-print(rest.flatten())
+fool["2"] = "two"
+
+print(lish_1)
+print(lish_2)

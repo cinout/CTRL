@@ -11,9 +11,9 @@
 #SBATCH --qos=gpgpudeeplearn
 #SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mocov2"
+#SBATCH --job-name="mskpr"
 #SBATCH --account=punim1623
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-06:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -47,15 +47,22 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 5 \
-    --magnitude_train 200.0 \
-    --magnitude_val 200.0 \
+    --epochs 800 \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
     --dataset imagenet100 \
     --target_class 26 \
+    \
+    --image_size 64 \
     --use_linear_probing \
-    --detect_trigger_channels \
-    --channel_num 1 \
+    --use_mask_pruning \
+    --pretrained_ssl_model "./Experiments/20240817_152348_57_81-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
+    --note "mask prune mag300 [DEBUG]" \
+    \
     --load_cached_tensors \
+    # --detect_trigger_channels \
+    # --channel_num 1 \ 
+    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

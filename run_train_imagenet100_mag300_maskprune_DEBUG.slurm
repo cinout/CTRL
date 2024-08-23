@@ -11,9 +11,9 @@
 #SBATCH --qos=gpgpudeeplearn
 #SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="mskpr"
+#SBATCH --job-name="deb"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:30:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -55,13 +55,16 @@ python -u main_train.py \
     \
     --image_size 64 \
     --use_linear_probing \
+    \
     --use_mask_pruning \
+    \
+    --detect_trigger_channels \
+    --topk_channel 1 2 3 4 6 8 \
+    \
+    --note "mask prune imagenet100_mag300 [overall]" \
     --pretrained_ssl_model "./Experiments/20240817_152348_57_81-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
-    --note "mask prune mag300 [DEBUG]" \
     \
     --load_cached_tensors \
-    # --detect_trigger_channels \
-    # --channel_num 1 \ 
     
 
 ##Log this job's resource usage stats###

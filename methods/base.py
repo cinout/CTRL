@@ -78,6 +78,7 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
 
 # called at 3rd pruning stage
 def evaluate_by_threshold(
+    args,
     model,
     linear,
     mask_values,  # sorted by [2], from low to high
@@ -106,6 +107,7 @@ def evaluate_by_threshold(
             mask_values[idx][2],
         )
         cl_loss, cl_acc = test_maskprune(
+            args=args,
             model=model,
             linear=linear,
             criterion=criterion,
@@ -113,6 +115,7 @@ def evaluate_by_threshold(
             val_mode="clean",
         )
         po_loss, po_acc = test_maskprune(
+            args=args,
             model=model,
             linear=linear,
             criterion=criterion,
@@ -178,11 +181,10 @@ def refill_unlearned_model(net, orig_state_dict):
     new_state_dict = OrderedDict()
     for k, v in net.state_dict().items():
         if k in orig_state_dict.keys():
-            # TODO: remove later
-            print(f">>>>>> IN orig_state_dict: {k}")
+            # print(f">>>>>> IN orig_state_dict: {k}")
             new_state_dict[k] = orig_state_dict[k]
         else:
-            print(f">>>>>> OUT orig_state_dict: {k}")
+            # print(f">>>>>> OUT orig_state_dict: {k}")
             new_state_dict[k] = v
     net.load_state_dict(new_state_dict)
 
@@ -631,6 +633,7 @@ class CLTrainer:
 
             if self.args.pruning_by == "threshold":
                 evaluate_by_threshold(
+                    self.args,
                     backbone,
                     linear,
                     mask_values,

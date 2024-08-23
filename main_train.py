@@ -146,12 +146,17 @@ parser.add_argument(
     default="zero",
     help="determines what values to replace the old value at the trigger channels",
 )
+
+# TODO: update [with template below]
+# parser.add_argument("--channel", nargs="+", type=int)
+
 parser.add_argument(
     "--topk_channel",
     default=1,
     type=int,
     help="a new hp, determine k channels of EACH SAMPLE; if this is set to be larger than 1, then channel_num is set to topk_channel",
 )
+
 parser.add_argument(
     "--channel_num",
     default=1,

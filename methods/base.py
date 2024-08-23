@@ -40,13 +40,22 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
     total_count = 0
     with torch.no_grad():
         for content in data_loader:
-            if val_mode == "poison":
-                (images, labels, original_label, _) = content
-                original_label = original_label.to(device)
-            elif val_mode == "clean":
-                (images, labels, _) = content
+            if args.detect_trigger_channels:
+                if val_mode == "poison":
+                    (images, views, labels, original_label, _) = content
+                    original_label = original_label.to(device)
+                elif val_mode == "clean":
+                    (images, views, labels, _) = content
+                else:
+                    raise Exception(f"unimplemented val_mode {val_mode}")
             else:
-                raise Exception(f"unimplemented val_mode {val_mode}")
+                if val_mode == "poison":
+                    (images, labels, original_label, _) = content
+                    original_label = original_label.to(device)
+                elif val_mode == "clean":
+                    (images, labels, _) = content
+                else:
+                    raise Exception(f"unimplemented val_mode {val_mode}")
 
             images, labels = images.to(device), labels.to(device)
             if val_mode == "poison":
@@ -195,7 +204,12 @@ def train_step_recovering(
     unlearned_model.train()
     linear.train()
 
-    for images, labels, _ in data_loader:
+    for content in data_loader:
+        if args.detect_trigger_channels:
+            images, views, labels, _ = content
+        else:
+            images, labels, _ = content
+
         images, labels = images.to(device), labels.to(device)
 
         mask_opt.zero_grad()
@@ -215,7 +229,12 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     linear.train()
     total_correct = 0
     total_count = 0
-    for images, labels, _ in data_loader:
+    for content in data_loader:
+        if args.detect_trigger_channels:
+            images, views, labels, _ = content
+        else:
+            images, labels, _ = content
+
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
@@ -352,7 +371,10 @@ def train_linear_classifier(
             if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
-                    views, backbone, args.channel_num, args.topk_channel
+                    views,
+                    backbone,
+                    args.channel_num,
+                    args.topk_channel,  # TODO: topk_channel
                 )
 
                 if args.replacement_value == "zero":
@@ -417,7 +439,10 @@ def eval_linear_classifier(
             if args.detect_trigger_channels and use_ss_detector:
                 # FIND channels that are related to trigger (although in training, all images are clean)
                 essential_indices = find_trigger_channels(
-                    views, backbone, args.channel_num, args.topk_channel
+                    views,
+                    backbone,
+                    args.channel_num,
+                    args.topk_channel,  # TODO: topk_channel
                 )
                 if args.replacement_value == "zero":
                     output[:, essential_indices] = 0.0
@@ -697,6 +722,8 @@ class CLTrainer:
                 optimizer, milestones=sched
             )
 
+            # TODO: update here
+
             # train linear classifier
             for epoch in range(linear_probing_epochs):
                 print(f"training linear classifier, epoch: {epoch}")
@@ -741,7 +768,7 @@ class CLTrainer:
                 f"with use_ss_detector set to: {use_ss_detector}, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
             )
 
-            return linear
+            return linear  # the returned linear is only used if use_ss_detector=False
 
     # entry point of this file, called in main_train.py
     def train_freq(self, model, optimizer, train_transform, poison):
@@ -954,7 +981,10 @@ class CLTrainer:
 
             if use_SS_detector:
                 essential_indices = find_trigger_channels(
-                    views, net, args.channel_num, args.topk_channel
+                    views,
+                    net,
+                    args.channel_num,
+                    args.topk_channel,  # TODO: topk_channel
                 )
 
                 if args.replacement_value == "zero":
@@ -1005,7 +1035,10 @@ class CLTrainer:
 
             if use_SS_detector:
                 essential_indices = find_trigger_channels(
-                    views, net, args.channel_num, args.topk_channel
+                    views,
+                    net,
+                    args.channel_num,
+                    args.topk_channel,  # TODO: topk_channel
                 )
 
                 if args.replacement_value == "zero":

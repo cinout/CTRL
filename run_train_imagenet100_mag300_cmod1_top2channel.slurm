@@ -59,7 +59,8 @@ python -u main_train.py \
     --topk_channel 2 \
     \
     --image_size 64 \
-    --note "top2 channels"
+    --note "top2 channels [can reproduce if skip channel_mod in linear classifier training????]" \
+    --pretrained_ssl_model "./Experiments/20240817_152348_57_81-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -368,20 +368,21 @@ def train_linear_classifier(
         with torch.no_grad():
             output = backbone(images)
 
-            if args.detect_trigger_channels and use_ss_detector:
-                # FIND channels that are related to trigger (although in training, all images are clean)
-                essential_indices = find_trigger_channels(
-                    views,
-                    backbone,
-                    args.channel_num,
-                    args.topk_channel,  # TODO: topk_channel
-                )
+            # # TODO: [do we need this?]
+            # if args.detect_trigger_channels and use_ss_detector:
+            #     # FIND channels that are related to trigger (although in training, all images are clean)
+            #     essential_indices = find_trigger_channels(
+            #         views,
+            #         backbone,
+            #         args.channel_num,
+            #         args.topk_channel,  # TODO: topk_channel
+            #     )
 
-                if args.replacement_value == "zero":
-                    output[:, essential_indices] = 0.0
-                elif args.replacement_value == "ref_mean":
-                    for idx in essential_indices.detach().cpu().numpy():
-                        output[:, idx] = train_probe_feats_mean[idx]
+            #     if args.replacement_value == "zero":
+            #         output[:, essential_indices] = 0.0
+            #     elif args.replacement_value == "ref_mean":
+            #         for idx in essential_indices.detach().cpu().numpy():
+            #             output[:, idx] = train_probe_feats_mean[idx]
 
         output = linear(output)
         loss = F.cross_entropy(output, target)

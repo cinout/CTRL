@@ -205,7 +205,8 @@ def train_step_recovering(
     linear.train()
 
     for content in data_loader:
-        if args.detect_trigger_channels:
+        # TODO: for debugging
+        if args.detect_trigger_channels and not args.use_larger_refset:
             images, views, labels, _ = content
         else:
             images, labels, _ = content
@@ -230,7 +231,8 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     total_correct = 0
     total_count = 0
     for content in data_loader:
-        if args.detect_trigger_channels:
+        # TODO: for debugging
+        if args.detect_trigger_channels and not args.use_larger_refset:
             images, views, labels, _ = content
         else:
             images, labels, _ = content
@@ -564,7 +566,11 @@ class CLTrainer:
                     linear=linear,
                     criterion=criterion,
                     optimizer=optimizer,
-                    data_loader=poison.train_probe_loader,
+                    data_loader=(
+                        poison.memory_loader
+                        if self.args.use_larger_refset
+                        else poison.train_probe_loader
+                    ),  # TODO: for debugging
                 )
 
                 scheduler.step()
@@ -612,7 +618,11 @@ class CLTrainer:
                     unlearned_model=unlearned_model,
                     linear=linear,
                     criterion=criterion,
-                    data_loader=poison.train_probe_loader,
+                    data_loader=(
+                        poison.memory_loader
+                        if self.args.use_larger_refset
+                        else poison.train_probe_loader
+                    ),  # TODO: for debugging
                     mask_opt=mask_optimizer,
                 )
 

@@ -60,7 +60,9 @@ python -u main_train.py \
     --detect_trigger_channels \
     --topk_channel 1 2 3 4 6 8 \
     \
-    --note "mask prune cifar10 [overall]" \
+    --note "mask prune cifar10 [longer unlearning/recovering, eps=50]" \
+    --unlearning_epochs 50 \
+    --recovering_epochs 50 \
     # --pretrained_ssl_model "./Experiments/20240817_131026_68_4-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
 
 ##Log this job's resource usage stats###

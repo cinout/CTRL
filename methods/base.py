@@ -132,7 +132,7 @@ def evaluate_by_threshold(
             val_mode="poison",
         )
         print(
-            "{:.2f} \t {} \t {} \t {:.4f} \t {:.4f} \t {:.4f}".format(
+            "{} \t {} \t {} \t {:.2f} \t {:.4f} \t {:.4f}".format(
                 start,
                 layer_name,
                 neuron_idx,
@@ -555,6 +555,7 @@ class CLTrainer:
             )
 
             #### stage 1: model unlearing
+            print(f">>>>>>>> start model unlearning")
             for epoch in range(0, self.args.unlearning_epochs + 1):
                 # UNLEARNING
                 train_acc = train_step_unlearning(
@@ -567,13 +568,17 @@ class CLTrainer:
                 )
 
                 scheduler.step()
+                print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
 
                 if train_acc <= self.args.clean_threshold:
+                    print(
+                        f">>>>>>>> arrive at early break of stage 1 unlearning at epoch {epoch}"
+                    )
                     # end stage 1
                     break
 
             #### stage 2: model recovering
-
+            print(f">>>>>>>> start model recovering")
             if self.args.method == "mocov2":
                 unlearned_model = models.__dict__[self.args.arch](
                     num_classes=512, norm_layer=MaskBatchNorm2d
@@ -619,7 +624,7 @@ class CLTrainer:
             del unlearned_model, backbone
 
             #### stage 3: model pruning
-
+            print(f">>>>>>>> start model pruning")
             # read poisoned model again!
             if self.args.method == "mocov2":
                 backbone = copy.deepcopy(model.encoder_q)
@@ -632,9 +637,7 @@ class CLTrainer:
             mask_file = os.path.join(self.args.saved_path, "mask_values.txt")
             mask_values = read_data(mask_file)
             mask_values = sorted(mask_values, key=lambda x: float(x[2]))
-            print(
-                "No. \t Layer Name \t Neuron Idx \t Mask \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC"
-            )
+            print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
             cl_loss, cl_acc = test_maskprune(
                 args=self.args,
                 model=backbone,
@@ -652,7 +655,7 @@ class CLTrainer:
                 val_mode="poison",
             )
             print(
-                "0 \t None     \t None     \t {:.4f} \t {:.4f}".format(
+                "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f}".format(
                     # po_loss,
                     po_acc * 100,
                     # cl_loss,

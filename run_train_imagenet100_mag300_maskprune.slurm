@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img100"
 #SBATCH --account=punim1623
-#SBATCH --time=0-14:00:00
+#SBATCH --time=0-10:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -61,9 +61,8 @@ python -u main_train.py \
     --detect_trigger_channels \
     --topk_channel 1 2 3 4 6 8 \
     \
-    --note "mask prune imagenet100_mag300 [longer unlearning/recovering, eps=50]" \
-    --unlearning_epochs 50 \
-    --recovering_epochs 50 \
+    --note "mask prune imagenet100_mag300 [clean_threshold 0.0]" \
+    --clean_threshold 0.0 \
     # --pretrained_ssl_model "./Experiments/20240824_124554_15_24-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \
     
 

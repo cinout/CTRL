@@ -47,18 +47,19 @@ python -u main_train.py \
     --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
-    --epochs 400 \
+    --epochs 200 \
     --magnitude_train 300.0 \
     --magnitude_val 300.0 \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --use_linear_probing \
-    --detect_trigger_channels \
-    --channel_num 1 \
-    \
     --image_size 64 \
-    --note "ep=400"
+    --use_linear_probing \
+    \
+    --detect_trigger_channels \
+    --topk_channel 1 \
+    \
+    --note "ep=200"
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

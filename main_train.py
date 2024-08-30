@@ -184,12 +184,6 @@ parser.add_argument(
     action="store_true",
     help="apply mask pruning (RNP paper)",
 )
-# TODO: for debugging
-parser.add_argument(
-    "--use_larger_refset",
-    action="store_true",
-    help="for debugging, use 100 percent train set",
-)
 parser.add_argument("--alpha", type=float, default=0.2)
 parser.add_argument(
     "--clean_threshold",

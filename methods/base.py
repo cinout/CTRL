@@ -205,8 +205,7 @@ def train_step_recovering(
     linear.train()
 
     for content in data_loader:
-        # TODO: for debugging
-        if args.detect_trigger_channels and not args.use_larger_refset:
+        if args.detect_trigger_channels:
             images, views, labels, _ = content
         else:
             images, labels, _ = content
@@ -231,8 +230,7 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     total_correct = 0
     total_count = 0
     for content in data_loader:
-        # TODO: for debugging
-        if args.detect_trigger_channels and not args.use_larger_refset:
+        if args.detect_trigger_channels:
             images, views, labels, _ = content
         else:
             images, labels, _ = content
@@ -265,6 +263,7 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     return acc
 
 
+# TODO: the method may need to be updated (with our new entropy voting)
 def find_trigger_channels(views, backbone, channel_num, topk_channel):
     # expected shaope of views: [bs, n_views, c, h, w]
 
@@ -566,11 +565,7 @@ class CLTrainer:
                     linear=linear,
                     criterion=criterion,
                     optimizer=optimizer,
-                    data_loader=(
-                        poison.memory_loader
-                        if self.args.use_larger_refset
-                        else poison.train_probe_loader
-                    ),  # TODO: for debugging
+                    data_loader=poison.train_probe_loader,
                 )
 
                 scheduler.step()
@@ -618,11 +613,7 @@ class CLTrainer:
                     unlearned_model=unlearned_model,
                     linear=linear,
                     criterion=criterion,
-                    data_loader=(
-                        poison.memory_loader
-                        if self.args.use_larger_refset
-                        else poison.train_probe_loader
-                    ),  # TODO: for debugging
+                    data_loader=poison.train_probe_loader,
                     mask_opt=mask_optimizer,
                 )
 

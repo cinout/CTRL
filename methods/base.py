@@ -798,7 +798,7 @@ class CLTrainer:
             backbone.eval()
             linear.eval()
 
-            print(f"evaluating on CLEAN val")
+            print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
                 poison.test_loader,
                 backbone,
@@ -809,7 +809,7 @@ class CLTrainer:
                 train_probe_feats_mean=train_probe_feats_mean,
             )
 
-            print(f"evaluating on POISONED val")
+            print(f"<<<<<<<<< evaluating linear on POISON val")
             poison_acc1 = eval_linear_classifier(
                 poison.test_pos_loader,
                 backbone,

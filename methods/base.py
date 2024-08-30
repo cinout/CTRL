@@ -1024,6 +1024,7 @@ class CLTrainer:
         """
         Evaluate clean KNN
         """
+        print(">>>>>>> now KNN evaluate for CLEAN val")
         if use_SS_detector:
             clean_val_top1_dict = {}
             clean_val_total_num_dict = {}
@@ -1034,7 +1035,6 @@ class CLTrainer:
             clean_val_top1, clean_val_total_num = 0.0, 0
 
         test_bar = tqdm(test_data_loader, desc="kNN", disable=hide_progress)
-
         for content in test_bar:
             if args.detect_trigger_channels:
                 (data, views, target, _) = content
@@ -1079,6 +1079,7 @@ class CLTrainer:
         """
         Evaluate poison KNN
         """
+        print(">>>>>>> now KNN evaluate for POISON val")
         if use_SS_detector:
             backdoor_val_top1_dict = {}
             backdoor_val_total_num_dict = {}

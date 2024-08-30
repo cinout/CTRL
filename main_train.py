@@ -149,17 +149,10 @@ parser.add_argument(
 
 
 parser.add_argument(
-    "--topk_channel",
+    "--channel_num",
     nargs="+",
     type=int,
-    help="a new hp, determine k channels of EACH SAMPLE; if this is set to be larger than 1, then channel_num is set to topk_channel",
-)
-
-parser.add_argument(
-    "--channel_num",
-    default=1,
-    type=int,
-    help="number of channels to set to replacement_value",
+    help="a new hp, determine k channels of EACH SAMPLE",
 )
 parser.add_argument(
     "--num_views",
@@ -258,7 +251,7 @@ else:
     elif args.mode == "frequency":
         # poisoning
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}-numc{}".format(
+            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}".format(
                 args.log_path,
                 args.timestamp,
                 args.dataset,
@@ -271,7 +264,6 @@ else:
                 args.lr,
                 args.knn_eval_freq,
                 "Yes" if args.detect_trigger_channels else "No",
-                args.channel_num,
             )
         )
     else:

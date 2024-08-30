@@ -263,21 +263,24 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     return acc
 
 
-# TODO: the method may need to be updated (with our new entropy voting)
-def find_trigger_channels(views, backbone, channel_num, topk_channel):
+def find_trigger_channels(args, views, backbone):
     # expected shaope of views: [bs, n_views, c, h, w]
 
     views = views.to(device)
     bs, n_views, c, h, w = views.shape
     views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
     vision_features = backbone(views)  # [bs*n_views, 512]
-    _, c = vision_features.shape
+    _, C = vision_features.shape
     vision_features = vision_features.detach().cpu().numpy()
     u, s, v = np.linalg.svd(
         vision_features - np.mean(vision_features, axis=0, keepdims=True),
         full_matrices=False,
     )
+
+    # get top eigenvector
     eig_for_indexing = v[0:1]  # [1, C]
+
+    # adjust direction (sign)
     corrs = np.matmul(eig_for_indexing, np.transpose(vision_features))
     coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
     coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
@@ -285,26 +288,57 @@ def find_trigger_channels(views, backbone, channel_num, topk_channel):
         eig_for_indexing * vision_features * coeff_adjust
     )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
 
-    max_indices = np.argsort(elementwise, axis=1)
-    max_indices = max_indices[:, -topk_channel:]
-    max_indices = max_indices.flatten()  # [bs*n_view*topk_channel, ]
-    # max_indices = np.argmax(elementwise, axis=1)
+    # get indices
+    max_indices = np.argsort(
+        elementwise, axis=1
+    )  # [bs*n_view, C], C are indices, sorted by value from low to high
+    max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
-    occ_count = Counter(max_indices)
+    max_indices_at_channel = max_indices[:, :, -1]  # [bs, n_view]
+    entropies = []  # bs elements
 
-    # HACK code, not optimal
-    if topk_channel > 1:
-        essential_indices = occ_count.most_common(topk_channel)
-    else:
-        essential_indices = occ_count.most_common(channel_num)
+    for votes in max_indices_at_channel:
+        votes_counter = Counter(votes).most_common()
+        counts = np.array([c for (name, c) in votes_counter])
+        p = counts / counts.sum()
+        h = -np.sum(p * np.log(p))
+        entropy = np.exp(h)
+        entropies.append(entropy)
+
+    entropies = np.array(entropies)
 
     print(
-        f"essential_indices: {essential_indices}; #samples: {bs*n_views}"
+        f">>>>> entropies of top-1 channel: mean is {np.mean(entropies):.2f}, std is {np.std(entropies):.2f}"
+    )
+    min_index = np.argmin(entropies)  # this sample is most likely to be poisoned
+    essential_indices = Counter(max_indices_at_channel[min_index]).most_common(
+        max(args.channel_num)
+    )
+
+    print(
+        f"essential_indices: {essential_indices}; #samples: {n_views}"
     )  # print (idx, count) tuples
     essential_indices = torch.tensor(
         [idx for (idx, occ_count) in essential_indices]
     )  # remove count
     return essential_indices
+
+    # max_indices = np.argsort(elementwise, axis=1)
+    # max_indices = max_indices[:, -channel_num:]
+    # max_indices = max_indices.flatten()  # [bs*n_view*channel_num, ]
+    # # max_indices = np.argmax(elementwise, axis=1)
+
+    # occ_count = Counter(max_indices)
+
+    # essential_indices = occ_count.most_common(channel_num)
+
+    # print(
+    #     f"essential_indices: {essential_indices}; #samples: {bs*n_views}"
+    # )  # print (idx, count) tuples
+    # essential_indices = torch.tensor(
+    #     [idx for (idx, occ_count) in essential_indices]
+    # )  # remove count
+    # return essential_indices
 
 
 # DISABLED, because it makes 0-channel_mean not 0, which is not good for our SS detecting strategy
@@ -367,21 +401,6 @@ def train_linear_classifier(
         with torch.no_grad():
             output = backbone(images)
 
-            # if args.detect_trigger_channels and use_ss_detector:
-            #     # FIND channels that are related to trigger (although in training, all images are clean)
-            #     essential_indices = find_trigger_channels(
-            #         views,
-            #         backbone,
-            #         args.channel_num,
-            #         args.topk_channel,  # topk_channel
-            #     )
-
-            #     if args.replacement_value == "zero":
-            #         output[:, essential_indices] = 0.0
-            #     elif args.replacement_value == "ref_mean":
-            #         for idx in essential_indices.detach().cpu().numpy():
-            #             output[:, idx] = train_probe_feats_mean[idx]
-
         output = linear(output)
         loss = F.cross_entropy(output, target)
 
@@ -389,6 +408,19 @@ def train_linear_classifier(
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+
+def produces_evaluation_results(linear, output, target, acc1_accumulator, total_count):
+    output = linear(output)
+    _, pred = output.topk(
+        1, 1, True, True
+    )  # k=1, dim=1, largest, sorted; pred is the indices of largest class
+    # pred.shape: [bs, k=1]
+    pred = pred.squeeze(1)  # shape: [bs, ]
+
+    total_count += target.shape[0]
+    acc1_accumulator += (pred == target).float().sum().item()
+    return acc1_accumulator, total_count
 
 
 def eval_linear_classifier(
@@ -399,11 +431,18 @@ def eval_linear_classifier(
     val_mode,
     use_ss_detector,
     train_probe_feats_mean,
-    topk_channel=0,
 ):
     with torch.no_grad():
-        acc1_accumulator = 0.0
-        total_count = 0
+        if args.detect_trigger_channels and use_ss_detector:
+            acc1_accumulator_dict = {}
+            total_count_dict = {}
+            for k in args.channel_num:
+                acc1_accumulator_dict[k] = 0.0
+                total_count_dict[k] = 0
+        else:
+            acc1_accumulator = 0.0
+            total_count = 0
+
         for i, content in enumerate(val_loader):
             if args.detect_trigger_channels:
                 if val_mode == "poison":
@@ -437,30 +476,36 @@ def eval_linear_classifier(
             # compute output
             output = backbone(images)
             if args.detect_trigger_channels and use_ss_detector:
-                # FIND channels that are related to trigger (although in training, all images are clean)
-                essential_indices = find_trigger_channels(
-                    views,
-                    backbone,
-                    args.channel_num,
-                    topk_channel,
+                contributing_indices = find_trigger_channels(
+                    args, views, backbone
+                )  # a torch tensor
+
+                for k in args.channel_num:
+                    indices_toremove = contributing_indices[0:k]
+                    output[:, indices_toremove] = 0.0
+
+                    acc1_r, total_r = produces_evaluation_results(
+                        linear,
+                        output,
+                        target,
+                        acc1_accumulator_dict[k],
+                        total_count_dict[k],
+                    )
+                    acc1_accumulator_dict[k] = acc1_r
+                    total_count_dict[k] = total_r
+
+            else:
+                acc1_accumulator, total_count = produces_evaluation_results(
+                    linear, output, target, acc1_accumulator, total_count
                 )
-                if args.replacement_value == "zero":
-                    output[:, essential_indices] = 0.0
-                elif args.replacement_value == "ref_mean":
-                    for idx in essential_indices.detach().cpu().numpy():
-                        output[:, idx] = train_probe_feats_mean[idx]
 
-            output = linear(output)
-            _, pred = output.topk(
-                1, 1, True, True
-            )  # k=1, dim=1, largest, sorted; pred is the indices of largest class
-            # pred.shape: [bs, k=1]
-            pred = pred.squeeze(1)  # shape: [bs, ]
-
-            total_count += target.shape[0]
-            acc1_accumulator += (pred == target).float().sum().item()
-
-        return acc1_accumulator / total_count * 100.0
+        if args.detect_trigger_channels and use_ss_detector:
+            results_dict = {}
+            for k in args.channel_num:
+                results_dict[k] = acc1_accumulator_dict[k] / total_count_dict[k] * 100.0
+            return results_dict
+        else:
+            return acc1_accumulator / total_count * 100.0
 
 
 class Normalize(nn.Module):
@@ -753,54 +798,35 @@ class CLTrainer:
             backbone.eval()
             linear.eval()
 
+            print(f"evaluating on CLEAN val")
+            clean_acc1 = eval_linear_classifier(
+                poison.test_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="clean",
+                use_ss_detector=use_ss_detector,
+                train_probe_feats_mean=train_probe_feats_mean,
+            )
+
+            print(f"evaluating on POISONED val")
+            poison_acc1 = eval_linear_classifier(
+                poison.test_pos_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="poison",
+                use_ss_detector=use_ss_detector,
+                train_probe_feats_mean=train_probe_feats_mean,
+            )
+
             if use_ss_detector:
-                for k_channel in self.args.topk_channel:
-                    print(f"evaluating on CLEAN val")
-                    clean_acc1 = eval_linear_classifier(
-                        poison.test_loader,
-                        backbone,
-                        linear,
-                        self.args,
-                        val_mode="clean",
-                        use_ss_detector=use_ss_detector,
-                        train_probe_feats_mean=train_probe_feats_mean,
-                        topk_channel=k_channel,
-                    )
-                    print(f"evaluating on POISONED val")
-                    poison_acc1 = eval_linear_classifier(
-                        poison.test_pos_loader,
-                        backbone,
-                        linear,
-                        self.args,
-                        val_mode="poison",
-                        use_ss_detector=use_ss_detector,
-                        train_probe_feats_mean=train_probe_feats_mean,
-                        topk_channel=k_channel,
-                    )
+                for k in self.args.channel_num:
                     print(
-                        f"by replacing {k_channel} channels, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
+                        f"by replacing {k} channels, the ACC on clean val is: {clean_acc1[k]}, the ASR on poisoned val is: {poison_acc1[k]}"
                     )
             else:
-                print(f"evaluating on CLEAN val")
-                clean_acc1 = eval_linear_classifier(
-                    poison.test_loader,
-                    backbone,
-                    linear,
-                    self.args,
-                    val_mode="clean",
-                    use_ss_detector=use_ss_detector,
-                    train_probe_feats_mean=train_probe_feats_mean,
-                )
-                print(f"evaluating on POISONED val")
-                poison_acc1 = eval_linear_classifier(
-                    poison.test_pos_loader,
-                    backbone,
-                    linear,
-                    self.args,
-                    val_mode="poison",
-                    use_ss_detector=use_ss_detector,
-                    train_probe_feats_mean=train_probe_feats_mean,
-                )
+
                 print(
                     f"with the DEFAULT linear classifier, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
                 )
@@ -917,31 +943,21 @@ class CLTrainer:
                     else:
                         backbone = model.backbone
 
-                    for k_channel in self.args.topk_channel:
-                        clean_acc_SSDETECTOR, back_acc_SSDETECTOR = (
-                            self.knn_monitor_fre(
-                                backbone,
-                                poison.memory_loader,  # memory loader is ONLY used here
-                                test_loader,
-                                epoch,
-                                self.args,
-                                classes=self.args.num_classes,
-                                subset=False,
-                                backdoor_loader=test_back_loader,
-                                use_SS_detector=True,
-                                topk_channel=k_channel,
-                            )
-                        )
+                    clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+                        backbone,
+                        poison.memory_loader,  # memory loader is ONLY used here
+                        test_loader,
+                        epoch,
+                        self.args,
+                        classes=self.args.num_classes,
+                        subset=False,
+                        backdoor_loader=test_back_loader,
+                        use_SS_detector=True,
+                    )
+
+                    for k in self.args.channel_num:
                         print(
-                            "In kNN classification, with top k channels set to {}, [{}-epoch] time:{:.3f} | clean acc with SS Detector: {:.3f} | back acc with SS Detector: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
-                                k_channel,
-                                epoch + 1,
-                                time.time() - start,
-                                clean_acc_SSDETECTOR,
-                                back_acc_SSDETECTOR,
-                                losses.avg,
-                                cl_losses.avg,
-                            )
+                            f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.3f} | back acc: {back_acc_SSDETECTOR[k]:.3f}"
                         )
 
         # Save final model
@@ -977,7 +993,6 @@ class CLTrainer:
         subset=False,
         backdoor_loader=None,
         use_SS_detector=False,
-        topk_channel=0,
     ):
 
         net.eval()
@@ -1009,8 +1024,15 @@ class CLTrainer:
         """
         Evaluate clean KNN
         """
+        if use_SS_detector:
+            clean_val_top1_dict = {}
+            clean_val_total_num_dict = {}
+            for k in args.channel_num:
+                clean_val_top1_dict[k] = 0.0
+                clean_val_total_num_dict[k] = 0
+        else:
+            clean_val_top1, clean_val_total_num = 0.0, 0
 
-        clean_val_top1, clean_val_total_num = 0.0, 0
         test_bar = tqdm(test_data_loader, desc="kNN", disable=hide_progress)
 
         for content in test_bar:
@@ -1023,35 +1045,49 @@ class CLTrainer:
             feature = net(data)
 
             if use_SS_detector:
-                essential_indices = find_trigger_channels(
-                    views,
-                    net,
-                    args.channel_num,
-                    topk_channel,
+                contributing_indices = find_trigger_channels(
+                    args, views, net
+                )  # a torch tensor
+
+                for k in args.channel_num:
+                    indices_toremove = contributing_indices[0:k]
+                    feature[:, indices_toremove] = 0.0
+                    feature = F.normalize(feature, dim=1)
+                    pred_labels = self.knn_predict(
+                        feature, feature_bank, feature_labels, classes, k, t
+                    )
+                    clean_val_total_num_dict[k] = clean_val_total_num_dict[
+                        k
+                    ] + data.size(0)
+                    clean_val_top1_dict[k] = (
+                        clean_val_top1_dict[k]
+                        + (pred_labels[:, 0] == target).float().sum().item()
+                    )
+            else:
+                feature = F.normalize(feature, dim=1)
+                # feature: [bsz, dim]
+                pred_labels = self.knn_predict(
+                    feature, feature_bank, feature_labels, classes, k, t
                 )
 
-                if args.replacement_value == "zero":
-                    feature[:, essential_indices] = 0.0
-                elif args.replacement_value == "ref_mean":
-                    for idx in essential_indices.detach().cpu().numpy():
-                        feature[:, idx] = feature_bank_mean[idx]
-
-            feature = F.normalize(feature, dim=1)
-            # feature: [bsz, dim]
-            pred_labels = self.knn_predict(
-                feature, feature_bank, feature_labels, classes, k, t
-            )
-
-            clean_val_total_num += data.size(0)
-            clean_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
-            test_bar.set_postfix(
-                {"Accuracy": clean_val_top1 / clean_val_total_num * 100}
-            )
+                clean_val_total_num += data.size(0)
+                clean_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
+                # test_bar.set_postfix(
+                #     {"Accuracy": clean_val_top1 / clean_val_total_num * 100}
+                # )
 
         """
         Evaluate poison KNN
         """
-        backdoor_val_top1, backdoor_val_total_num = 0.0, 0
+        if use_SS_detector:
+            backdoor_val_top1_dict = {}
+            backdoor_val_total_num_dict = {}
+            for k in args.channel_num:
+                backdoor_val_top1_dict[k] = 0.0
+                backdoor_val_total_num_dict[k] = 0
+        else:
+            backdoor_val_top1, backdoor_val_total_num = 0.0, 0
+
         backdoor_test_bar = tqdm(backdoor_loader, desc="kNN", disable=hide_progress)
 
         for content in backdoor_test_bar:
@@ -1077,35 +1113,54 @@ class CLTrainer:
             feature = net(data)
 
             if use_SS_detector:
-                essential_indices = find_trigger_channels(
-                    views,
-                    net,
-                    args.channel_num,
-                    topk_channel,
+                contributing_indices = find_trigger_channels(
+                    args, views, net
+                )  # a torch tensor
+
+                for k in args.channel_num:
+                    indices_toremove = contributing_indices[0:k]
+                    feature[:, indices_toremove] = 0.0
+                    feature = F.normalize(feature, dim=1)
+                    pred_labels = self.knn_predict(
+                        feature, feature_bank, feature_labels, classes, k, t
+                    )
+                    backdoor_val_total_num_dict[k] = backdoor_val_total_num_dict[
+                        k
+                    ] + data.size(0)
+                    backdoor_val_top1_dict[k] = (
+                        backdoor_val_top1_dict[k]
+                        + (pred_labels[:, 0] == target).float().sum().item()
+                    )
+            else:
+
+                feature = F.normalize(feature, dim=1)
+                # feature: [bsz, dim]
+                pred_labels = self.knn_predict(
+                    feature, feature_bank, feature_labels, classes, k, t
                 )
 
-                if args.replacement_value == "zero":
-                    feature[:, essential_indices] = 0.0
-                elif args.replacement_value == "ref_mean":
-                    for idx in essential_indices.detach().cpu().numpy():
-                        feature[:, idx] = feature_bank_mean[idx]
+                backdoor_val_total_num += data.size(0)
+                backdoor_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
+                # test_bar.set_postfix(
+                #     {"Accuracy": backdoor_val_top1 / backdoor_val_total_num * 100}
+                # )
+        if use_SS_detector:
+            clean_results_dict = {}
+            backdoor_results_dict = {}
+            for k in args.channel_num:
+                clean_results_dict[k] = (
+                    clean_val_top1_dict[k] / clean_val_total_num_dict[k] * 100.0
+                )
+                backdoor_results_dict[k] = (
+                    backdoor_val_top1_dict[k] / backdoor_val_total_num_dict[k] * 100.0
+                )
+            return clean_results_dict, backdoor_results_dict
+        else:
 
-            feature = F.normalize(feature, dim=1)
-            # feature: [bsz, dim]
-            pred_labels = self.knn_predict(
-                feature, feature_bank, feature_labels, classes, k, t
+            return (
+                clean_val_top1 / clean_val_total_num * 100,
+                backdoor_val_top1 / backdoor_val_total_num * 100,
             )
-
-            backdoor_val_total_num += data.size(0)
-            backdoor_val_top1 += (pred_labels[:, 0] == target).float().sum().item()
-            test_bar.set_postfix(
-                {"Accuracy": backdoor_val_top1 / backdoor_val_total_num * 100}
-            )
-
-        return (
-            clean_val_top1 / clean_val_total_num * 100,
-            backdoor_val_top1 / backdoor_val_total_num * 100,
-        )
 
     def knn_predict(self, feature, feature_bank, feature_labels, classes, knn_k, knn_t):
         # feature: [bsz, dim]

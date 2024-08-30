@@ -59,7 +59,7 @@ python -u main_train.py \
     --use_mask_pruning \
     \
     --detect_trigger_channels \
-    --topk_channel 1 2 3 4 6 8 \
+    --channel_num 1 2 3 4 6 8 \
     \
     --note "mask prune imagenet100_mag300 [clean_threshold 0.0]" \
     --clean_threshold 0.0 \

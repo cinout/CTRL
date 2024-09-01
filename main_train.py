@@ -140,14 +140,17 @@ parser.add_argument(
     help="use spectral signature to detect channels, this requires N augmented views to be generated",
 )
 parser.add_argument(
+    "--minority_percent",
+    type=float,
+    default=0.005,
+)
+parser.add_argument(
     "--replacement_value",
     type=str,
     choices=["zero", "ref_mean"],
     default="zero",
     help="determines what values to replace the old value at the trigger channels",
 )
-
-
 parser.add_argument(
     "--channel_num",
     nargs="+",

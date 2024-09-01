@@ -266,16 +266,16 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
 # def find_trigger_channels(args, views, backbone):
 #     # expected shaope of views: [bs, n_views, c, h, w]
 
-#     views = views.to(device)
-#     bs, n_views, c, h, w = views.shape
-#     views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-#     vision_features = backbone(views)  # [bs*n_views, 512]
-#     _, C = vision_features.shape
-#     vision_features = vision_features.detach().cpu().numpy()
-#     u, s, v = np.linalg.svd(
-#         vision_features - np.mean(vision_features, axis=0, keepdims=True),
-#         full_matrices=False,
-#     )
+    # views = views.to(device)
+    # bs, n_views, c, h, w = views.shape
+    # views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+    # vision_features = backbone(views)  # [bs*n_views, 512]
+    # _, C = vision_features.shape
+    # vision_features = vision_features.detach().cpu().numpy()
+    # u, s, v = np.linalg.svd(
+    #     vision_features - np.mean(vision_features, axis=0, keepdims=True),
+    #     full_matrices=False,
+    # )
 
 #     # get top eigenvector
 #     eig_for_indexing = v[0:1]  # [1, C]
@@ -353,10 +353,12 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
         elif val_mode == "clean":
             (_, views, _, _) = content
 
-        views = torch.cat(views, dim=0)
+        
         views = views.to(device)
+        bs, n_views, c, h, w = views.shape
+        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
         vision_features = backbone(views)  # [bs*n_views, 512]
-        total, C = vision_features.shape
+        _, C = vision_features.shape
         vision_features = vision_features.detach().cpu().numpy()
         u, s, v = np.linalg.svd(
             vision_features - np.mean(vision_features, axis=0, keepdims=True),
@@ -378,9 +380,8 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
         max_indices = np.argsort(
             elementwise, axis=1
         )  # [bs*n_view, C], C are indices, sorted by value from low to high
-        this_bs = int(total / args.num_views)
-        total_images += this_bs
-        max_indices = max_indices.reshape(this_bs, args.num_views, C)  # [bs, n_view, C]
+        total_images += bs
+        max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
         # only consider the top-1 index
         max_indices_at_channel = max_indices[:, :, -1]  # [bs, n_view]

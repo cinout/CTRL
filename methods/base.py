@@ -266,16 +266,16 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
 # def find_trigger_channels(args, views, backbone):
 #     # expected shaope of views: [bs, n_views, c, h, w]
 
-    # views = views.to(device)
-    # bs, n_views, c, h, w = views.shape
-    # views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-    # vision_features = backbone(views)  # [bs*n_views, 512]
-    # _, C = vision_features.shape
-    # vision_features = vision_features.detach().cpu().numpy()
-    # u, s, v = np.linalg.svd(
-    #     vision_features - np.mean(vision_features, axis=0, keepdims=True),
-    #     full_matrices=False,
-    # )
+# views = views.to(device)
+# bs, n_views, c, h, w = views.shape
+# views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+# vision_features = backbone(views)  # [bs*n_views, 512]
+# _, C = vision_features.shape
+# vision_features = vision_features.detach().cpu().numpy()
+# u, s, v = np.linalg.svd(
+#     vision_features - np.mean(vision_features, axis=0, keepdims=True),
+#     full_matrices=False,
+# )
 
 #     # get top eigenvector
 #     eig_for_indexing = v[0:1]  # [1, C]
@@ -353,7 +353,6 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
         elif val_mode == "clean":
             (_, views, _, _) = content
 
-        
         views = views.to(device)
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
@@ -404,17 +403,20 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view]
     all_entropies = np.array(all_entropies)
-    all_entropies = np.argsort(
+    all_entropies_indices = np.argsort(
         all_entropies
     )  # indices, sorted from low to high by entropy value
     minority_num = int(total_images * args.minority_percent)
-    minority_indices = all_entropies[:minority_num]
+    minority_indices = all_entropies_indices[:minority_num]
     all_votes = all_votes[minority_indices]  # votes by minority, [minority_num, n_view]
 
     # obtain trigger channels
     essential_indices = Counter(all_votes.flatten()).most_common(max(args.channel_num))
     print(
         f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views}"
+    )
+    print(
+        f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
     )
     essential_indices = torch.tensor(
         [idx for (idx, occ_count) in essential_indices]

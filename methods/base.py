@@ -347,7 +347,6 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
     total_images = 0
 
     for i, content in enumerate(data_loader):
-        # TODO: update
         if val_mode == "poison":
             (_, views, _, _, _) = content
         elif val_mode == "clean":
@@ -525,7 +524,7 @@ def eval_linear_classifier(
             for k in args.channel_num:
                 acc1_accumulator_dict[k] = 0.0
                 total_count_dict[k] = 0
-            # TODO: update
+
             contributing_indices = find_trigger_channels(
                 args, val_loader, backbone, val_mode
             )
@@ -1121,7 +1120,7 @@ class CLTrainer:
             for k in args.channel_num:
                 clean_val_top1_dict[k] = 0.0
                 clean_val_total_num_dict[k] = 0
-            # TODO: update
+
             contributing_indices = find_trigger_channels(
                 args, test_data_loader, net, "clean"
             )
@@ -1180,7 +1179,7 @@ class CLTrainer:
             for k in args.channel_num:
                 backdoor_val_top1_dict[k] = 0.0
                 backdoor_val_total_num_dict[k] = 0
-            # TODO: update
+
             contributing_indices = find_trigger_channels(
                 args, backdoor_loader, net, "poison"
             )

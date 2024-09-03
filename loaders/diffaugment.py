@@ -322,8 +322,7 @@ class PoisonAgent:
                 if self.args.use_linear_probing
                 else self.args.eval_batch_size
             ),
-            shuffle=False,
-            drop_last=False,
+            shuffle=True,  # TODO: True or False
         )
 
         if self.args.detect_trigger_channels:
@@ -349,7 +348,7 @@ class PoisonAgent:
                 if self.args.use_linear_probing
                 else self.args.eval_batch_size
             ),
-            shuffle=False,
+            shuffle=True,  # TODO: True or False
         )
 
         # memory set is never poisoned (used in knn eval only, in base.py)

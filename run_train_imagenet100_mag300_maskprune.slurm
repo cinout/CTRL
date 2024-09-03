@@ -60,7 +60,7 @@ python -u main_train.py \
     --clean_threshold 0.0 \
     \
     --detect_trigger_channels \
-    --channel_num 10 12 14 16 20 24 \
+    --channel_num 1 2 3 4 6 8 10 12 14 16 20 24 \
     \
     --note "mask prune imagenet100_mag300 [clean_threshold 0.0]" \
     # --pretrained_ssl_model "./Experiments/20240824_124554_15_24-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes-numc1/last.pth.tar" \

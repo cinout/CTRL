@@ -428,7 +428,7 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
     # )
     # TODO: consider the top-channel_num indices
     print(
-        f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*args.channel_num}"
+        f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
     )
 
     print(

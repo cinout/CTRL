@@ -348,12 +348,12 @@ def main_worker(args):
     # train_transform: augmentation for simclr/byol on the fly
     # poison: poisoned dataset, get train/test/memory via poison.xxx
 
-    if args.pretrained_ssl_model == "":
-        # create optimizer
-        optimizer = optim.SGD(
-            model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-        )
-        trainer.train_freq(model, optimizer, train_transform, poison)
+    # if args.pretrained_ssl_model == "":
+    # create optimizer
+    optimizer = optim.SGD(
+        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+    )
+    trainer.train_freq(model, optimizer, train_transform, poison)
 
     if args.use_linear_probing:
         trained_linear = trainer.linear_probing(model, poison, use_ss_detector=False)

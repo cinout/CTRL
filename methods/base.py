@@ -969,51 +969,55 @@ class CLTrainer:
             start = time.time()
 
             # this is where training occurs
-            for i, (images, __, _) in enumerate(
-                train_loader
-            ):  # frequency backdoor has been injected
-                # print(i)
-                model.train()
-                images = images.to(device)
+            if self.args.pretrained_ssl_model == "":
+                for i, (images, __, _) in enumerate(
+                    train_loader
+                ):  # frequency backdoor has been injected
+                    # print(i)
+                    model.train()
+                    images = images.to(device)
 
-                # data
-                v1 = train_transform(images)
-                v2 = train_transform(images)
+                    # data
+                    v1 = train_transform(images)
+                    v2 = train_transform(images)
 
-                if self.args.method == "simclr":
-                    features = model(v1, v2)
-                    loss, _, _ = model.criterion(features)
+                    if self.args.method == "simclr":
+                        features = model(v1, v2)
+                        loss, _, _ = model.criterion(features)
 
-                elif self.args.method == "mocov2":
-                    moco_losses = model(im_q=v1, im_k=v2)
-                    loss = moco_losses.combine(
-                        contr_w=1,
-                        align_w=0,
-                        unif_w=0,
-                    )
+                    elif self.args.method == "mocov2":
+                        moco_losses = model(im_q=v1, im_k=v2)
+                        loss = moco_losses.combine(
+                            contr_w=1,
+                            align_w=0,
+                            unif_w=0,
+                        )
 
-                elif self.args.method == "simsiam":
-                    features = model(v1, v2)
-                    loss = model.criterion(*features)
+                    elif self.args.method == "simsiam":
+                        features = model(v1, v2)
+                        loss = model.criterion(*features)
 
-                elif self.args.method == "byol":
-                    features = model(v1, v2)
-                    loss = model.criterion(*features)
+                    elif self.args.method == "byol":
+                        features = model(v1, v2)
+                        loss = model.criterion(*features)
 
-                losses.update(loss.item(), images[0].size(0))
-                cl_losses.update(loss.item(), images[0].size(0))
+                    losses.update(loss.item(), images[0].size(0))
+                    cl_losses.update(loss.item(), images[0].size(0))
 
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
+                    # compute gradient and do SGD step
+                    optimizer.zero_grad()
 
-                loss.backward()
+                    loss.backward()
 
-                optimizer.step()
+                    optimizer.step()
 
-            warmup_scheduler.step()
+                warmup_scheduler.step()
 
             # (KNN-eval) why this eval step? (this code combines training and eval together)
-            if epoch % self.args.knn_eval_freq == 0 or epoch + 1 == self.args.epochs:
+            if epoch + 1 == self.args.epochs or (
+                self.args.pretrained_ssl_model == ""
+                and epoch % self.args.knn_eval_freq == 0
+            ):
                 if self.args.method == "mocov2":
                     backbone = copy.deepcopy(model.encoder_q)
                     backbone.fc = nn.Sequential()
@@ -1066,21 +1070,22 @@ class CLTrainer:
                             f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.3f} | back acc: {back_acc_SSDETECTOR[k]:.3f}"
                         )
 
-        # Save final model
-        if not self.args.distributed or (
-            self.args.distributed
-            and self.args.local_rank % self.args.ngpus_per_node == 0
-        ):
-            save_model(
-                {
-                    "epoch": epoch + 1,
-                    "state_dict": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                },
-                filename=os.path.join(self.args.saved_path, "last.pth.tar"),
-            )
+        if self.args.pretrained_ssl_model == "":
+            # Save final model
+            if not self.args.distributed or (
+                self.args.distributed
+                and self.args.local_rank % self.args.ngpus_per_node == 0
+            ):
+                save_model(
+                    {
+                        "epoch": epoch + 1,
+                        "state_dict": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                    },
+                    filename=os.path.join(self.args.saved_path, "last.pth.tar"),
+                )
 
-            print("last epoch saved")
+                print("last epoch saved")
 
         return model
 

@@ -687,6 +687,7 @@ class CLTrainer:
     ):
         if use_mask_pruning:
             # use mask pruning
+            model.eval()
 
             if self.args.method == "mocov2":
                 backbone = copy.deepcopy(model.encoder_q)
@@ -832,6 +833,7 @@ class CLTrainer:
 
         else:
             # NOT USING MASK PRUNING
+            model.eval()
             if self.args.method == "mocov2":
                 backbone = copy.deepcopy(model.encoder_q)
                 backbone.fc = nn.Sequential()
@@ -1018,6 +1020,8 @@ class CLTrainer:
                 self.args.pretrained_ssl_model == ""
                 and epoch % self.args.knn_eval_freq == 0
             ):
+                model.eval()
+
                 if self.args.method == "mocov2":
                     backbone = copy.deepcopy(model.encoder_q)
                     backbone.fc = nn.Sequential()
@@ -1047,6 +1051,7 @@ class CLTrainer:
                 # Apply channel removal (our method) to see its efficacy in KNN classification
                 if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
                     # if last epoch, also evaluate with SS detctor
+                    model.eval()
                     if self.args.method == "mocov2":
                         backbone = copy.deepcopy(model.encoder_q)
                         backbone.fc = nn.Sequential()

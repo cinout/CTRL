@@ -858,7 +858,7 @@ class CLTrainer:
                 # it means a linear classifier is already trained in the last step
                 linear = copy.deepcopy(trained_linear)
             else:
-                # just train it
+                # training linear
 
                 if self.args.use_ref_norm:
                     train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
@@ -876,31 +876,51 @@ class CLTrainer:
                         nn.Linear(feat_dim, self.args.num_classes),
                     )
 
-                linear = linear.to(device)
-                optimizer = torch.optim.SGD(
-                    linear.parameters(),
-                    lr=0.06,
-                    momentum=0.9,
-                    weight_decay=1e-4,
-                )
-                sched = [15, 30, 40]
-                lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                    optimizer, milestones=sched
-                )
-
-                # train linear classifier
-                linear_probing_epochs = 40
-                for epoch in range(linear_probing_epochs):
-                    print(f"training linear classifier, epoch: {epoch}")
-                    train_linear_classifier(
-                        poison.train_probe_loader,
-                        backbone,
-                        linear,
-                        optimizer,
-                        self.args,
+                if self.args.pretrained_linear_model != "":
+                    pretrained_state_dict = torch.load(
+                        self.args.pretrained_linear_model, map_location=device
                     )
-                    # modify lr
-                    lr_scheduler.step()
+                    linear.load_state_dict(pretrained_state_dict, strict=True)
+
+                linear = linear.to(device)
+
+                if self.args.pretrained_linear_model == "":
+                    optimizer = torch.optim.SGD(
+                        linear.parameters(),
+                        lr=0.06,
+                        momentum=0.9,
+                        weight_decay=1e-4,
+                    )
+                    sched = [15, 30, 40]
+                    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                        optimizer, milestones=sched
+                    )
+
+                    # train linear classifier
+                    linear_probing_epochs = 40
+
+                    for epoch in range(linear_probing_epochs):
+                        print(f"training linear classifier, epoch: {epoch}")
+                        train_linear_classifier(
+                            poison.train_probe_loader,
+                            backbone,
+                            linear,
+                            optimizer,
+                            self.args,
+                        )
+                        # modify lr
+                        lr_scheduler.step()
+
+                    if not self.args.distributed or (
+                        self.args.distributed
+                        and self.args.local_rank % self.args.ngpus_per_node == 0
+                    ):
+                        save_model(
+                            linear.state_dict(),
+                            filename=os.path.join(
+                                self.args.saved_path, "linear.pth.tar"
+                            ),
+                        )
 
             # eval linear classifier
             backbone.eval()

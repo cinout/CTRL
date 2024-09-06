@@ -27,6 +27,12 @@ parser.add_argument(
     default="",
     help="path for pretrained ssl model (stage 1)",
 )
+parser.add_argument(
+    "--pretrained_linear_model",
+    type=str,
+    default="",
+    help="path for pretrained linear model (stage 2)",
+)
 parser.add_argument("--note", type=str, default="")
 parser.add_argument("--image_size", type=int, default=32)
 parser.add_argument(

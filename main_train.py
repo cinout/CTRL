@@ -235,58 +235,20 @@ parser.add_argument(
 )
 
 
-args = parser.parse_args()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# for Logging
-if args.debug:  #### in the debug setting
-    args.saved_path = os.path.join("./{}/test".format(args.log_path))
-else:
-    if args.mode == "normal":
-        args.saved_path = os.path.join(
-            "./{}/{}-{}_{}".format(
-                args.log_path,
-                args.dataset,
-                args.method,
-                args.arch,
-            )
-        )
-    elif args.mode == "frequency":
-        # poisoning
-        args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}".format(
-                args.log_path,
-                args.timestamp,
-                args.dataset,
-                args.method,
-                args.arch,
-                args.poison_ratio,
-                args.magnitude_train,
-                args.magnitude_val,
-                args.batch_size,
-                args.lr,
-                args.knn_eval_freq,
-                "Yes" if args.detect_trigger_channels else "No",
-            )
-        )
-    else:
-        raise Exception(f"args.mode {args.mode} is not implemented")
 
+def main(args):
 
-if not os.path.exists(args.saved_path):
-    os.makedirs(args.saved_path)
+    # os.environ["PYTHONHASHSEED"] = str(seed)
+    # torch.initial_seed()  # dataloader multi processing
 
-# tb_logger = tb_logger.Logger(logdir=args.saved_path, flush_secs=2)
-
-
-def main():
-    print(args.saved_path)
-    set_seed(args.seed)
-
-    main_worker(args)
-
-
-def main_worker(args):
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     # create model
     print("=> creating cnn model '{}'".format(args.arch))
@@ -343,13 +305,6 @@ def main_worker(args):
     )
     print(all_args)
 
-    ###### train a triggered model
-    # model: simclr or byol
-    # train_transform: augmentation for simclr/byol on the fly
-    # poison: poisoned dataset, get train/test/memory via poison.xxx
-
-    # if args.pretrained_ssl_model == "":
-    # create optimizer
     optimizer = optim.SGD(
         model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
     )
@@ -371,4 +326,29 @@ def main_worker(args):
 
 
 if __name__ == "__main__":
-    main()
+    args = parser.parse_args()
+
+    # for Logging
+    if args.debug:  #### in the debug setting
+        args.saved_path = os.path.join("./{}/test".format(args.log_path))
+    else:
+        args.saved_path = os.path.join(
+            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}".format(
+                args.log_path,
+                args.timestamp,
+                args.dataset,
+                args.method,
+                args.arch,
+                args.poison_ratio,
+                args.magnitude_train,
+                args.magnitude_val,
+                args.batch_size,
+                args.lr,
+                args.knn_eval_freq,
+                "Yes" if args.detect_trigger_channels else "No",
+            )
+        )
+    if not os.path.exists(args.saved_path):
+        os.makedirs(args.saved_path)
+
+    main(args)

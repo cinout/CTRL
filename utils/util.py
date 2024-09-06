@@ -48,22 +48,6 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-def set_seed(seed):
-    # for reproducibility.
-    # note that pytorch is not completely reproducible
-    # https://pytorch.org/docs/stable/notes/randomness.html
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-    random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    np.random.seed(seed)
-    torch.initial_seed()  # dataloader multi processing
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    return None
-
-
 def save_model(state, filename="checkpoint.pth.tar"):
     torch.save(state, filename)
 

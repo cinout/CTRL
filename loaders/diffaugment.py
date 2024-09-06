@@ -428,19 +428,16 @@ def set_aug_diff(args):
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
         args.num_classes = 10
-        args.save_freq = 100
 
     elif args.dataset == "cifar100":
         mean = (0.5071, 0.4867, 0.4408)
         std = (0.2675, 0.2565, 0.2761)
         args.num_classes = 100
-        args.save_freq = 100
 
     # used for imagenet100
     elif args.dataset == "imagenet100":
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
-        args.save_freq = 100
         args.num_classes = 100
 
     else:

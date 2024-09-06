@@ -63,7 +63,7 @@ python -u main_train.py \
     --channel_num 1 2 3 4 6 8 10 12 14 16 20 24 \
     \
     --note "double check seed works" \
-    --pretrained_ssl_model "./Experiments/20240903_141512_9_96-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
+    # --pretrained_ssl_model "./Experiments/20240903_141512_9_96-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     
 
 ##Log this job's resource usage stats###

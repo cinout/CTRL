@@ -302,6 +302,7 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
 
         images = images.to(device)
         views = generate_view_tensors(images, ss_transform)
+        views = views.to(device)
         is_batch_poisoned = is_batch_poisoned.to(device)
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]

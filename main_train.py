@@ -49,7 +49,7 @@ parser.add_argument(
 parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)
 parser.add_argument("--window_size", default=32, type=int)
-parser.add_argument("--eval_batch_size", default=512, type=int)
+parser.add_argument("--eval_batch_size", default=128, type=int)
 parser.add_argument("--linear_probe_batch_size", default=128, type=int)
 parser.add_argument("--num_workers", default=1, type=int)
 

@@ -44,7 +44,7 @@ python -u main_train.py \
     --poisoning \
     \
     --batch_size 512 \
-    --eval_batch_size 512 \
+    --eval_batch_size 128 \
     --linear_probe_batch_size 128 \
     \
     --epochs 800 \

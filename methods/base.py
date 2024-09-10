@@ -354,7 +354,7 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
             corrs = np.abs(corrs)
             corrs = corrs.reshape(-1, n_views)  #  [bs,n_views]
             ss_scores = np.max(corrs, axis=1).tolist()  # [bs]
-            entropies.extend(ss_scores)
+            entropies.extend(-ss_scores)
         elif args.minority_criterion == "ss_score_elements":
             num_interested_channels = 1  # TODO:  changeale
             top_channel_votes = max_indices[
@@ -369,7 +369,7 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
 
             scores = scores.reshape(-1, n_views)  # [ bs, n_views]
             ss_scores = np.max(scores, axis=1).tolist()  # [bs]
-            entropies.extend(ss_scores)
+            entropies.extend(-ss_scores)
 
         all_entropies.extend(entropies)
         all_votes.append(max_indices_at_channel)

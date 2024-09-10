@@ -138,39 +138,6 @@ class PoisonAgent:
             self.train_probe_loader,
         ) = self.choose_poisons_randomly()
 
-    def generate_view_tensors(self, input):
-        # input.shape: [total, 3, 32, 32]; value range: [0, 1]
-        input = torch.permute(input, (0, 2, 3, 1))
-        input = input * 255.0
-        input = torch.clamp(input, 0, 255)
-        input = np.array(
-            input.cpu(), dtype=np.uint8
-        )  # shape: [total, 32, 32, 3]; value range: [0, 255]
-
-        view_tensors = []
-        for img in input:
-            img = PIL.Image.fromarray(img)  # in PIL format now
-            views = self.ss_transform(
-                img
-            )  # a list of args.num_views elements, each one is a PIL image
-
-            tensors_of_an_image = []
-            for view in views:
-                view = np.asarray(view).astype(np.float32) / 255.0
-                view = torch.tensor(view)
-                view = torch.permute(
-                    view, (2, 0, 1)
-                )  # shape: [c=3, h, w], value: [0, 1]
-                tensors_of_an_image.append(view)
-            tensors_of_an_image = torch.stack(
-                tensors_of_an_image, dim=0
-            )  # [num_views, c, h, w]
-            view_tensors.append(tensors_of_an_image)
-
-        view_tensors = torch.stack(view_tensors, dim=0)  # [total, num_views, c, h, w]
-
-        return view_tensors
-
     def choose_poisons_randomly(self):
 
         # construct class prototype for each class
@@ -306,7 +273,6 @@ class PoisonAgent:
             (
                 TensorDataset(
                     x_train_tensor,
-                    self.generate_view_tensors(x_train_tensor),
                     train_is_poisoned,
                     y_train_tensor,
                     train_index,

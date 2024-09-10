@@ -19,6 +19,7 @@ import torch.nn.functional as F
 import torchvision.models as models
 from networks.mask_batchnorm import MaskBatchNorm2d
 import pandas as pd
+import PIL
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -258,14 +259,49 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     return acc
 
 
-def find_trigger_channels(args, data_loader, backbone):
+def generate_view_tensors(input, ss_transform):
+    # input.shape: [total, 3, 32, 32]; value range: [0, 1]
+    input = torch.permute(input, (0, 2, 3, 1))
+    input = input * 255.0
+    input = torch.clamp(input, 0, 255)
+    input = np.array(
+        input.cpu(), dtype=np.uint8
+    )  # shape: [total, 32, 32, 3]; value range: [0, 255]
+
+    view_tensors = []
+    for img in input:
+        img = PIL.Image.fromarray(img)  # in PIL format now
+        views = ss_transform(
+            img
+        )  # a list of args.num_views elements, each one is a PIL image
+
+        tensors_of_an_image = []
+        for view in views:
+            view = np.asarray(view).astype(np.float32) / 255.0
+            view = torch.tensor(view)
+            view = torch.permute(view, (2, 0, 1))  # shape: [c=3, h, w], value: [0, 1]
+            tensors_of_an_image.append(view)
+        tensors_of_an_image = torch.stack(
+            tensors_of_an_image, dim=0
+        )  # [num_views, c, h, w]
+        view_tensors.append(tensors_of_an_image)
+
+    view_tensors = torch.stack(view_tensors, dim=0)  # [total, num_views, c, h, w]
+
+    return view_tensors
+
+
+def find_trigger_channels(args, data_loader, backbone, ss_transform):
     all_entropies = []  # for all images in the dataset
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
     total_images = 0
 
     for i, content in tqdm(enumerate(data_loader)):
-        (_, views, is_batch_poisoned, _, _) = content
+        (images, is_batch_poisoned, _, _) = content
+
+        images = images.to(device)
+        views = generate_view_tensors(images, ss_transform)
 
         views = views.to(device)
         is_batch_poisoned = is_batch_poisoned.to(device)
@@ -892,7 +928,7 @@ class CLTrainer:
                     train_loader
                 ):  # frequency backdoor has been injected
                     if self.args.detect_trigger_channels:
-                        (images, views, is_poisoned, __, _) = content
+                        (images, is_poisoned, __, _) = content
                     else:
                         (images, __, _) = content
                     model.train()
@@ -979,7 +1015,10 @@ class CLTrainer:
                         backbone = model.backbone
 
                     self.contributing_indices = find_trigger_channels(
-                        self.args, poison.train_pos_loader, backbone
+                        self.args,
+                        poison.train_pos_loader,
+                        backbone,
+                        poison.ss_transform,
                     )
 
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(

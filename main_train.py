@@ -145,6 +145,15 @@ parser.add_argument(
     action="store_true",
     help="use spectral signature to detect channels, this requires N augmented views to be generated",
 )
+# TODO: update
+parser.add_argument(
+    "--minority_criterion",
+    type=str,
+    choices=["entropy", "ss_score"],
+    default="entropy",
+    help="how to find minority (bd samples)",
+)
+
 parser.add_argument(
     "--minority_percent",
     type=float,

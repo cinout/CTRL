@@ -318,7 +318,9 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
         eig_for_indexing = v[0:1]  # [1, C]
 
         # adjust direction (sign)
-        corrs = np.matmul(eig_for_indexing, np.transpose(vision_features))
+        corrs = np.matmul(
+            eig_for_indexing, np.transpose(vision_features)
+        )  # [1, bs*n_view]
         coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
         coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
         elementwise = (
@@ -340,13 +342,19 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
         )  # [bs, n_view*channel_num]
 
         entropies = []  # bs elements
-        for votes in max_indices_at_channel:  # for each original image
-            votes_counter = Counter(votes).most_common()
-            counts = np.array([c for (name, c) in votes_counter])
-            p = counts / counts.sum()
-            h = -np.sum(p * np.log(p))
-            entropy = np.exp(h)
-            entropies.append(entropy)
+        if args.minority_criterion == "entropy":
+            for votes in max_indices_at_channel:  # for each original image
+                votes_counter = Counter(votes).most_common()
+                counts = np.array([c for (name, c) in votes_counter])
+                p = counts / counts.sum()
+                h = -np.sum(p * np.log(p))
+                entropy = np.exp(h)
+                entropies.append(entropy)
+        elif args.minority_criterion == "ss_score":
+            corrs = np.abs(corrs)
+            corrs = corrs.reshape(n_views, -1)  # [n_views, bs]
+            ss_scores = np.max(corrs, axis=0).tolist()  # [bs]
+            entropies.extend(ss_scores)
 
         all_entropies.extend(entropies)
         all_votes.append(max_indices_at_channel)

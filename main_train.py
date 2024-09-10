@@ -149,7 +149,7 @@ parser.add_argument(
 parser.add_argument(
     "--minority_criterion",
     type=str,
-    choices=["entropy", "ss_score"],
+    choices=["entropy", "ss_score", "ss_score_elements"],
     default="entropy",
     help="how to find minority (bd samples)",
 )

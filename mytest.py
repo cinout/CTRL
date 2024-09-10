@@ -6,6 +6,7 @@ import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 import copy
 
-corrs = np.random.random((10, 4))
-ss_scores = np.max(corrs, axis=0).tolist()  # [bs]
-print(type(ss_scores))
+is_poisoned = np.array([0, 1, 1, 0, 1, 1])
+
+res = np.nonzero(is_poisoned == 1)
+print(type(res[0]))

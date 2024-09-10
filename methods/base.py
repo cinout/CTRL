@@ -355,6 +355,9 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
             corrs = corrs.reshape(n_views, -1)  # [n_views, bs]
             ss_scores = np.max(corrs, axis=0).tolist()  # [bs]
             entropies.extend(ss_scores)
+        elif args.minority_criterion == "ss_score_elements":
+            # TODO: update
+            pass
 
         all_entropies.extend(entropies)
         all_votes.append(max_indices_at_channel)
@@ -366,11 +369,16 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
     score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
     print(f"the AUROC score is: {score*100}")
 
-    all_entropies_indices = np.argsort(
-        all_entropies
-    )  # indices, sorted from low to high by entropy value
     minority_num = int(total_images * args.minority_percent)
-    minority_indices = all_entropies_indices[:minority_num]
+
+    # TODO: uncomment
+    # all_entropies_indices = np.argsort(
+    #     all_entropies
+    # )  # indices, sorted from low to high by entropy value
+    # minority_indices = all_entropies_indices[:minority_num]
+    # TODO: for debug, remove later
+    poison_indices = np.nonzero(is_poisoned == 1)[0]
+    minority_indices = poison_indices[:minority_num]
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view]
     all_votes = all_votes[minority_indices]  # votes by minority, [minority_num, n_view]

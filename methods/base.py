@@ -354,7 +354,7 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
 
     all_entropies = np.array(all_entropies)
     is_poisoned = torch.cat(is_poisoned)
-    is_poisoned = np.array(is_poisoned)  # [#dataset]
+    is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
     score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
     print(f"the AUROC score is: {score*100}")
 

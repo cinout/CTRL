@@ -298,57 +298,50 @@ class PoisonAgent:
         """
         Create dataloaders
         """
+        train_is_poisoned = torch.zeros_like(y_train_tensor)
+        train_is_poisoned[poison_index] = 1
+
         # contain both CLEAN and a portion of POISONED images
         train_loader = DataLoader(
-            TensorDataset(x_train_tensor, y_train_tensor, train_index),
+            (
+                TensorDataset(
+                    x_train_tensor,
+                    self.generate_view_tensors(x_train_tensor),
+                    train_is_poisoned,
+                    y_train_tensor,
+                    train_index,
+                )
+                if self.args.detect_trigger_channels
+                else TensorDataset(x_train_tensor, y_train_tensor, train_index)
+            ),
             batch_size=self.args.batch_size,
             sampler=None,
             shuffle=True,
             drop_last=True,
         )
 
-        if self.args.detect_trigger_channels:
-            view_tensors = self.generate_view_tensors(x_test_tensor)
-
         # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
-            (
-                TensorDataset(x_test_tensor, view_tensors, y_test_tensor, test_index)
-                if self.args.detect_trigger_channels
-                else TensorDataset(x_test_tensor, y_test_tensor, test_index)
-            ),
+            TensorDataset(x_test_tensor, y_test_tensor, test_index),
             batch_size=(
                 self.args.linear_probe_batch_size
                 if self.args.use_linear_probing
                 else self.args.eval_batch_size
             ),
-            shuffle=True,  # TODO: True or False
+            shuffle=False,
         )
-
-        if self.args.detect_trigger_channels:
-            view_tensors = self.generate_view_tensors(x_test_pos_tensor)
 
         # poisoned validation set (used in knn eval only, in base.py)
         test_pos_loader = DataLoader(
-            (
-                TensorDataset(
-                    x_test_pos_tensor,
-                    view_tensors,
-                    y_test_pos_tensor,
-                    y_test_tensor,
-                    test_index,
-                )
-                if self.args.detect_trigger_channels
-                else TensorDataset(
-                    x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
-                )
+            TensorDataset(
+                x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
             ),  # y_test_tensor serves as the original label tensor (for correcting ASR)
             batch_size=(
                 self.args.linear_probe_batch_size
                 if self.args.use_linear_probing
                 else self.args.eval_batch_size
             ),
-            shuffle=True,  # TODO: True or False
+            shuffle=False,
         )
 
         # memory set is never poisoned (used in knn eval only, in base.py)
@@ -388,16 +381,8 @@ class PoisonAgent:
                 list(range(len(x_probe_tensor))), dtype=torch.long
             )
 
-            if self.args.detect_trigger_channels:
-                view_tensors = self.generate_view_tensors(x_probe_tensor)
             train_probe_loader = DataLoader(
-                (
-                    TensorDataset(
-                        x_probe_tensor, view_tensors, y_probe_tensor, probe_index
-                    )
-                    if self.args.detect_trigger_channels
-                    else TensorDataset(x_probe_tensor, y_probe_tensor, probe_index)
-                ),
+                TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
                 batch_size=self.args.linear_probe_batch_size,
                 shuffle=True,
             )

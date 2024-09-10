@@ -6,13 +6,11 @@ import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 import copy
 
-fool = dict()
-fool["1"] = "one"
+hey1 = torch.tensor([2, 4, 5])
+hey2 = torch.tensor([2, 3, 5])
+now = []
+now.append(hey1)
+now.append(hey2)
 
-lish_1 = fool
-lish_2 = copy.deepcopy(fool)
-
-fool["2"] = "two"
-
-print(lish_1)
-print(lish_2)
+now = torch.cat(now)
+print(now)

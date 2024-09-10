@@ -8,7 +8,7 @@ import numpy as np
 from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
-
+from sklearn.metrics import roc_auc_score
 from collections import Counter, OrderedDict
 from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
@@ -40,22 +40,22 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
     total_count = 0
     with torch.no_grad():
         for content in data_loader:
-            if args.detect_trigger_channels:
-                if val_mode == "poison":
-                    (images, views, labels, original_label, _) = content
-                    original_label = original_label.to(device)
-                elif val_mode == "clean":
-                    (images, views, labels, _) = content
-                else:
-                    raise Exception(f"unimplemented val_mode {val_mode}")
+            # if args.detect_trigger_channels:
+            #     if val_mode == "poison":
+            #         (images, views, labels, original_label, _) = content
+            #         original_label = original_label.to(device)
+            #     elif val_mode == "clean":
+            #         (images, views, labels, _) = content
+            #     else:
+            #         raise Exception(f"unimplemented val_mode {val_mode}")
+            # else:
+            if val_mode == "poison":
+                (images, labels, original_label, _) = content
+                original_label = original_label.to(device)
+            elif val_mode == "clean":
+                (images, labels, _) = content
             else:
-                if val_mode == "poison":
-                    (images, labels, original_label, _) = content
-                    original_label = original_label.to(device)
-                elif val_mode == "clean":
-                    (images, labels, _) = content
-                else:
-                    raise Exception(f"unimplemented val_mode {val_mode}")
+                raise Exception(f"unimplemented val_mode {val_mode}")
 
             images, labels = images.to(device), labels.to(device)
             if val_mode == "poison":
@@ -205,10 +205,8 @@ def train_step_recovering(
     linear.train()
 
     for content in data_loader:
-        if args.detect_trigger_channels:
-            images, views, labels, _ = content
-        else:
-            images, labels, _ = content
+
+        images, labels, _ = content
 
         images, labels = images.to(device), labels.to(device)
 
@@ -230,10 +228,7 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     total_correct = 0
     total_count = 0
     for content in data_loader:
-        if args.detect_trigger_channels:
-            images, views, labels, _ = content
-        else:
-            images, labels, _ = content
+        images, labels, _ = content
 
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -263,96 +258,17 @@ def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader
     return acc
 
 
-# def find_trigger_channels(args, views, backbone):
-#     # expected shaope of views: [bs, n_views, c, h, w]
-
-# views = views.to(device)
-# bs, n_views, c, h, w = views.shape
-# views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-# vision_features = backbone(views)  # [bs*n_views, 512]
-# _, C = vision_features.shape
-# vision_features = vision_features.detach().cpu().numpy()
-# u, s, v = np.linalg.svd(
-#     vision_features - np.mean(vision_features, axis=0, keepdims=True),
-#     full_matrices=False,
-# )
-
-#     # get top eigenvector
-#     eig_for_indexing = v[0:1]  # [1, C]
-
-#     # adjust direction (sign)
-#     corrs = np.matmul(eig_for_indexing, np.transpose(vision_features))
-#     coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-#     coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-#     elementwise = (
-#         eig_for_indexing * vision_features * coeff_adjust
-#     )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
-
-#     # get indices
-#     max_indices = np.argsort(
-#         elementwise, axis=1
-#     )  # [bs*n_view, C], C are indices, sorted by value from low to high
-#     max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
-
-#     max_indices_at_channel = max_indices[:, :, -1]  # [bs, n_view]
-#     entropies = []  # bs elements
-
-#     for votes in max_indices_at_channel:
-#         votes_counter = Counter(votes).most_common()
-#         counts = np.array([c for (name, c) in votes_counter])
-#         p = counts / counts.sum()
-#         h = -np.sum(p * np.log(p))
-#         entropy = np.exp(h)
-#         entropies.append(entropy)
-
-#     entropies = np.array(entropies)
-
-#     print(
-#         f">>>>> entropies of top-1 channel: mean is {np.mean(entropies):.2f}, std is {np.std(entropies):.2f}"
-#     )
-#     min_index = np.argmin(entropies)  # this sample is most likely to be poisoned
-#     essential_indices = Counter(max_indices_at_channel[min_index]).most_common(
-#         max(args.channel_num)
-#     )
-
-#     print(
-#         f"essential_indices: {essential_indices}; #samples: {n_views}"
-#     )  # print (idx, count) tuples
-#     essential_indices = torch.tensor(
-#         [idx for (idx, occ_count) in essential_indices]
-#     )  # remove count
-#     return essential_indices
-
-#     # max_indices = np.argsort(elementwise, axis=1)
-#     # max_indices = max_indices[:, -channel_num:]
-#     # max_indices = max_indices.flatten()  # [bs*n_view*channel_num, ]
-#     # # max_indices = np.argmax(elementwise, axis=1)
-
-#     # occ_count = Counter(max_indices)
-
-#     # essential_indices = occ_count.most_common(channel_num)
-
-#     # print(
-#     #     f"essential_indices: {essential_indices}; #samples: {bs*n_views}"
-#     # )  # print (idx, count) tuples
-#     # essential_indices = torch.tensor(
-#     #     [idx for (idx, occ_count) in essential_indices]
-#     # )  # remove count
-#     # return essential_indices
-
-
-def find_trigger_channels(args, data_loader, backbone, val_mode):
+def find_trigger_channels(args, data_loader, backbone):
     all_entropies = []  # for all images in the dataset
     all_votes = []  # for all images in the dataset
+    is_poisoned = []  # for all images in the dataset
     total_images = 0
 
-    for i, content in enumerate(data_loader):
-        if val_mode == "poison":
-            (_, views, _, _, _) = content
-        elif val_mode == "clean":
-            (_, views, _, _) = content
+    for i, content in tqdm(enumerate(data_loader)):
+        (_, views, is_batch_poisoned, _, _) = content
 
         views = views.to(device)
+        is_batch_poisoned = is_batch_poisoned.to(device)
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
         vision_features = backbone(views)  # [bs*n_views, 512]
@@ -381,10 +297,6 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
         total_images += bs
         max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
-        # # TODO: only consider the top-1 index
-        # max_indices_at_channel = max_indices[:, :, -1]  # [bs, n_view]
-
-        # TODO: consider the top-channel_num indices
         max_indices_at_channel = max_indices[
             :, :, -max(args.channel_num) :
         ]  # [bs, n_view, channel_num]
@@ -403,13 +315,14 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
 
         all_entropies.extend(entropies)
         all_votes.append(max_indices_at_channel)
-
-        # print(
-        #     f">>>>> entropies of top-1 channel: mean is {np.mean(entropies):.2f}, std is {np.std(entropies):.2f}"
-        # )
-        # min_index = np.argmin(entropies)  # this sample is most likely to be poisoned
+        is_poisoned.append(is_batch_poisoned)
 
     all_entropies = np.array(all_entropies)
+    is_poisoned = torch.cat(is_poisoned)
+    is_poisoned = np.array(is_poisoned)  # [#dataset]
+    score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
+    print(f"the AUROC score is: {score*100}")
+
     all_entropies_indices = np.argsort(
         all_entropies
     )  # indices, sorted from low to high by entropy value
@@ -419,14 +332,15 @@ def find_trigger_channels(args, data_loader, backbone, val_mode):
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view]
     all_votes = all_votes[minority_indices]  # votes by minority, [minority_num, n_view]
 
+    is_poisoned = is_poisoned[minority_indices]
+    poisoned_found = is_poisoned.sum()
+    print(
+        f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
+    )
+
     # obtain trigger channels
     essential_indices = Counter(all_votes.flatten()).most_common(max(args.channel_num))
 
-    # # TODO: only consider the top-1 index
-    # print(
-    #     f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views}"
-    # )
-    # TODO: consider the top-channel_num indices
     print(
         f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
     )
@@ -452,10 +366,7 @@ def get_feats(loader, model, args):
 
     with torch.no_grad():
         for i, content in enumerate(loader):
-            if args.detect_trigger_channels:
-                (images, views, target, _) = content
-            else:
-                (images, target, _) = content
+            (images, target, _) = content
 
             # images = images.cuda(non_blocking=True)
             images = images.to(device)
@@ -490,11 +401,7 @@ def train_linear_classifier(
     backbone.eval()
     linear.train()
     for i, content in enumerate(train_loader):
-
-        if args.detect_trigger_channels:
-            (images, views, target, _) = content
-        else:
-            (images, target, _) = content
+        (images, target, _) = content
 
         images = images.to(device)
         target = target.to(device)
@@ -526,13 +433,7 @@ def produces_evaluation_results(linear, output, target, acc1_accumulator, total_
 
 
 def eval_linear_classifier(
-    val_loader,
-    backbone,
-    linear,
-    args,
-    val_mode,
-    use_ss_detector,
-    train_probe_feats_mean,
+    val_loader, backbone, linear, args, val_mode, use_ss_detector, contributing_indices
 ):
     with torch.no_grad():
         if args.detect_trigger_channels and use_ss_detector:
@@ -541,31 +442,27 @@ def eval_linear_classifier(
             for k in args.channel_num:
                 acc1_accumulator_dict[k] = 0.0
                 total_count_dict[k] = 0
-
-            contributing_indices = find_trigger_channels(
-                args, val_loader, backbone, val_mode
-            )
         else:
             acc1_accumulator = 0.0
             total_count = 0
 
         for i, content in enumerate(val_loader):
-            if args.detect_trigger_channels:
-                if val_mode == "poison":
-                    (images, views, target, original_label, _) = content
-                    original_label = original_label.to(device)
-                elif val_mode == "clean":
-                    (images, views, target, _) = content
-                else:
-                    raise Exception(f"unimplemented val_mode {val_mode}")
+            # if args.detect_trigger_channels:
+            #     if val_mode == "poison":
+            #         (images, views, target, original_label, _) = content
+            #         original_label = original_label.to(device)
+            #     elif val_mode == "clean":
+            #         (images, views, target, _) = content
+            #     else:
+            #         raise Exception(f"unimplemented val_mode {val_mode}")
+            # else:
+            if val_mode == "poison":
+                (images, target, original_label, _) = content
+                original_label = original_label.to(device)
+            elif val_mode == "clean":
+                (images, target, _) = content
             else:
-                if val_mode == "poison":
-                    (images, target, original_label, _) = content
-                    original_label = original_label.to(device)
-                elif val_mode == "clean":
-                    (images, target, _) = content
-                else:
-                    raise Exception(f"unimplemented val_mode {val_mode}")
+                raise Exception(f"unimplemented val_mode {val_mode}")
 
             images = images.to(device)
             target = target.to(device)
@@ -582,10 +479,6 @@ def eval_linear_classifier(
             # compute output
             output = backbone(images)
             if args.detect_trigger_channels and use_ss_detector:
-                # contributing_indices = find_trigger_channels(
-                #     args, views, backbone
-                # )  # a torch tensor
-
                 for k in args.channel_num:
                     indices_toremove = contributing_indices[0:k]
                     output[:, indices_toremove] = 0.0
@@ -676,6 +569,9 @@ class CLTrainer:
         logging.info(str(args))
 
         self.args.warmup_epoch = 10
+
+        if self.args.detect_trigger_channels:
+            self.contributing_indices = None
 
     def linear_probing(
         self,  # call self.args for options
@@ -934,7 +830,7 @@ class CLTrainer:
                 self.args,
                 val_mode="clean",
                 use_ss_detector=use_ss_detector,
-                train_probe_feats_mean=train_probe_feats_mean,
+                contributing_indices=self.contributing_indices,
             )
 
             print(f"<<<<<<<<< evaluating linear on POISON val")
@@ -945,7 +841,7 @@ class CLTrainer:
                 self.args,
                 val_mode="poison",
                 use_ss_detector=use_ss_detector,
-                train_probe_feats_mean=train_probe_feats_mean,
+                contributing_indices=self.contributing_indices,
             )
 
             if use_ss_detector:
@@ -992,10 +888,13 @@ class CLTrainer:
 
             # this is where training occurs
             if self.args.pretrained_ssl_model == "":
-                for i, (images, __, _) in enumerate(
+                for i, content in enumerate(
                     train_loader
                 ):  # frequency backdoor has been injected
-                    # print(i)
+                    if self.args.detect_trigger_channels:
+                        (images, views, is_poisoned, __, _) = content
+                    else:
+                        (images, __, _) = content
                     model.train()
                     images = images.to(device)
 
@@ -1049,7 +948,7 @@ class CLTrainer:
                     backbone = model.backbone
                 clean_acc, back_acc = self.knn_monitor_fre(
                     backbone,
-                    poison.memory_loader,  # memory loader is ONLY used here
+                    poison.memory_loader,
                     test_loader,
                     epoch,
                     self.args,
@@ -1071,6 +970,7 @@ class CLTrainer:
                 # Apply channel removal (our method) to see its efficacy in KNN classification
                 if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
                     # if last epoch, also evaluate with SS detctor
+
                     model.eval()
                     if self.args.method == "mocov2":
                         backbone = copy.deepcopy(model.encoder_q)
@@ -1078,9 +978,13 @@ class CLTrainer:
                     else:
                         backbone = model.backbone
 
+                    self.contributing_indices = find_trigger_channels(
+                        self.args, poison.train_pos_loader, backbone
+                    )
+
                     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
                         backbone,
-                        poison.memory_loader,  # memory loader is ONLY used here
+                        poison.memory_loader,
                         test_loader,
                         epoch,
                         self.args,
@@ -1088,6 +992,7 @@ class CLTrainer:
                         subset=False,
                         backdoor_loader=test_back_loader,
                         use_SS_detector=True,
+                        contributing_indices=self.contributing_indices,
                     )
 
                     for k in self.args.channel_num:
@@ -1129,6 +1034,7 @@ class CLTrainer:
         subset=False,
         backdoor_loader=None,
         use_SS_detector=False,
+        contributing_indices=None,
     ):
 
         net.eval()
@@ -1167,28 +1073,18 @@ class CLTrainer:
             for k in args.channel_num:
                 clean_val_top1_dict[k] = 0.0
                 clean_val_total_num_dict[k] = 0
-
-            contributing_indices = find_trigger_channels(
-                args, test_data_loader, net, "clean"
-            )
         else:
             clean_val_top1, clean_val_total_num = 0.0, 0
 
         test_bar = tqdm(test_data_loader, desc="kNN", disable=hide_progress)
         for content in test_bar:
-            if args.detect_trigger_channels:
-                (data, views, target, _) = content
-            else:
-                (data, target, _) = content
+
+            (data, target, _) = content
 
             data, target = data.to(device), target.to(device)
             feature = net(data)
 
             if use_SS_detector:
-                # contributing_indices = find_trigger_channels(
-                #     args, views, net
-                # )  # a torch tensor
-
                 for k in args.channel_num:
                     indices_toremove = contributing_indices[0:k]
                     feature[:, indices_toremove] = 0.0
@@ -1226,20 +1122,13 @@ class CLTrainer:
             for k in args.channel_num:
                 backdoor_val_top1_dict[k] = 0.0
                 backdoor_val_total_num_dict[k] = 0
-
-            contributing_indices = find_trigger_channels(
-                args, backdoor_loader, net, "poison"
-            )
         else:
             backdoor_val_top1, backdoor_val_total_num = 0.0, 0
 
         backdoor_test_bar = tqdm(backdoor_loader, desc="kNN", disable=hide_progress)
 
         for content in backdoor_test_bar:
-            if args.detect_trigger_channels:
-                (data, views, target, original_label, _) = content
-            else:
-                (data, target, original_label, _) = content
+            (data, target, original_label, _) = content
 
             data, target, original_label = (
                 data.to(device),
@@ -1258,10 +1147,6 @@ class CLTrainer:
             feature = net(data)
 
             if use_SS_detector:
-                # contributing_indices = find_trigger_channels(
-                #     args, views, net
-                # )  # a torch tensor
-
                 for k in args.channel_num:
                     indices_toremove = contributing_indices[0:k]
                     feature[:, indices_toremove] = 0.0

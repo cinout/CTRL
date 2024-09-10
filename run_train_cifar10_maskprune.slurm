@@ -43,8 +43,8 @@ python -u main_train.py \
     --poison_ratio 0.01 \
     --poisoning \
     \
-    --batch_size 512 \
-    --eval_batch_size 128 \
+    --batch_size 128 \
+    --eval_batch_size 512 \
     --linear_probe_batch_size 128 \
     \
     --epochs 800 \

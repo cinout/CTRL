@@ -401,9 +401,9 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
     clean_votes = all_votes[clean_indices]  # [#clean, n_view*channel_num]
     poison_votes = all_votes[poison_indices]
 
-    with open(f"{args.dataset}_train_clean_votes.npy", "wb") as f:
+    with open(f"dataset_{args.dataset}_train_clean_votes.npy", "wb") as f:
         np.save(f, clean_votes)
-    with open(f"{args.dataset}_train_poison_votes.npy", "wb") as f:
+    with open(f"dataset_{args.dataset}_train_poison_votes.npy", "wb") as f:
         np.save(f, poison_votes)
 
     exit()

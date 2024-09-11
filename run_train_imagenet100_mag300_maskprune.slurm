@@ -15,12 +15,12 @@
 #SBATCH --account=punim1623
 #SBATCH --time=0-03:00:00
 
-#SBATCH --nodes=1
+#SBATCH --nodes=1e
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=150G
+#SBATCH --mem=110G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400

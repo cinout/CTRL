@@ -392,8 +392,27 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
     # poison_indices = np.nonzero(is_poisoned == 1)[0]
     # minority_indices = poison_indices[:minority_num]
 
-    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view]
-    all_votes = all_votes[minority_indices]  # votes by minority, [minority_num, n_view]
+    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
+
+    # TODO: remove, for debug only
+    clean_indices = np.nonzero(is_poisoned == 0)[0]
+    poison_indices = np.nonzero(is_poisoned == 1)[0]
+
+    clean_votes = all_votes[clean_indices]  # [#clean, n_view*channel_num]
+    poison_votes = all_votes[poison_indices]
+
+    with open(f"{args.dataset}_train_clean_votes.npy", "wb") as f:
+        np.save(f, clean_votes)
+    with open(f"{args.dataset}_train_poison_votes.npy", "wb") as f:
+        np.save(f, poison_votes)
+
+    exit()
+
+    # TODO: end of debug
+
+    all_votes = all_votes[
+        minority_indices
+    ]  # votes by minority, [minority_num, n_view*channel_num]
 
     is_poisoned = is_poisoned[minority_indices]
     poisoned_found = is_poisoned.sum()
@@ -1044,6 +1063,7 @@ class CLTrainer:
                     self.contributing_indices = find_trigger_channels(
                         self.args,
                         poison.train_pos_loader,
+                        # TODO: ref loader
                         backbone,
                         poison.ss_transform,
                     )

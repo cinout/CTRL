@@ -7,9 +7,12 @@ from torch.utils.data import DataLoader, TensorDataset
 import copy
 from collections import Counter
 
-clean_file = "dataset_cifar10_train_clean_votes.npy"
-poison_file = "dataset_cifar10_train_poison_votes.npy"
-# [(0, 12), (1, 14), (2, 4), (4, 0), (5, 15), (6, 1), (7, 29), (8, 10), (9, 16), (10, 37), (11, 2), (12, 11), (14, 5), (15, 34), (25, 17), (27, 6), (30, 8), (31, 13), (32, 45), (40, 7), (42, 22), (44, 9), (49, 18)]
+clean_file = "dataset_imagenet100_train_clean_votes.npy"
+poison_file = "dataset_imagenet100_train_poison_votes.npy"
+
+# clean_file = "dataset_cifar10_train_clean_votes.npy"
+# poison_file = "dataset_cifar10_train_poison_votes.npy"
+# # [(0, 12), (1, 14), (2, 4), (4, 0), (5, 15), (6, 1), (7, 29), (8, 10), (9, 16), (10, 37), (11, 2), (12, 11), (14, 5), (15, 34), (25, 17), (27, 6), (30, 8), (31, 13), (32, 45), (40, 7), (42, 22), (44, 9), (49, 18)]
 
 # clean_file = "dataset_cifar100_train_clean_votes.npy"
 # poison_file = "dataset_cifar100_train_poison_votes.npy"

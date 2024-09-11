@@ -394,21 +394,21 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
 
-    # TODO: remove, for debug only
-    clean_indices = np.nonzero(is_poisoned == 0)[0]
-    poison_indices = np.nonzero(is_poisoned == 1)[0]
+    # # TODO: remove, for debug only
+    # clean_indices = np.nonzero(is_poisoned == 0)[0]
+    # poison_indices = np.nonzero(is_poisoned == 1)[0]
 
-    clean_votes = all_votes[clean_indices]  # [#clean, n_view*channel_num]
-    poison_votes = all_votes[poison_indices]
+    # clean_votes = all_votes[clean_indices]  # [#clean, n_view*channel_num]
+    # poison_votes = all_votes[poison_indices]
 
-    with open(f"dataset_{args.dataset}_train_clean_votes.npy", "wb") as f:
-        np.save(f, clean_votes)
-    with open(f"dataset_{args.dataset}_train_poison_votes.npy", "wb") as f:
-        np.save(f, poison_votes)
+    # with open(f"dataset_{args.dataset}_train_clean_votes.npy", "wb") as f:
+    #     np.save(f, clean_votes)
+    # with open(f"dataset_{args.dataset}_train_poison_votes.npy", "wb") as f:
+    #     np.save(f, poison_votes)
 
-    exit()
+    # exit()
 
-    # TODO: end of debug
+    # # TODO: end of debug
 
     all_votes = all_votes[
         minority_indices

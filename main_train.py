@@ -159,6 +159,16 @@ parser.add_argument(
     default=0.005,
 )
 parser.add_argument(
+    "--minority_percent_lower_bound",
+    type=float,
+    default=0.005,
+)
+parser.add_argument(
+    "--minority_percent_upper_bound",
+    type=float,
+    default=0.015,
+)
+parser.add_argument(
     "--replacement_value",
     type=str,
     choices=["zero", "ref_mean"],

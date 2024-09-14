@@ -380,14 +380,18 @@ def find_trigger_channels(args, data_loader, backbone, ss_transform):
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
     score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
     print(f"the AUROC score is: {score*100}")
-
-    minority_num = int(total_images * args.minority_percent)
-
-    ### uncomment
     all_entropies_indices = np.argsort(
         all_entropies
     )  # indices, sorted from low to high by entropy value
-    minority_indices = all_entropies_indices[:minority_num]
+
+    # minority_num = int(total_images * args.minority_percent)
+    minority_lb = int(total_images * args.minority_percent_lower_bound)
+    minority_ub = int(total_images * args.minority_percent_upper_bound)
+    minority_num = minority_ub - minority_lb
+
+    # minority_indices = all_entropies_indices[:minority_num]
+    minority_indices = all_entropies_indices[minority_lb:minority_ub]
+
     ###: for debug, remove later
     # poison_indices = np.nonzero(is_poisoned == 1)[0]
     # minority_indices = poison_indices[:minority_num]

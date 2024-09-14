@@ -299,8 +299,8 @@ def find_trigger_channels(
     is_poisoned = []  # for all images in the dataset
     total_images = 0
 
+    # TODO: add this for probing
     all_probe_votes = []
-
     for i, content in enumerate(train_probe_loader):
         (images, target, _) = content
 
@@ -472,6 +472,7 @@ def find_trigger_channels(
     essential_indices = [idx for (idx, occ_count) in essential_indices]
 
     # TODO: remove all_probe_votes from all_votes
+    all_probe_votes = np.concatenate(all_probe_votes, axis=0)  # [#dataset, n_view*channel_num]
     probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
         max(args.channel_num)
     )

@@ -294,207 +294,182 @@ def generate_view_tensors(input, ss_transform):
 def find_trigger_channels(
     args, data_loader, train_probe_loader, backbone, ss_transform
 ):
-    all_entropies = []  # for all images in the dataset
-    all_votes = []  # for all images in the dataset
-    is_poisoned = []  # for all images in the dataset
-    total_images = 0
+    # all_entropies = []  # for all images in the dataset
+    # all_votes = []  # for all images in the dataset
+    # is_poisoned = []  # for all images in the dataset
+    # total_images = 0
 
-    # TODO: add this for probing
-    all_probe_votes = []
-    for i, content in enumerate(train_probe_loader):
-        (images, target, _) = content
+    # # # TODO: add this for probing
+    # # all_probe_votes = []
+    # # for i, content in enumerate(train_probe_loader):
+    # #     (images, target, _) = content
 
-        images = images.to(device)
-        views = generate_view_tensors(images, ss_transform)
-        views = views.to(device)
+    # #     images = images.to(device)
+    # #     views = generate_view_tensors(images, ss_transform)
+    # #     views = views.to(device)
 
-        bs, n_views, c, h, w = views.shape
-        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        vision_features = backbone(views)  # [bs*n_views, 512]
-        _, C = vision_features.shape
-        vision_features = vision_features.detach().cpu().numpy()
-        u, s, v = np.linalg.svd(
-            vision_features - np.mean(vision_features, axis=0, keepdims=True),
-            full_matrices=False,
-        )
+    # #     bs, n_views, c, h, w = views.shape
+    # #     views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+    # #     vision_features = backbone(views)  # [bs*n_views, 512]
+    # #     _, C = vision_features.shape
+    # #     vision_features = vision_features.detach().cpu().numpy()
+    # #     u, s, v = np.linalg.svd(
+    # #         vision_features - np.mean(vision_features, axis=0, keepdims=True),
+    # #         full_matrices=False,
+    # #     )
 
-        # get top eigenvector
-        eig_for_indexing = v[0:1]  # [1, C]
+    # #     # get top eigenvector
+    # #     eig_for_indexing = v[0:1]  # [1, C]
 
-        # adjust direction (sign)
-        corrs = np.matmul(
-            eig_for_indexing, np.transpose(vision_features)
-        )  # [1, bs*n_view]
-        coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-        coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-        elementwise = (
-            eig_for_indexing * vision_features * coeff_adjust
-        )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+    # #     # adjust direction (sign)
+    # #     corrs = np.matmul(
+    # #         eig_for_indexing, np.transpose(vision_features)
+    # #     )  # [1, bs*n_view]
+    # #     coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
+    # #     coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
+    # #     elementwise = (
+    # #         eig_for_indexing * vision_features * coeff_adjust
+    # #     )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
 
-        # get contributing indices sorted from low to high
-        max_indices = np.argsort(
-            elementwise, axis=1
-        )  # [bs*n_view, C], C are indices, sorted by value from low to high
-        # total_images += bs
-        max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
+    # #     # get contributing indices sorted from low to high
+    # #     max_indices = np.argsort(
+    # #         elementwise, axis=1
+    # #     )  # [bs*n_view, C], C are indices, sorted by value from low to high
+    # #     # total_images += bs
+    # #     max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
-        max_indices_at_channel = max_indices[
-            :, :, -max(args.channel_num) :
-        ]  # [bs, n_view, channel_num]
-        max_indices_at_channel = max_indices_at_channel.reshape(
-            bs, -1
-        )  # [bs, n_view*channel_num]
-        all_probe_votes.append(max_indices_at_channel)
+    # #     max_indices_at_channel = max_indices[
+    # #         :, :, -max(args.channel_num) :
+    # #     ]  # [bs, n_view, channel_num]
+    # #     max_indices_at_channel = max_indices_at_channel.reshape(
+    # #         bs, -1
+    # #     )  # [bs, n_view*channel_num]
+    # #     all_probe_votes.append(max_indices_at_channel)
+    all_clean = []
+    contain_poi = []
+    poi_position = []
 
     for i, content in tqdm(enumerate(data_loader)):
+        if len(all_clean) == 4 and len(contain_poi) == 4:
+            break
+
         (images, is_batch_poisoned, _, _) = content
         is_batch_poisoned = is_batch_poisoned.to(device)
 
-        images = images.to(device)
-        views = generate_view_tensors(images, ss_transform)
-        views = views.to(device)
+        if 1 in is_batch_poisoned and len(contain_poi) < 4:
+            # contain poi
+            poi_position.append(is_batch_poisoned)
 
-        bs, n_views, c, h, w = views.shape
-        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        vision_features = backbone(views)  # [bs*n_views, 512]
-        _, C = vision_features.shape
-        vision_features = vision_features.detach().cpu().numpy()
-        u, s, v = np.linalg.svd(
-            vision_features - np.mean(vision_features, axis=0, keepdims=True),
-            full_matrices=False,
-        )
+            images = images.to(device)
+            views = generate_view_tensors(images, ss_transform)
+            views = views.to(device)
 
-        # get top eigenvector
-        eig_for_indexing = v[0:1]  # [1, C]
+            bs, n_views, c, h, w = views.shape
+            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+            vision_features = backbone(views)  # [bs*n_views, 512]
+            vision_features = vision_features.reshape(
+                bs, n_views, c, h, w
+            )  # [bs, n_views, c, h, w]
+            contain_poi.append(vision_features)
 
-        # adjust direction (sign)
-        corrs = np.matmul(
-            eig_for_indexing, np.transpose(vision_features)
-        )  # [1, bs*n_view]
-        coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-        coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-        elementwise = (
-            eig_for_indexing * vision_features * coeff_adjust
-        )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+        if 1 not in is_batch_poisoned and len(all_clean) < 4:
+            # all clean (shuffled)
+            images = images.to(device)
+            views = generate_view_tensors(images, ss_transform)
+            views = views.to(device)
+            bs, n_views, c, h, w = views.shape
+            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+            vision_features = backbone(views)  # [bs*n_views, 512]
+            vision_features = vision_features.reshape(
+                bs, n_views, c, h, w
+            )  # [bs, n_views, c, h, w]
+            all_clean.append(vision_features)
+    all_clean = torch.stack(all_clean, dim=0)  # [4, bs, n_views, c, h, w]
+    contain_poi = torch.stack(contain_poi, dim=0)  # [4, bs, n_views, c, h, w]
+    poi_position = torch.stack(poi_position, dim=0)  # [4, bs]
 
-        # get contributing indices sorted from low to high
-        max_indices = np.argsort(
-            elementwise, axis=1
-        )  # [bs*n_view, C], C are indices, sorted by value from low to high
-        total_images += bs
-        max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
+    with open(f"{args.dataset}_all_clean.t", "wb") as f:
+        torch.save(all_clean, f)
+    with open(f"{args.dataset}_contain_poi.t", "wb") as f:
+        torch.save(contain_poi, f)
+    with open(f"{args.dataset}_poi_position.t", "wb") as f:
+        torch.save(poi_position, f)
 
-        max_indices_at_channel = max_indices[
-            :, :, -max(args.channel_num) :
-        ]  # [bs, n_view, channel_num]
-        max_indices_at_channel = max_indices_at_channel.reshape(
-            bs, -1
-        )  # [bs, n_view*channel_num]
+    exit()
+    #     all_entropies.extend(entropies)
+    #     all_votes.append(max_indices_at_channel)
+    #     is_poisoned.append(is_batch_poisoned)
 
-        entropies = []  # bs elements
-        if args.minority_criterion == "entropy":
-            for votes in max_indices_at_channel:  # for each original image
-                votes_counter = Counter(votes).most_common()
-                counts = np.array([c for (name, c) in votes_counter])
-                p = counts / counts.sum()
-                h = -np.sum(p * np.log(p))
-                entropy = np.exp(h)
-                entropies.append(entropy)
-        elif args.minority_criterion == "ss_score":
-            corrs = np.abs(corrs)
-            corrs = corrs.reshape(-1, n_views)  #  [bs,n_views]
-            ss_scores = -1 * np.max(corrs, axis=1)  # [bs]
-            entropies.extend(ss_scores.tolist())
-        elif args.minority_criterion == "ss_score_elements":
-            num_interested_channels = 1  # TODO:  changeale
-            top_channel_votes = max_indices[
-                :, :, -num_interested_channels:
-            ].flatten()  # [bs*n_view*num_interested_channels]
-            votes_of_batch = Counter(top_channel_votes).most_common(
-                num_interested_channels
-            )
-            chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
-            scores = elementwise[:, chosen_channels]
-            scores = np.sum(scores, axis=1)  # [bs*n_view, ]
+    # all_entropies = np.array(all_entropies)
+    # is_poisoned = torch.cat(is_poisoned)
+    # is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
+    # score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
+    # print(f"the AUROC score is: {score*100}")
+    # all_entropies_indices = np.argsort(
+    #     all_entropies
+    # )  # indices, sorted from low to high by entropy value
 
-            scores = scores.reshape(-1, n_views)  # [ bs, n_views]
-            ss_scores = -1 * np.max(scores, axis=1)  # [bs]
-            entropies.extend(ss_scores.tolist())
+    # # minority_num = int(total_images * args.minority_percent)
+    # minority_lb = int(total_images * args.minority_percent_lower_bound)
+    # minority_ub = int(total_images * args.minority_percent_upper_bound)
+    # minority_num = minority_ub - minority_lb
 
-        all_entropies.extend(entropies)
-        all_votes.append(max_indices_at_channel)
-        is_poisoned.append(is_batch_poisoned)
+    # # minority_indices = all_entropies_indices[:minority_num]
+    # minority_indices = all_entropies_indices[minority_lb:minority_ub]
 
-    all_entropies = np.array(all_entropies)
-    is_poisoned = torch.cat(is_poisoned)
-    is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
-    score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
-    print(f"the AUROC score is: {score*100}")
-    all_entropies_indices = np.argsort(
-        all_entropies
-    )  # indices, sorted from low to high by entropy value
+    # all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
 
-    # minority_num = int(total_images * args.minority_percent)
-    minority_lb = int(total_images * args.minority_percent_lower_bound)
-    minority_ub = int(total_images * args.minority_percent_upper_bound)
-    minority_num = minority_ub - minority_lb
+    # all_votes = all_votes[
+    #     minority_indices
+    # ]  # votes by minority, [minority_num, n_view*channel_num]
 
-    # minority_indices = all_entropies_indices[:minority_num]
-    minority_indices = all_entropies_indices[minority_lb:minority_ub]
+    # is_poisoned = is_poisoned[minority_indices]
+    # poisoned_found = is_poisoned.sum()
+    # print(
+    #     f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
+    # )
 
-    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
+    # # obtain trigger channels
+    # essential_indices = Counter(all_votes.flatten()).most_common(
+    #     2 * max(args.channel_num)  # TODO: note that we 2*
+    # )
 
-    all_votes = all_votes[
-        minority_indices
-    ]  # votes by minority, [minority_num, n_view*channel_num]
+    # print(
+    #     f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
+    # )
 
-    is_poisoned = is_poisoned[minority_indices]
-    poisoned_found = is_poisoned.sum()
-    print(
-        f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
-    )
+    # print(
+    #     f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
+    # )
+    # print(
+    #     f"entropy mean is {np.mean(all_entropies):.2f}, std is {np.std(all_entropies):.2f}"
+    # )
+    # essential_indices = [idx for (idx, occ_count) in essential_indices]
 
-    # obtain trigger channels
-    essential_indices = Counter(all_votes.flatten()).most_common(
-        2 * max(args.channel_num)  # TODO: note that we 2*
-    )
+    # # TODO: remove all_probe_votes from all_votes
+    # all_probe_votes = np.concatenate(
+    #     all_probe_votes, axis=0
+    # )  # [#dataset, n_view*channel_num]
+    # probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
+    #     max(args.channel_num)
+    # )
+    # probe_essential_indices = [
+    #     idx for (idx, occ_count) in probe_essential_indices
+    # ]  # a list of channel indices
 
-    print(
-        f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
-    )
+    # print(f"probe_essential_indices are: {probe_essential_indices}")
 
-    print(
-        f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
-    )
-    print(
-        f"entropy mean is {np.mean(all_entropies):.2f}, std is {np.std(all_entropies):.2f}"
-    )
-    essential_indices = [idx for (idx, occ_count) in essential_indices]
+    # essential_indices = [
+    #     item for item in essential_indices if item not in probe_essential_indices
+    # ]
 
-    # TODO: remove all_probe_votes from all_votes
-    all_probe_votes = np.concatenate(
-        all_probe_votes, axis=0
-    )  # [#dataset, n_view*channel_num]
-    probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
-        max(args.channel_num)
-    )
-    probe_essential_indices = [
-        idx for (idx, occ_count) in probe_essential_indices
-    ]  # a list of channel indices
+    # essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
 
-    print(f"probe_essential_indices are: {probe_essential_indices}")
+    # print(f"after removing probe channels, essential_indices are: {essential_indices}")
 
-    essential_indices = [
-        item for item in essential_indices if item not in probe_essential_indices
-    ]
+    # # TODO: end of removing
 
-    essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
-
-    print(f"after removing probe channels, essential_indices are: {essential_indices}")
-
-    # TODO: end of removing
-
-    return essential_indices
+    # return essential_indices
 
 
 # DISABLED, because it makes 0-channel_mean not 0, which is not good for our SS detecting strategy

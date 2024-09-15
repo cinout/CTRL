@@ -388,11 +388,11 @@ def find_trigger_channels(
     contain_poi = torch.stack(contain_poi, dim=0)  # [4, bs, n_views, c, h, w]
     poi_position = torch.stack(poi_position, dim=0)  # [4, bs]
 
-    with open(f"{args.dataset}_all_clean.t", "wb") as f:
+    with open(f"dataset_{args.dataset}_all_clean.t", "wb") as f:
         torch.save(all_clean, f)
-    with open(f"{args.dataset}_contain_poi.t", "wb") as f:
+    with open(f"dataset_{args.dataset}_contain_poi.t", "wb") as f:
         torch.save(contain_poi, f)
-    with open(f"{args.dataset}_poi_position.t", "wb") as f:
+    with open(f"dataset_{args.dataset}_poi_position.t", "wb") as f:
         torch.save(poi_position, f)
 
     exit()

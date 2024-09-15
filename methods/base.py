@@ -345,20 +345,20 @@ def find_trigger_channels(
     # #         bs, -1
     # #     )  # [bs, n_view*channel_num]
     # #     all_probe_votes.append(max_indices_at_channel)
-    all_clean = []
-    contain_poi = []
-    poi_position = []
+
+    clean_count = 0
+    poi_count = 0
 
     for i, content in tqdm(enumerate(data_loader)):
-        if len(all_clean) == 4 and len(contain_poi) == 4:
+        if clean_count == 4 and poi_count == 4:
             break
 
         (images, is_batch_poisoned, _, _) = content
         is_batch_poisoned = is_batch_poisoned.to(device)
 
-        if 1 in is_batch_poisoned and len(contain_poi) < 4:
+        if 1 in is_batch_poisoned and poi_count < 4:
+            poi_count += 1
             # contain poi
-            poi_position.append(is_batch_poisoned)
 
             images = images.to(device)
             views = generate_view_tensors(images, ss_transform)
@@ -370,9 +370,13 @@ def find_trigger_channels(
             vision_features = vision_features.reshape(
                 bs, n_views, -1
             )  # [bs, n_views, 512]
-            contain_poi.append(vision_features)
+            with open(f"dataset_{args.dataset}_poi_{poi_count}.t", "wb") as f:
+                torch.save(vision_features, f)
+            with open(f"dataset_{args.dataset}_poi_{poi_count}_position.t", "wb") as f:
+                torch.save(is_batch_poisoned, f)
 
-        if 1 not in is_batch_poisoned and len(all_clean) < 4:
+        if 1 not in is_batch_poisoned and clean_count < 4:
+            clean_count += 1
             # all clean (shuffled)
             images = images.to(device)
             views = generate_view_tensors(images, ss_transform)
@@ -383,17 +387,12 @@ def find_trigger_channels(
             vision_features = vision_features.reshape(
                 bs, n_views, -1
             )  # [bs, n_views, 512]
-            all_clean.append(vision_features)
-    all_clean = torch.stack(all_clean, dim=0)  # [4, bs, n_views, c, h, w]
-    contain_poi = torch.stack(contain_poi, dim=0)  # [4, bs, n_views, c, h, w]
-    poi_position = torch.stack(poi_position, dim=0)  # [4, bs]
+            with open(f"dataset_{args.dataset}_clean_{clean_count}.t", "wb") as f:
+                torch.save(vision_features, f)
 
-    with open(f"dataset_{args.dataset}_all_clean.t", "wb") as f:
-        torch.save(all_clean, f)
-    with open(f"dataset_{args.dataset}_contain_poi.t", "wb") as f:
-        torch.save(contain_poi, f)
-    with open(f"dataset_{args.dataset}_poi_position.t", "wb") as f:
-        torch.save(poi_position, f)
+    # all_clean = torch.stack(all_clean, dim=0)  # [4, bs, n_views, c, h, w]
+    # contain_poi = torch.stack(contain_poi, dim=0)  # [4, bs, n_views, c, h, w]
+    # poi_position = torch.stack(poi_position, dim=0)  # [4, bs]
 
     exit()
     #     all_entropies.extend(entropies)

@@ -368,8 +368,8 @@ def find_trigger_channels(
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
             vision_features = backbone(views)  # [bs*n_views, 512]
             vision_features = vision_features.reshape(
-                bs, n_views, c, h, w
-            )  # [bs, n_views, c, h, w]
+                bs, n_views, -1
+            )  # [bs, n_views, 512]
             contain_poi.append(vision_features)
 
         if 1 not in is_batch_poisoned and len(all_clean) < 4:
@@ -381,8 +381,8 @@ def find_trigger_channels(
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
             vision_features = backbone(views)  # [bs*n_views, 512]
             vision_features = vision_features.reshape(
-                bs, n_views, c, h, w
-            )  # [bs, n_views, c, h, w]
+                bs, n_views, -1
+            )  # [bs, n_views, 512]
             all_clean.append(vision_features)
     all_clean = torch.stack(all_clean, dim=0)  # [4, bs, n_views, c, h, w]
     contain_poi = torch.stack(contain_poi, dim=0)  # [4, bs, n_views, c, h, w]

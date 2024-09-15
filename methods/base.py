@@ -472,7 +472,9 @@ def find_trigger_channels(
     essential_indices = [idx for (idx, occ_count) in essential_indices]
 
     # TODO: remove all_probe_votes from all_votes
-    all_probe_votes = np.concatenate(all_probe_votes, axis=0)  # [#dataset, n_view*channel_num]
+    all_probe_votes = np.concatenate(
+        all_probe_votes, axis=0
+    )  # [#dataset, n_view*channel_num]
     probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
         max(args.channel_num)
     )
@@ -488,9 +490,7 @@ def find_trigger_channels(
 
     essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
 
-    print(
-        f"after removing probe channels, essential_indices are: {probe_essential_indices}"
-    )
+    print(f"after removing probe channels, essential_indices are: {essential_indices}")
 
     # TODO: end of removing
 

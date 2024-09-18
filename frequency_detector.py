@@ -40,7 +40,7 @@ def patching_train(clean_sample, x_train, image_size):
     elif attack == 2:
         return addnoise(output)
     elif attack == 3:
-        return randshadow(output)
+        return randshadow(output, image_size)
     if attack == 4:
         randind = np.random.randint(x_train.shape[0])
         tri = x_train[randind]

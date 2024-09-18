@@ -309,58 +309,75 @@ def find_trigger_channels(
 
     if args.use_frequency_detector:
         freq_detector = FrequencyDetector(height=args.image_size, width=args.image_size)
-        optimizer = torch.optim.Adadelta(
-            freq_detector.parameters(), lr=0.05, weight_decay=1e-4
-        )
-        criterion = nn.CrossEntropyLoss()
-        freq_detector.train()
+        if args.pretrained_frequency_model == "":
+            # train from scratch
+            optimizer = torch.optim.Adadelta(
+                freq_detector.parameters(), lr=0.05, weight_decay=1e-4
+            )
+            criterion = nn.CrossEntropyLoss()
+            freq_detector.train()
 
-        for epoch in range(args.frequency_detector_epochs):
-            for content in train_probe_freq_detector_loader:
-                # prepare data in this batch
-                (images_clean, _, _) = content
-                images_clean = images_clean.to(device)
-                images_clean = torch.permute(images_clean, (0, 2, 3, 1))
-                images_clean = np.array(
-                    images_clean.cpu(), dtype=np.float32
-                )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
-                images_poi = np.zeros_like(images_clean)
-                for i in range(images_clean.shape[0]):
-                    images_poi[i] = patching_train(images_clean[i], images_clean)
+            for epoch in range(args.frequency_detector_epochs):
+                for content in train_probe_freq_detector_loader:
+                    # prepare data in this batch
+                    (images_clean, _, _) = content
+                    images_clean = images_clean.to(device)
+                    images_clean = torch.permute(images_clean, (0, 2, 3, 1))
+                    images_clean = np.array(
+                        images_clean.cpu(), dtype=np.float32
+                    )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+                    images_poi = np.zeros_like(images_clean)
+                    for i in range(images_clean.shape[0]):
+                        images_poi[i] = patching_train(images_clean[i], images_clean)
 
-                images = np.concatenate(
-                    [images_clean, images_poi], axis=0
-                )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                for i in range(images.shape[0]):
-                    for channel in range(3):
-                        images[i][:, :, channel] = dct2(
-                            (images[i][:, :, channel] * 255).astype(np.uint8)
-                        )
-                labels = np.concatenate(
-                    (
-                        np.zeros(images_clean.shape[0]),
-                        np.ones(images_clean.shape[0]),
-                    ),
-                    axis=0,
-                )
+                    images = np.concatenate(
+                        [images_clean, images_poi], axis=0
+                    )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                    for i in range(images.shape[0]):
+                        for channel in range(3):
+                            images[i][:, :, channel] = dct2(
+                                (images[i][:, :, channel] * 255).astype(np.uint8)
+                            )
+                    labels = np.concatenate(
+                        (
+                            np.zeros(images_clean.shape[0]),
+                            np.ones(images_clean.shape[0]),
+                        ),
+                        axis=0,
+                    )
 
-                idx = np.arange(images.shape[0])
-                random.shuffle(idx)
-                images = images[idx]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                images = torch.tensor(images, device=device)
-                images = torch.permute(images, (0, 3, 1, 2))  # shape: [2*bs, 3, 32, 32]
+                    idx = np.arange(images.shape[0])
+                    random.shuffle(idx)
+                    images = images[
+                        idx
+                    ]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                    images = torch.tensor(images, device=device)
+                    images = torch.permute(
+                        images, (0, 3, 1, 2)
+                    )  # shape: [2*bs, 3, 32, 32]
 
-                labels = labels[idx]  # shape: [2*bs]
-                labels = torch.tensor(labels, device=device, dtype=torch.long)
+                    labels = labels[idx]  # shape: [2*bs]
+                    labels = torch.tensor(labels, device=device, dtype=torch.long)
 
-                # obtain loss and update params
-                output = freq_detector(images)  # [2*bs, 2]
-                loss = criterion(output, labels)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                print(f"> epoch is {epoch}; loss is {loss.item()}")
-            # TODO: evaluate data
+                    # obtain loss and update params
+                    output = freq_detector(images)  # [2*bs, 2]
+                    loss = criterion(output, labels)
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                    print(f"> epoch is {epoch}; loss is {loss.item()}")
+            save_model(
+                freq_detector.state_dict(),
+                filename=os.path.join(args.saved_path, "freq_detector.pth.tar"),
+            )
+        else:
+            # load model
+            pretrained_state_dict = torch.load(
+                args.pretrained_frequency_model, map_location=device
+            )
+            freq_detector.load_state_dict(pretrained_state_dict, strict=True)
+
+        # TODO: evaluate on test data
 
     all_probe_votes = []
     for i, content in enumerate(train_probe_loader):

@@ -33,6 +33,13 @@ parser.add_argument(
     default="",
     help="path for pretrained linear model (stage 2)",
 )
+# TODO: add to slurms
+parser.add_argument(
+    "--pretrained_frequency_model",
+    type=str,
+    default="",
+    help="path for pretrained frequency detector (stage 2)",
+)
 parser.add_argument("--note", type=str, default="")
 parser.add_argument("--image_size", type=int, default=32)
 parser.add_argument(

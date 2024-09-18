@@ -331,7 +331,9 @@ def find_trigger_channels(
                     )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
                     images_poi = np.zeros_like(images_clean)
                     for i in range(images_clean.shape[0]):
-                        images_poi[i] = patching_train(images_clean[i], images_clean)
+                        images_poi[i] = patching_train(
+                            images_clean[i], images_clean, args.image_size
+                        )
 
                     images = np.concatenate(
                         [images_clean, images_poi], axis=0

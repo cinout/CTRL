@@ -17,15 +17,15 @@ def addnoise(img):
     return auged
 
 
-def randshadow(img):
+def randshadow(img, image_size):
     aug = albumentations.RandomShadow(p=1)
     test = (img * 255).astype(np.uint8)
-    augmented = aug(image=cv2.resize(test, (32, 32)))
+    augmented = aug(image=cv2.resize(test, (image_size, image_size)))
     auged = augmented["image"] / 255
     return auged
 
 
-def patching_train(clean_sample, x_train):
+def patching_train(clean_sample, x_train, image_size):
     """
     this code conducts a patching procedure with random white blocks or random noise block
     """
@@ -56,16 +56,20 @@ def patching_train(clean_sample, x_train):
         )
     elif rand_loc == 1:
         output[
-            margin : margin + pat_size_x, 32 - margin - pat_size_y : 32 - margin, :
+            margin : margin + pat_size_x,
+            image_size - margin - pat_size_y : image_size - margin,
+            :,
         ] = block
     elif rand_loc == 2:
         output[
-            32 - margin - pat_size_x : 32 - margin, margin : margin + pat_size_y, :
+            image_size - margin - pat_size_x : image_size - margin,
+            margin : margin + pat_size_y,
+            :,
         ] = block
     elif rand_loc == 3:
         output[
-            32 - margin - pat_size_x : 32 - margin,
-            32 - margin - pat_size_y : 32 - margin,
+            image_size - margin - pat_size_x : image_size - margin,
+            image_size - margin - pat_size_y : image_size - margin,
             :,
         ] = block  # right bottom
 

@@ -8,11 +8,13 @@ import copy
 from collections import Counter
 import random
 
-labels = (np.concatenate((np.zeros(5), np.ones(5)), axis=0)).astype(np.uint)
-print(labels)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+labels = np.concatenate(
+    (
+        np.zeros(10),
+        np.ones(10),
+    ),
+    axis=0,
+)
 
-idx = np.arange(10)
-random.shuffle(idx)
-print(idx)
-labels = labels[idx]
-print(labels)
+labels = torch.tensor(labels, device=device, dtype=torch.long)

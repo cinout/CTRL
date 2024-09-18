@@ -336,15 +336,13 @@ def find_trigger_channels(
                         images[i][:, :, channel] = dct2(
                             (images[i][:, :, channel] * 255).astype(np.uint8)
                         )
-                labels = (
-                    np.concatenate(
-                        (
-                            np.zeros(images_clean.shape[0]),
-                            np.ones(images_clean.shape[0]),
-                        ),
-                        axis=0,
-                    )
-                ).astype(np.uint)
+                labels = np.concatenate(
+                    (
+                        np.zeros(images_clean.shape[0]),
+                        np.ones(images_clean.shape[0]),
+                    ),
+                    axis=0,
+                )
 
                 idx = np.arange(images.shape[0])
                 random.shuffle(idx)

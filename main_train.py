@@ -8,6 +8,7 @@ import random
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from datetime import datetime
+from loaders.diffaugment import set_aug_diff, PoisonAgent
 
 
 # sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -16,7 +17,6 @@ from methods import set_model
 from methods.base import CLTrainer
 from utils.util import *
 from utils.frequency import PoisonFre
-from loaders.diffaugment import set_aug_diff, PoisonAgent
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 

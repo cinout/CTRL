@@ -3,6 +3,7 @@ import torch.nn as nn
 import albumentations
 from scipy.fftpack import dct
 import numpy as np
+import cv2
 
 
 def dct2(block):

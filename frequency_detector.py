@@ -121,11 +121,3 @@ class FrequencyDetector(nn.Module):
         x = self.model(x)
         x = self.softmax(x)
         return x
-
-
-for epoch in range(epochs):
-    output = model(x_final_train)
-    loss = criterion(output, hot_lab)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()

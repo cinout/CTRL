@@ -380,52 +380,53 @@ def find_trigger_channels(
             )
             freq_detector.load_state_dict(pretrained_state_dict, strict=True)
 
-    all_probe_votes = []
-    for i, content in enumerate(train_probe_loader):
-        (images, target, _) = content
+    if args.ignore_probe_channels:
+        all_probe_votes = []
+        for i, content in enumerate(train_probe_loader):
+            (images, target, _) = content
 
-        images = images.to(device)
-        views = generate_view_tensors(images, ss_transform)
+            images = images.to(device)
+            views = generate_view_tensors(images, ss_transform)
 
-        views = views.to(device)
+            views = views.to(device)
 
-        bs, n_views, c, h, w = views.shape
-        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        vision_features = backbone(views)  # [bs*n_views, 512]
-        _, C = vision_features.shape
-        vision_features = vision_features.detach().cpu().numpy()
-        u, s, v = np.linalg.svd(
-            vision_features - np.mean(vision_features, axis=0, keepdims=True),
-            full_matrices=False,
-        )
+            bs, n_views, c, h, w = views.shape
+            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+            vision_features = backbone(views)  # [bs*n_views, 512]
+            _, C = vision_features.shape
+            vision_features = vision_features.detach().cpu().numpy()
+            u, s, v = np.linalg.svd(
+                vision_features - np.mean(vision_features, axis=0, keepdims=True),
+                full_matrices=False,
+            )
 
-        # get top eigenvector
-        eig_for_indexing = v[0:1]  # [1, C]
+            # get top eigenvector
+            eig_for_indexing = v[0:1]  # [1, C]
 
-        # adjust direction (sign)
-        corrs = np.matmul(
-            eig_for_indexing, np.transpose(vision_features)
-        )  # [1, bs*n_view]
-        coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-        coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-        elementwise = (
-            eig_for_indexing * vision_features * coeff_adjust
-        )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+            # adjust direction (sign)
+            corrs = np.matmul(
+                eig_for_indexing, np.transpose(vision_features)
+            )  # [1, bs*n_view]
+            coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
+            coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
+            elementwise = (
+                eig_for_indexing * vision_features * coeff_adjust
+            )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
 
-        # get contributing indices sorted from low to high
-        max_indices = np.argsort(
-            elementwise, axis=1
-        )  # [bs*n_view, C], C are indices, sorted by value from low to high
-        # total_images += bs
-        max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
+            # get contributing indices sorted from low to high
+            max_indices = np.argsort(
+                elementwise, axis=1
+            )  # [bs*n_view, C], C are indices, sorted by value from low to high
+            # total_images += bs
+            max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
-        max_indices_at_channel = max_indices[
-            :, :, -max(args.channel_num) :
-        ]  # [bs, n_view, channel_num]
-        max_indices_at_channel = max_indices_at_channel.reshape(
-            bs, -1
-        )  # [bs, n_view*channel_num]
-        all_probe_votes.append(max_indices_at_channel)
+            max_indices_at_channel = max_indices[
+                :, :, -max(args.channel_num) :
+            ]  # [bs, n_view, channel_num]
+            max_indices_at_channel = max_indices_at_channel.reshape(
+                bs, -1
+            )  # [bs, n_view*channel_num]
+            all_probe_votes.append(max_indices_at_channel)
 
     for i, content in tqdm(enumerate(data_loader)):
         (images, is_batch_poisoned, _, _) = content
@@ -567,44 +568,35 @@ def find_trigger_channels(
         f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
     )
 
-    # obtain trigger channels
-    essential_indices = Counter(all_votes.flatten()).most_common(
-        2 * max(args.channel_num)
-    )
+    if args.ignore_probe_channels:
+        # REMOVE channels that appear in probe dataset
 
-    # print(
-    #     f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
-    # )
-    # print(
-    #     f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
-    # )
-    # print(
-    #     f"entropy mean is {np.mean(all_entropies):.2f}, std is {np.std(all_entropies):.2f}"
-    # )
+        essential_indices = Counter(all_votes.flatten()).most_common(
+            2 * max(args.channel_num)
+        )
+        essential_indices = [idx for (idx, occ_count) in essential_indices]
 
-    essential_indices = [idx for (idx, occ_count) in essential_indices]
+        all_probe_votes = np.concatenate(
+            all_probe_votes, axis=0
+        )  # [#dataset, n_view*channel_num]
+        probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
+            max(args.channel_num)
+        )
+        probe_essential_indices = [
+            idx for (idx, occ_count) in probe_essential_indices
+        ]  # a list of channel indices
 
-    # FIXME: remove all_probe_votes from all_votes
-    all_probe_votes = np.concatenate(
-        all_probe_votes, axis=0
-    )  # [#dataset, n_view*channel_num]
-    probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
-        max(args.channel_num)
-    )
-    probe_essential_indices = [
-        idx for (idx, occ_count) in probe_essential_indices
-    ]  # a list of channel indices
-
-    # print(f"probe_essential_indices are: {probe_essential_indices}")
-
-    essential_indices = [
-        item for item in essential_indices if item not in probe_essential_indices
-    ]
-    essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
-
-    # print(f"after removing probe channels, essential_indices are: {essential_indices}")
-
-    # FIXME: end of removing
+        essential_indices = [
+            item for item in essential_indices if item not in probe_essential_indices
+        ]
+        essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
+    else:
+        essential_indices = Counter(all_votes.flatten()).most_common(
+            max(args.channel_num)
+        )
+        essential_indices = torch.tensor(
+            [idx for (idx, occ_count) in essential_indices]
+        )
 
     return essential_indices
 

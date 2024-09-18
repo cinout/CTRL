@@ -8,7 +8,7 @@ import random
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from datetime import datetime
-from loaders.diffaugment import set_aug_diff, PoisonAgent
+from data_prepare.diffaugment import set_aug_diff, PoisonAgent
 
 
 # sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))

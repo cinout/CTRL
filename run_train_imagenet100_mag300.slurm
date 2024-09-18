@@ -63,13 +63,14 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/20240906_183318_46_6-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     \
     --minority_criterion ss_score \
-    --minority_percent_lower_bound 0.002 \
-    --minority_percent_upper_bound 0.010 \
+    --minority_percent_lower_bound 0.004 \
+    --minority_percent_upper_bound 0.008 \
     \
     --use_frequency_detector \
-    --frequency_detector_epochs 500 \
+    --frequency_detector_epochs 400 \
     \
-    --note "use frequency detector" \
+    --ignore_probe_channels \
+    --note "0.004-0.008, ep=400" \
     
 
 ##Log this job's resource usage stats###

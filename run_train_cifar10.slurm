@@ -55,22 +55,24 @@ python -u main_train.py \
     \
     --use_linear_probing \
     \
-    --use_mask_pruning \
-    --clean_threshold 0.0 \
-    \
     --detect_trigger_channels \
-    --channel_num 1 2 3 4 6 8 10 12 14 16 20 24 \
+    --channel_num 12 16 24 \
     \
     --pretrained_ssl_model "./Experiments/20240906_183247_61_43-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "./Experiments/20240906_183247_61_43-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     --pretrained_frequency_model "" \
     \
     --minority_criterion ss_score \
+    --minority_percent_lower_bound 0.002 \
+    --minority_percent_upper_bound 0.010 \
     \
     --use_frequency_detector \
     --frequency_detector_epochs 500 \
     \
     --note "use frequency detector" \
+    # \
+    # --use_mask_pruning \
+    # --clean_threshold 0.0 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

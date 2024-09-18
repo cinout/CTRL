@@ -527,38 +527,40 @@ def find_trigger_channels(
             output = output[:, 1].detach().cpu().tolist()
             all_frequencies.extend(output)
 
-    all_entropies = np.array(all_entropies)
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
-    score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
-    print(f"the AUROC score of all_entropies is: {score*100}")
+
+    minority_lb = int(total_images * args.minority_percent_lower_bound)
+    minority_ub = int(total_images * args.minority_percent_upper_bound)
+    minority_num = minority_ub - minority_lb
+
+    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
 
     if args.use_frequency_detector:
         all_frequencies = np.array(all_frequencies)
         freq_auc_score = roc_auc_score(y_true=is_poisoned, y_score=all_frequencies)
         print(f"the AUROC score of frequency detector is: {freq_auc_score*100}")
-
+        all_frequencies_indices = np.argsort(
+            all_frequencies
+        )  # indices, sorted from low to high by entropy value
+        minority_indices = all_frequencies_indices[-minority_ub:-minority_lb]
         # TODO: remove later
         exit()
+    else:
+        all_entropies = np.array(all_entropies)
+        score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
+        print(f"the AUROC score of all_entropies is: {score*100}")
 
-    all_entropies_indices = np.argsort(
-        all_entropies
-    )  # indices, sorted from low to high by entropy value
-
-    # minority_num = int(total_images * args.minority_percent)
-    minority_lb = int(total_images * args.minority_percent_lower_bound)
-    minority_ub = int(total_images * args.minority_percent_upper_bound)
-    minority_num = minority_ub - minority_lb
-
-    # minority_indices = all_entropies_indices[:minority_num]
-    minority_indices = all_entropies_indices[minority_lb:minority_ub]
-
-    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
+        all_entropies_indices = np.argsort(
+            all_entropies
+        )  # indices, sorted from low to high by entropy value
+        minority_indices = all_entropies_indices[minority_lb:minority_ub]
 
     all_votes = all_votes[
         minority_indices
     ]  # votes by minority, [minority_num, n_view*channel_num]
 
+    ### for debugging, reporting percentage of poisoned images
     is_poisoned = is_poisoned[minority_indices]
     poisoned_found = is_poisoned.sum()
     print(
@@ -570,16 +572,16 @@ def find_trigger_channels(
         2 * max(args.channel_num)
     )
 
-    print(
-        f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
-    )
+    # print(
+    #     f"essential_indices: {essential_indices}; #samples: {minority_num*args.num_views*max(args.channel_num)}"
+    # )
+    # print(
+    #     f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
+    # )
+    # print(
+    #     f"entropy mean is {np.mean(all_entropies):.2f}, std is {np.std(all_entropies):.2f}"
+    # )
 
-    print(
-        f"lowest entropies are: {[ round(item,2) for item in all_entropies[minority_indices]]}"
-    )
-    print(
-        f"entropy mean is {np.mean(all_entropies):.2f}, std is {np.std(all_entropies):.2f}"
-    )
     essential_indices = [idx for (idx, occ_count) in essential_indices]
 
     # FIXME: remove all_probe_votes from all_votes
@@ -593,15 +595,14 @@ def find_trigger_channels(
         idx for (idx, occ_count) in probe_essential_indices
     ]  # a list of channel indices
 
-    print(f"probe_essential_indices are: {probe_essential_indices}")
+    # print(f"probe_essential_indices are: {probe_essential_indices}")
 
     essential_indices = [
         item for item in essential_indices if item not in probe_essential_indices
     ]
-
     essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
 
-    print(f"after removing probe channels, essential_indices are: {essential_indices}")
+    # print(f"after removing probe channels, essential_indices are: {essential_indices}")
 
     # FIXME: end of removing
 

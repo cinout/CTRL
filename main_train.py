@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 from datetime import datetime
 
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from methods import set_model
 from methods.base import CLTrainer

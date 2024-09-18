@@ -39,7 +39,6 @@ parser.add_argument(
     default="",
     help="path for pretrained frequency detector (stage 2)",
 )
-# TODO: add to slurm
 parser.add_argument(
     "--ignore_probe_channels",
     action="store_true",
@@ -94,7 +93,6 @@ parser.add_argument(
 parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mocov2"])
 parser.add_argument("--batch_size", default=512, type=int)
 parser.add_argument("--epochs", default=800, type=int)
-# TODO: add to slumr
 parser.add_argument("--frequency_detector_epochs", default=150, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
 parser.add_argument(
@@ -154,7 +152,6 @@ parser.add_argument(
 )
 
 # for frequency detector
-# TODO: add to slurm
 parser.add_argument(
     "--use_frequency_detector",
     action="store_true",

@@ -545,8 +545,6 @@ def find_trigger_channels(
             all_frequencies
         )  # indices, sorted from low to high by entropy value
         minority_indices = all_frequencies_indices[-minority_ub:-minority_lb]
-        # TODO: remove later
-        exit()
     else:
         all_entropies = np.array(all_entropies)
         score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)

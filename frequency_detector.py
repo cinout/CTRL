@@ -25,11 +25,6 @@ def randshadow(img):
     return auged
 
 
-def normalization(data):
-    _range = np.max(data) - np.min(data)
-    return (data - np.min(data)) / _range
-
-
 def patching_train(clean_sample, x_train):
     """
     this code conducts a patching procedure with random white blocks or random noise block

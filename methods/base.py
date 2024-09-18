@@ -21,11 +21,7 @@ from networks.mask_batchnorm import MaskBatchNorm2d
 import pandas as pd
 import PIL
 import random
-
-import sys
-
-sys.path.append("..")
-from ..frequency_detector import FrequencyDetector, patching_train, dct2
+from frequency_detector import FrequencyDetector, patching_train, dct2
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

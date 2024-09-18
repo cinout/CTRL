@@ -4,7 +4,6 @@ import argparse
 import warnings
 import random
 
-from utils.frequency import PoisonFre
 
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
@@ -16,6 +15,7 @@ from datetime import datetime
 from methods import set_model
 from methods.base import CLTrainer
 from utils.util import *
+from utils.frequency import PoisonFre
 from loaders.diffaugment import set_aug_diff, PoisonAgent
 
 parser = argparse.ArgumentParser(description="CTRL Training")

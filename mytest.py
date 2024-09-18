@@ -9,12 +9,7 @@ from collections import Counter
 import random
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-labels = np.concatenate(
-    (
-        np.zeros(10),
-        np.ones(10),
-    ),
-    axis=0,
-)
-
-labels = torch.tensor(labels, device=device, dtype=torch.long)
+haha = torch.randint(0, 10, (10, 2))
+haha = -1 * haha[:, 1]
+haha = haha.detach().cpu().tolist()
+print(haha)

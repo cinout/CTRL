@@ -296,7 +296,7 @@ def generate_view_tensors(input, ss_transform):
 
 def find_trigger_channels(
     args,
-    data_loader,
+    data_loader,  # train dataset with poisoned images
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
@@ -305,9 +305,11 @@ def find_trigger_channels(
     all_entropies = []  # for all images in the dataset
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
+
     total_images = 0
 
     if args.use_frequency_detector:
+        all_frequencies = []  # for all images in the dataset
         freq_detector = FrequencyDetector(height=args.image_size, width=args.image_size)
         freq_detector = freq_detector.to(device)
         if args.pretrained_frequency_model == "":
@@ -378,8 +380,6 @@ def find_trigger_channels(
             )
             freq_detector.load_state_dict(pretrained_state_dict, strict=True)
 
-        # TODO: evaluate on test data
-
     all_probe_votes = []
     for i, content in enumerate(train_probe_loader):
         (images, target, _) = content
@@ -432,6 +432,7 @@ def find_trigger_channels(
         is_batch_poisoned = is_batch_poisoned.to(device)
 
         images = images.to(device)
+
         views = generate_view_tensors(images, ss_transform)
         views = views.to(device)
 
@@ -506,11 +507,40 @@ def find_trigger_channels(
         all_votes.append(max_indices_at_channel)
         is_poisoned.append(is_batch_poisoned)
 
+        if args.use_frequency_detector:
+            # evaluate
+            freq_detector.eval()
+            images = torch.permute(images, (0, 2, 3, 1))
+            images = np.array(
+                images.cpu(), dtype=np.float32
+            )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+            for i in range(images.shape[0]):
+                for channel in range(3):
+                    images[i][:, :, channel] = dct2(
+                        (images[i][:, :, channel] * 255).astype(np.uint8)
+                    )
+            images = torch.tensor(images, device=device)
+            images = torch.permute(images, (0, 3, 1, 2))  # shape: [bs, 3, 32, 32]
+            output = freq_detector(
+                images
+            )  # [bs, 2], the second element is anomaly score
+            output = output[:, 1].detach().cpu().tolist()
+            all_frequencies.extend(output)
+
     all_entropies = np.array(all_entropies)
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
     score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
-    print(f"the AUROC score is: {score*100}")
+    print(f"the AUROC score of all_entropies is: {score*100}")
+
+    if args.use_frequency_detector:
+        all_frequencies = np.array(all_frequencies)
+        freq_auc_score = roc_auc_score(y_true=is_poisoned, y_score=all_frequencies)
+        print(f"the AUROC score of frequency detector is: {freq_auc_score*100}")
+
+        # TODO: remove later
+        exit()
+
     all_entropies_indices = np.argsort(
         all_entropies
     )  # indices, sorted from low to high by entropy value

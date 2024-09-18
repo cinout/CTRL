@@ -299,7 +299,6 @@ def find_trigger_channels(
     is_poisoned = []  # for all images in the dataset
     total_images = 0
 
-    # TODO: add this for probing
     all_probe_votes = []
     for i, content in enumerate(train_probe_loader):
         (images, target, _) = content
@@ -406,7 +405,7 @@ def find_trigger_channels(
             ss_scores = -1 * np.max(corrs, axis=1)  # [bs]
             entropies.extend(ss_scores.tolist())
         elif args.minority_criterion == "ss_score_elements":
-            num_interested_channels = 1  # TODO:  changeale
+            num_interested_channels = 1  # FIXME:  changeale
             top_channel_votes = max_indices[
                 :, :, -num_interested_channels:
             ].flatten()  # [bs*n_view*num_interested_channels]
@@ -456,7 +455,7 @@ def find_trigger_channels(
 
     # obtain trigger channels
     essential_indices = Counter(all_votes.flatten()).most_common(
-        2 * max(args.channel_num)  # TODO: note that we 2*
+        2 * max(args.channel_num)
     )
 
     print(
@@ -471,7 +470,7 @@ def find_trigger_channels(
     )
     essential_indices = [idx for (idx, occ_count) in essential_indices]
 
-    # TODO: remove all_probe_votes from all_votes
+    # FIXME: remove all_probe_votes from all_votes
     all_probe_votes = np.concatenate(
         all_probe_votes, axis=0
     )  # [#dataset, n_view*channel_num]
@@ -492,7 +491,7 @@ def find_trigger_channels(
 
     print(f"after removing probe channels, essential_indices are: {essential_indices}")
 
-    # TODO: end of removing
+    # FIXME: end of removing
 
     return essential_indices
 
@@ -1122,7 +1121,6 @@ class CLTrainer:
                         self.args,
                         poison.train_pos_loader,
                         poison.train_probe_loader,
-                        # TODO: ref loader
                         backbone,
                         poison.ss_transform,
                     )

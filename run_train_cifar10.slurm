@@ -68,7 +68,7 @@ python -u main_train.py \
     --minority_criterion ss_score \
     \
     --use_frequency_detector \
-    --frequency_detector_epochs 10 \
+    --frequency_detector_epochs 50 \
     \
     --note "use frequency detector" \
 

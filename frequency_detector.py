@@ -113,9 +113,7 @@ class FrequencyDetector(nn.Module):
             nn.MaxPool2d(kernel_size=2),
             nn.Dropout(0.4),
             nn.Flatten(),
-            nn.Linear(
-                128 * (self.height // 8) * (self.width // 8), self.num_classes
-            ),  # TODO: double check 10
+            nn.Linear(128 * (self.height // 8) * (self.width // 8), self.num_classes),
         )
 
     def forward(self, x):

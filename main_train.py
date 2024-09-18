@@ -89,7 +89,7 @@ parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mo
 parser.add_argument("--batch_size", default=512, type=int)
 parser.add_argument("--epochs", default=800, type=int)
 # TODO: add to slumr
-parser.add_argument("--frequency_detector_epochs", default=10, type=int)
+parser.add_argument("--frequency_detector_epochs", default=50, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
 parser.add_argument(
     "--remove", default="none", choices=["crop", "flip", "color", "gray", "none"]

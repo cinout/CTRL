@@ -274,7 +274,7 @@ class PoisonAgent:
             (
                 TensorDataset(
                     x_train_tensor,
-                    train_is_poisoned,  # TODO: can be removed later, for debug purpose only
+                    train_is_poisoned,  # FIXME: can be removed later, for debug purpose only
                     y_train_tensor,
                     train_index,
                 )

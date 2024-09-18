@@ -20,6 +20,8 @@ import torchvision.models as models
 from networks.mask_batchnorm import MaskBatchNorm2d
 import pandas as pd
 import PIL
+from ..frequency_detector import FrequencyDetector, patching_train, dct2
+import random
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -292,12 +294,74 @@ def generate_view_tensors(input, ss_transform):
 
 
 def find_trigger_channels(
-    args, data_loader, train_probe_loader, backbone, ss_transform
+    args,
+    data_loader,
+    train_probe_loader,
+    train_probe_freq_detector_loader,
+    backbone,
+    ss_transform,
 ):
     all_entropies = []  # for all images in the dataset
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
     total_images = 0
+
+    if args.use_frequency_detector:
+        freq_detector = FrequencyDetector(height=args.image_size, width=args.image_size)
+        optimizer = torch.optim.Adadelta(
+            freq_detector.parameters(), lr=0.05, weight_decay=1e-4
+        )
+        criterion = nn.CrossEntropyLoss()
+        freq_detector.train()
+
+        for epoch in range(args.frequency_detector_epochs):
+            for content in train_probe_freq_detector_loader:
+                # prepare data in this batch
+                (images_clean, _, _) = content
+                images_clean = images_clean.to(device)
+                images_clean = torch.permute(images_clean, (0, 2, 3, 1))
+                images_clean = np.array(
+                    images_clean.cpu(), dtype=np.float32
+                )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+                images_poi = np.zeros_like(images_clean)
+                for i in range(images_clean.shape[0]):
+                    images_poi[i] = patching_train(images_clean[i], images_clean)
+
+                images = np.concatenate(
+                    [images_clean, images_poi], axis=0
+                )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                for i in range(images.shape[0]):
+                    for channel in range(3):
+                        images[i][:, :, channel] = dct2(
+                            (images[i][:, :, channel] * 255).astype(np.uint8)
+                        )
+                labels = (
+                    np.concatenate(
+                        (
+                            np.zeros(images_clean.shape[0]),
+                            np.ones(images_clean.shape[0]),
+                        ),
+                        axis=0,
+                    )
+                ).astype(np.uint)
+
+                idx = np.arange(images.shape[0])
+                random.shuffle(idx)
+                images = images[idx]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                images = torch.tensor(images, device=device)
+                images = torch.permute(images, (0, 3, 1, 2))  # shape: [2*bs, 3, 32, 32]
+
+                labels = labels[idx]  # shape: [2*bs]
+                labels = torch.tensor(labels, device=device, dtype=torch.long)
+
+                # obtain loss and update params
+                output = freq_detector(images)  # [2*bs, 2]
+                loss = criterion(output, labels)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                print(f"> epoch is {epoch}; loss is {loss.item()}")
+            # TODO: evaluate data
 
     all_probe_votes = []
     for i, content in enumerate(train_probe_loader):
@@ -305,6 +369,7 @@ def find_trigger_channels(
 
         images = images.to(device)
         views = generate_view_tensors(images, ss_transform)
+
         views = views.to(device)
 
         bs, n_views, c, h, w = views.shape
@@ -1121,6 +1186,7 @@ class CLTrainer:
                         self.args,
                         poison.train_pos_loader,
                         poison.train_probe_loader,
+                        poison.train_probe_freq_detector_loader,
                         backbone,
                         poison.ss_transform,
                     )

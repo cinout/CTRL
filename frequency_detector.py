@@ -29,7 +29,7 @@ def normalization(data):
     return (data - np.min(data)) / _range
 
 
-def patching_train(clean_sample):
+def patching_train(clean_sample, x_train):
     """
     this code conducts a patching procedure with random white blocks or random noise block
     """
@@ -46,7 +46,6 @@ def patching_train(clean_sample):
     elif attack == 3:
         return randshadow(output)
     if attack == 4:
-        # TODO: what is this?
         randind = np.random.randint(x_train.shape[0])
         tri = x_train[randind]
         mid = output + 0.3 * tri
@@ -78,10 +77,6 @@ def patching_train(clean_sample):
     return output
 
 
-epochs = 10
-batch_size = 64
-
-
 class FrequencyDetector(nn.Module):
     def __init__(self, height, width):
         super(FrequencyDetector, self).__init__()
@@ -89,6 +84,7 @@ class FrequencyDetector(nn.Module):
         self.num_classes = 2  # poisoned or clean
         self.height = height
         self.width = width
+        self.softmax = nn.Softmax(dim=1)
 
         self.model = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, padding=1),
@@ -122,15 +118,10 @@ class FrequencyDetector(nn.Module):
         )
 
     def forward(self, x):
-        return self.model(x)
+        x = self.model(x)
+        x = self.softmax(x)
+        return x
 
-
-# TODO: update according to classes
-model = FrequencyDetector(height, width)
-model.train()
-
-optimizer = torch.optim.Adadelta(model.parameters(), lr=0.05, weight_decay=1e-4)
-criterion = nn.CrossEntropyLoss()
 
 for epoch in range(epochs):
     output = model(x_final_train)
@@ -138,5 +129,3 @@ for epoch in range(epochs):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-
-torch.save(model.state_dict(), "./detector/6_CNN_CIF1R10.pt")

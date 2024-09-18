@@ -136,6 +136,7 @@ class PoisonAgent:
             self.test_pos_loader,
             self.memory_loader,
             self.train_probe_loader,
+            self.train_probe_freq_detector_loader,
         ) = self.choose_poisons_randomly()
 
     def choose_poisons_randomly(self):
@@ -321,6 +322,8 @@ class PoisonAgent:
             shuffle=False,
         )
 
+        train_probe_loader = None
+        train_probe_freq_detector_loader = None
         if self.args.use_linear_probing:
             # create 1% train set for classifier training
             percent = 0.01
@@ -352,16 +355,20 @@ class PoisonAgent:
                 batch_size=self.args.linear_probe_batch_size,
                 shuffle=True,
             )
-
-            return (
-                train_loader,
-                test_loader,
-                test_pos_loader,
-                memory_loader,
-                train_probe_loader,
+            train_probe_freq_detector_loader = DataLoader(
+                TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
+                batch_size=64,
+                shuffle=True,
             )
-        else:
-            return train_loader, test_loader, test_pos_loader, memory_loader, None
+
+        return (
+            train_loader,
+            test_loader,
+            test_pos_loader,
+            memory_loader,
+            train_probe_loader,
+            train_probe_freq_detector_loader,
+        )
 
 
 class RandomApply(nn.Module):

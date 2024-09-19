@@ -64,14 +64,14 @@ python -u main_train.py \
     --pretrained_frequency_model "" \
     \
     --minority_criterion ss_score \
-    --minority_percent_lower_bound 0.002 \
-    --minority_percent_upper_bound 0.012 \
+    --minority_percent_lower_bound 0.000 \
+    --minority_percent_upper_bound 0.010 \
     \
     --use_frequency_detector \
     --frequency_detector_epochs 500 \
     \
     --ignore_probe_channels \
-    --note "0.004-0.008, ep=400" \
+    --note "0.000-0.010, ep=500, channel_num=30, ignore_probe_channel_num=15" \
     # \
     # --use_mask_pruning \
     # --clean_threshold 0.0 \

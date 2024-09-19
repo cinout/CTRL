@@ -422,15 +422,17 @@ def find_trigger_channels(
             # total_images += bs
             max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
+            take_channel = args.ignore_probe_channel_num
+
             max_indices_at_channel = max_indices[
-                :, :, -max(args.channel_num) :
-            ]  # [bs, n_view, channel_num]
+                :, :, -take_channel:
+            ]  # [bs, n_view, take_channel]
             max_indices_at_channel = max_indices_at_channel.reshape(
                 bs, -1
-            )  # [bs, n_view*channel_num]
+            )  # [bs, n_view*take_channel]
             all_probe_votes.append(max_indices_at_channel)
 
-    for i, content in tqdm(enumerate(data_loader)):
+    for i, content in tqdm(enumerate(data_loader)):  # actual train loader
         (images, is_batch_poisoned, _, _) = content
         is_batch_poisoned = is_batch_poisoned.to(device)
 
@@ -469,12 +471,18 @@ def find_trigger_channels(
         total_images += bs
         max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
+        take_channel = (
+            max(args.channel_num) + args.ignore_probe_channel_num
+            if args.ignore_probe_channels
+            else max(args.channel_num)
+        )
+
         max_indices_at_channel = max_indices[
-            :, :, -max(args.channel_num) :
-        ]  # [bs, n_view, channel_num]
+            :, :, -take_channel:
+        ]  # [bs, n_view, take_channel]
         max_indices_at_channel = max_indices_at_channel.reshape(
             bs, -1
-        )  # [bs, n_view*channel_num]
+        )  # [bs, n_view*take_channel]
 
         entropies = []  # bs elements
         if args.minority_criterion == "entropy":
@@ -537,7 +545,7 @@ def find_trigger_channels(
     minority_ub = int(total_images * args.minority_percent_upper_bound)
     minority_num = minority_ub - minority_lb
 
-    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*channel_num]
+    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
     if args.use_frequency_detector:
         all_frequencies = np.array(all_frequencies)
@@ -559,7 +567,7 @@ def find_trigger_channels(
 
     all_votes = all_votes[
         minority_indices
-    ]  # votes by minority, [minority_num, n_view*channel_num]
+    ]  # votes by minority, [minority_num, n_view*take_channel]
 
     ### for debugging, reporting percentage of poisoned images
     is_poisoned = is_poisoned[minority_indices]
@@ -572,15 +580,15 @@ def find_trigger_channels(
         # REMOVE channels that appear in probe dataset
 
         essential_indices = Counter(all_votes.flatten()).most_common(
-            2 * max(args.channel_num)
+            max(args.channel_num) + args.ignore_probe_channel_num
         )
         essential_indices = [idx for (idx, occ_count) in essential_indices]
 
         all_probe_votes = np.concatenate(
             all_probe_votes, axis=0
-        )  # [#dataset, n_view*channel_num]
+        )  # [#dataset, n_view*take_channel]
         probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
-            max(args.channel_num)
+            args.ignore_probe_channel_num
         )
         probe_essential_indices = [
             idx for (idx, occ_count) in probe_essential_indices

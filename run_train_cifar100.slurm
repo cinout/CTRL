@@ -56,17 +56,18 @@ python -u main_train.py \
     --use_linear_probing \
     \
     --detect_trigger_channels \
-    --channel_num 12 16 24 \
+    --channel_num 30 \
+    --ignore_probe_channel_num 15 \
     \
     --pretrained_ssl_model "./Experiments/20240906_183247_52_10-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "./Experiments/20240906_183247_52_10-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     \
     --minority_criterion ss_score \
-    --minority_percent_lower_bound 0.004 \
-    --minority_percent_upper_bound 0.008 \
+    --minority_percent_lower_bound 0.002 \
+    --minority_percent_upper_bound 0.012 \
     \
     --use_frequency_detector \
-    --frequency_detector_epochs 400 \
+    --frequency_detector_epochs 500 \
     \
     --ignore_probe_channels \
     --note "0.004-0.008, ep=400" \

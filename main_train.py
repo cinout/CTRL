@@ -201,6 +201,12 @@ parser.add_argument(
     type=int,
     help="a new hp, determine k channels of EACH SAMPLE",
 )
+# TODO: add to slurm
+parser.add_argument(
+    "--ignore_probe_channel_num",
+    type=int,
+    help="ignore those appear in the probe dataset's voted channels",
+)
 parser.add_argument(
     "--num_views",
     type=int,

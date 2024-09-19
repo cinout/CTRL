@@ -201,7 +201,6 @@ parser.add_argument(
     type=int,
     help="a new hp, determine k channels of EACH SAMPLE",
 )
-# TODO: add to slurm
 parser.add_argument(
     "--ignore_probe_channel_num",
     type=int,

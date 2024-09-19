@@ -57,8 +57,8 @@ python -u main_train.py \
     --use_linear_probing \
     \
     --detect_trigger_channels \
-    --channel_num 40 \
-    --ignore_probe_channel_num 15 \
+    --channel_num 30 \
+    --ignore_probe_channel_num 30 \
     \
     --pretrained_ssl_model "./Experiments/20240906_183318_46_6-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "./Experiments/20240906_183318_46_6-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
@@ -71,7 +71,7 @@ python -u main_train.py \
     --frequency_detector_epochs 500 \
     \
     --ignore_probe_channels \
-    --note "set 2" \
+    --note "set 3" \
     
 
 ##Log this job's resource usage stats###

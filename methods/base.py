@@ -423,6 +423,7 @@ def find_trigger_channels(
             max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
             take_channel = args.ignore_probe_channel_num
+            print(f">>> take_channel in probe is: {take_channel}")
 
             max_indices_at_channel = max_indices[
                 :, :, -take_channel:
@@ -477,6 +478,7 @@ def find_trigger_channels(
         #     if args.ignore_probe_channels
         #     else max(args.channel_num)
         # )
+        print(f">>> take_channel in main is: {take_channel}")
 
         max_indices_at_channel = max_indices[
             :, :, -take_channel:
@@ -571,8 +573,16 @@ def find_trigger_channels(
     ]  # votes by minority, [minority_num, n_view*take_channel]
 
     ### for debugging, reporting percentage of poisoned images
+
+    print(f">>> minority_indices is: {minority_indices}")
+    print(f">>> is_poisoned.shape BEFORE is: {is_poisoned.shape}")
     is_poisoned = is_poisoned[minority_indices]
+    print(f">>> is_poisoned.shape AFTER is: {is_poisoned.shape}")
     poisoned_found = is_poisoned.sum()
+
+    print(f">>> is_poisoned.shape is: {is_poisoned.shape}")
+    print(f">>> poisoned_found is: {poisoned_found}")
+
     print(
         f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
     )
@@ -584,6 +594,7 @@ def find_trigger_channels(
             max(args.channel_num) + args.ignore_probe_channel_num
         )
         essential_indices = [idx for (idx, occ_count) in essential_indices]
+        print(f">>> len(essential_indices) BEFORE is: {len(essential_indices)}")
 
         all_probe_votes = np.concatenate(
             all_probe_votes, axis=0
@@ -594,11 +605,15 @@ def find_trigger_channels(
         probe_essential_indices = [
             idx for (idx, occ_count) in probe_essential_indices
         ]  # a list of channel indices
+        print(f">>> len(probe_essential_indices) is: {len(probe_essential_indices)}")
 
         essential_indices = [
             item for item in essential_indices if item not in probe_essential_indices
         ]
+        print(f">>> len(essential_indices) AFTER is: {len(essential_indices)}")
         essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
+        print(f">>> [FINAL] essential_indices.shape is: {essential_indices.shape}")
+        print(f">>> [FINAL] essential_indices is: {essential_indices}")
     else:
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.channel_num)

@@ -8,8 +8,7 @@ import copy
 from collections import Counter
 import random
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-haha = torch.randint(0, 10, (10, 2))
-haha = -1 * haha[:, 1]
-haha = haha.detach().cpu().tolist()
-print(haha)
+aa = [0, 2, 3]
+print(aa[-2:])
+print(aa[-2:-1])
+print(aa[-2:0])

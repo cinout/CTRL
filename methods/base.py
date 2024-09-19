@@ -471,11 +471,12 @@ def find_trigger_channels(
         total_images += bs
         max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
-        take_channel = (
-            max(args.channel_num) + args.ignore_probe_channel_num
-            if args.ignore_probe_channels
-            else max(args.channel_num)
-        )
+        take_channel = max(args.channel_num)
+        # take_channel = (
+        #     max(args.channel_num) + args.ignore_probe_channel_num
+        #     if args.ignore_probe_channels
+        #     else max(args.channel_num)
+        # )
 
         max_indices_at_channel = max_indices[
             :, :, -take_channel:

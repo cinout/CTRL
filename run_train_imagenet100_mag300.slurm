@@ -71,7 +71,7 @@ python -u main_train.py \
     --frequency_detector_epochs 800 \
     \
     --ignore_probe_channels \
-    --note "0.000-0.010, ep=800, channel_num=40, ignore_probe_channel_num=15" \
+    --note "0.000-0.010, ep=800, channel_num=40, ignore_probe_channel_num=15 [set4: take_channel=max(...)]" \
     
 
 ##Log this job's resource usage stats###

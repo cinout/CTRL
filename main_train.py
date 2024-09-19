@@ -93,7 +93,7 @@ parser.add_argument(
 parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mocov2"])
 parser.add_argument("--batch_size", default=512, type=int)
 parser.add_argument("--epochs", default=800, type=int)
-parser.add_argument("--frequency_detector_epochs", default=150, type=int)
+parser.add_argument("--frequency_detector_epochs", default=500, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
 parser.add_argument(
     "--remove", default="none", choices=["crop", "flip", "color", "gray", "none"]

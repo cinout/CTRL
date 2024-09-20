@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="cf100"
 #SBATCH --account=punim1623
-#SBATCH --time=0-03:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -72,7 +72,10 @@ python -u main_train.py \
     --ignore_probe_channels \
     \
     --trigger_type htba \
-    --note "htba debug" \
+    --note "htba" \
+    \
+    --use_mask_pruning \
+    --clean_threshold 0.0 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

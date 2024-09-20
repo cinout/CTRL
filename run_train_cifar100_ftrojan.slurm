@@ -55,21 +55,24 @@ python -u main_train.py \
     \
     --use_linear_probing \
     \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    --ignore_probe_channel_num 30 \
-    \
     --pretrained_ssl_model "./Experiments/20240906_183247_52_10-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "./Experiments/20240906_183247_52_10-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs512-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
+    --pretrained_frequency_model "" \
     \
-    --secondary_detector ss_score \
-    --minority_1st_lower_bound 0.000 \
-    --minority_1st_upper_bound 0.010 \
+    --detect_trigger_channels \
+    --channel_num 40 \
+    \
+    --ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
     --use_frequency_detector \
     --frequency_detector_epochs 500 \
     \
-    --ignore_probe_channels \
+    --minority_1st_lower_bound 0.000 \
+    --minority_1st_upper_bound 0.010 \
+    \
+    --secondary_detector ss_score \
+    \
     --note "set 4" \
 
 ##Log this job's resource usage stats###

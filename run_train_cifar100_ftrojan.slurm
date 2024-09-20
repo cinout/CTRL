@@ -62,6 +62,9 @@ python -u main_train.py \
     \
     --secondary_detector ss_score \
     \
+    --minority_2nd_lower_bound 0.010 \
+    --minority_2nd_upper_bound 0.600 \
+    \
     --note "set 4" \
 
 ##Log this job's resource usage stats###

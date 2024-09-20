@@ -63,6 +63,9 @@ python -u main_train.py \
     \
     --secondary_detector ss_score \
     \
+    --minority_2nd_lower_bound 0.010 \
+    --minority_2nd_upper_bound 0.600 \
+    \
     --use_mask_pruning \
     --clean_threshold 0.0 \
     \

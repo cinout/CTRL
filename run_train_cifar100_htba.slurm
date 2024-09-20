@@ -29,6 +29,10 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+### TODO: update model checkpoints
+### TODO: update note
+### TODO: remove mask pruning
+
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -60,11 +64,11 @@ python -u main_train.py \
     \
     --minority_1st_lower_bound 0.000 \
     --minority_1st_upper_bound 0.010 \
-    \
-    --secondary_detector ss_score \
-    \
-    --minority_2nd_lower_bound 0.010 \
-    --minority_2nd_upper_bound 0.600 \
+    # \
+    # --secondary_detector ss_score \
+    # \
+    # --minority_2nd_lower_bound 0.010 \
+    # --minority_2nd_upper_bound 0.600 \
     \
     --use_mask_pruning \
     --clean_threshold 0.0 \

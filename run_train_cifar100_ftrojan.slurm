@@ -65,7 +65,7 @@ python -u main_train.py \
     --minority_2nd_lower_bound 0.010 \
     --minority_2nd_upper_bound 0.600 \
     \
-    --note "set 4" \
+    --note "set 4 [2nd detector]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

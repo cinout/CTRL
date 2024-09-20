@@ -167,9 +167,9 @@ parser.add_argument(
     help="use spectral signature to detect channels, this requires N augmented views to be generated",
 )
 parser.add_argument(
-    "--minority_criterion",
+    "--secondary_detector",
     type=str,
-    choices=["entropy", "ss_score", "ss_score_elements"],
+    choices=["", "entropy", "ss_score", "ss_score_elements"],
     default="entropy",
     help="how to find minority (bd samples)",
 )
@@ -180,12 +180,12 @@ parser.add_argument(
     default=0.005,
 )
 parser.add_argument(
-    "--minority_percent_lower_bound",
+    "--minority_1st_lower_bound",
     type=float,
     default=0.005,
 )
 parser.add_argument(
-    "--minority_percent_upper_bound",
+    "--minority_1st_upper_bound",
     type=float,
     default=0.020,
 )

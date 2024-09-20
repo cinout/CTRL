@@ -300,7 +300,7 @@ def find_trigger_channels(
     backbone,
     ss_transform,
 ):
-    all_entropies = []  # for all images in the dataset
+    all_secondary_scores = []  # for all images in the dataset
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
 
@@ -483,40 +483,6 @@ def find_trigger_channels(
             bs, -1
         )  # [bs, n_view*take_channel]
 
-        entropies = []  # bs elements
-        if args.minority_criterion == "entropy":
-            for votes in max_indices_at_channel:  # for each original image
-                votes_counter = Counter(votes).most_common()
-                counts = np.array([c for (name, c) in votes_counter])
-                p = counts / counts.sum()
-                h = -np.sum(p * np.log(p))
-                entropy = np.exp(h)
-                entropies.append(entropy)
-        elif args.minority_criterion == "ss_score":
-            corrs = np.abs(corrs)
-            corrs = corrs.reshape(-1, n_views)  #  [bs,n_views]
-            ss_scores = -1 * np.max(corrs, axis=1)  # [bs]
-            entropies.extend(ss_scores.tolist())
-        elif args.minority_criterion == "ss_score_elements":
-            num_interested_channels = 1  # FIXME:  changeale
-            top_channel_votes = max_indices[
-                :, :, -num_interested_channels:
-            ].flatten()  # [bs*n_view*num_interested_channels]
-            votes_of_batch = Counter(top_channel_votes).most_common(
-                num_interested_channels
-            )
-            chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
-            scores = elementwise[:, chosen_channels]
-            scores = np.sum(scores, axis=1)  # [bs*n_view, ]
-
-            scores = scores.reshape(-1, n_views)  # [ bs, n_views]
-            ss_scores = -1 * np.max(scores, axis=1)  # [bs]
-            entropies.extend(ss_scores.tolist())
-
-        all_entropies.extend(entropies)
-        all_votes.append(max_indices_at_channel)
-        is_poisoned.append(is_batch_poisoned)
-
         if args.use_frequency_detector:
             # evaluate
             freq_detector.eval()
@@ -537,12 +503,45 @@ def find_trigger_channels(
             output = output[:, 1].detach().cpu().tolist()
             all_frequencies.extend(output)
 
+        secondary_score = []  # bs elements
+        if args.secondary_detector == "entropy":
+            for votes in max_indices_at_channel:  # for each original image
+                votes_counter = Counter(votes).most_common()
+                counts = np.array([c for (name, c) in votes_counter])
+                p = counts / counts.sum()
+                h = -np.sum(p * np.log(p))
+                entropy = -1 * np.exp(h)
+                secondary_score.append(entropy)
+        elif args.secondary_detector == "ss_score":
+            corrs = np.abs(corrs)
+            corrs = corrs.reshape(-1, n_views)  #  [bs,n_views]
+            ss_scores = np.max(corrs, axis=1)  # [bs]
+            secondary_score.extend(ss_scores.tolist())
+        elif args.secondary_detector == "ss_score_elements":
+            num_interested_channels = 1  # FIXME:  changeale
+            top_channel_votes = max_indices[
+                :, :, -num_interested_channels:
+            ].flatten()  # [bs*n_view*num_interested_channels]
+            votes_of_batch = Counter(top_channel_votes).most_common(
+                num_interested_channels
+            )
+            chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
+            scores = elementwise[:, chosen_channels]
+            scores = np.sum(scores, axis=1)  # [bs*n_view, ]
+
+            scores = scores.reshape(-1, n_views)  # [ bs, n_views]
+            ss_scores = np.max(scores, axis=1)  # [bs]
+            secondary_score.extend(ss_scores.tolist())
+
+        all_secondary_scores.extend(secondary_score)
+        all_votes.append(max_indices_at_channel)
+        is_poisoned.append(is_batch_poisoned)
+
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
 
-    minority_lb = int(total_images * args.minority_percent_lower_bound)
-    minority_ub = int(total_images * args.minority_percent_upper_bound)
-    minority_num = minority_ub - minority_lb
+    minority_lb = int(total_images * args.minority_1st_lower_bound)
+    minority_ub = int(total_images * args.minority_1st_upper_bound)
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
@@ -557,15 +556,20 @@ def find_trigger_channels(
             minority_indices = all_frequencies_indices[-minority_ub:-minority_lb]
         else:
             minority_indices = all_frequencies_indices[-minority_ub:]
-    else:
-        all_entropies = np.array(all_entropies)
-        score = roc_auc_score(y_true=is_poisoned, y_score=-all_entropies)
-        print(f"the AUROC score of all_entropies is: {score*100}")
 
-        all_entropies_indices = np.argsort(
-            all_entropies
+    # TODO: update from here (all_secondary_scores are now higher for poisoend samples)
+    # update minority indices
+    else:
+        all_secondary_scores = np.array(all_secondary_scores)
+        score = roc_auc_score(y_true=is_poisoned, y_score=-all_secondary_scores)
+        print(f"the AUROC score of all_secondary_scores is: {score*100}")
+
+        all_secondary_scores_indices = np.argsort(
+            all_secondary_scores
         )  # indices, sorted from low to high by entropy value
-        minority_indices = all_entropies_indices[minority_lb:minority_ub]
+        minority_indices = all_secondary_scores_indices[minority_lb:minority_ub]
+
+    # TODO: [END]
 
     all_votes = all_votes[
         minority_indices
@@ -582,7 +586,6 @@ def find_trigger_channels(
 
     if args.ignore_probe_channels:
         # REMOVE channels that appear in probe dataset
-
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.channel_num) + args.ignore_probe_channel_num
         )
@@ -601,9 +604,7 @@ def find_trigger_channels(
         essential_indices = [
             item for item in essential_indices if item not in probe_essential_indices
         ]
-
         essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
-
     else:
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.channel_num)

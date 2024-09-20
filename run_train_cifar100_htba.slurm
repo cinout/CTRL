@@ -62,9 +62,9 @@ python -u main_train.py \
     --pretrained_ssl_model "" \
     --pretrained_linear_model "" \
     \
-    --minority_criterion ss_score \
-    --minority_percent_lower_bound 0.000 \
-    --minority_percent_upper_bound 0.010 \
+    --secondary_detector ss_score \
+    --minority_1st_lower_bound 0.000 \
+    --minority_1st_upper_bound 0.010 \
     \
     --use_frequency_detector \
     --frequency_detector_epochs 500 \

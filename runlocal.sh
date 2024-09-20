@@ -1,11 +1,9 @@
 python -u main_train.py \
     --method simclr \
-    --mode frequency \
     --channel 1 2 \
     --window_size 32 \
     --trigger_position 15 31 \
     --poison_ratio 0.01 \
-    --poisoning \
     \
     --batch_size 128 \
     --eval_batch_size 512 \

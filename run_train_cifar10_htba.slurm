@@ -36,12 +36,11 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --mode frequency \
     --channel 1 2 \
     --window_size 32 \
     --trigger_position 15 31 \
     --poison_ratio 0.01 \
-    --poisoning \
+    --trigger_type htba \
     \
     --batch_size 128 \
     --eval_batch_size 512 \
@@ -55,28 +54,28 @@ python -u main_train.py \
     \
     --use_linear_probing \
     \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    --ignore_probe_channel_num 30 \
-    \
     --pretrained_ssl_model "" \
     --pretrained_linear_model "" \
     --pretrained_frequency_model "" \
     \
-    --secondary_detector ss_score \
-    --minority_1st_lower_bound 0.000 \
-    --minority_1st_upper_bound 0.010 \
+    --detect_trigger_channels \
+    --channel_num 40 \
+    \
+    --ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
     --use_frequency_detector \
     --frequency_detector_epochs 500 \
     \
-    --ignore_probe_channels \
+    --minority_1st_lower_bound 0.000 \
+    --minority_1st_upper_bound 0.010 \
     \
-    --trigger_type htba \
-    --note "htba" \
+    --secondary_detector ss_score \
     \
     --use_mask_pruning \
     --clean_threshold 0.0 \
+    \
+    --note "htba" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

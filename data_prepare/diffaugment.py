@@ -39,9 +39,9 @@ def get_data_and_label(paths, size):
     for i, item in enumerate(paths):
         if i % 1000 == 0:
             print(f"transform data to {i}/{len(paths)}")
+
         img = Image.open(item.split()[0]).convert("RGB")
         img = img.resize((size, size))
-
         img = np.asarray(img).astype(np.float32) / 255.0
         img = torch.tensor(img)
         img = torch.permute(img, (2, 0, 1))  # shape: [c=3, h, w], value: [0, 1]
@@ -227,13 +227,20 @@ class PoisonAgent:
         # POISONed Validation Set
         """
         # test set (poison all images)
-        x_test_pos_tensor, y_test_pos_tensor = (
-            self.fre_poison_agent.Poison_Frequency_Diff(
+        if self.args.trigger_type == "ftrojan":
+            x_test_pos_tensor, y_test_pos_tensor = (
+                self.fre_poison_agent.Poison_Frequency_Diff(
+                    x_test_tensor.clone().detach(),
+                    y_test_tensor.clone().detach(),
+                    self.magnitude_val,
+                )
+            )
+        elif self.args.trigger_type == "htba":
+            x_test_pos_tensor, y_test_pos_tensor = self.fre_poison_agent.Poison_HTBA(
                 x_test_tensor.clone().detach(),
                 y_test_tensor.clone().detach(),
-                self.magnitude_val,
             )
-        )
+
         # why? is it because above code does not assign correct label to poisoned images?
         # [YES], the Poison_Frequency_Diff() function only poisons image data, but does not pollute label.
         y_test_pos_tensor = (
@@ -251,13 +258,21 @@ class PoisonAgent:
         poison_index = poison_index[: self.poison_num]
 
         # train set (poison only a portion of train images)
-        x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-            self.fre_poison_agent.Poison_Frequency_Diff(
-                x_train_tensor[poison_index],
-                y_train_tensor[poison_index],
-                self.magnitude_train,
+        if self.args.trigger_type == "ftrojan":
+            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                self.fre_poison_agent.Poison_Frequency_Diff(
+                    x_train_tensor[poison_index],
+                    y_train_tensor[poison_index],
+                    self.magnitude_train,
+                )
             )
-        )
+        elif self.args.trigger_type == "htba":
+            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                self.fre_poison_agent.Poison_HTBA(
+                    x_train_tensor[poison_index],
+                    y_train_tensor[poison_index],
+                )
+            )
 
         train_index = torch.tensor(list(range(len(self.trainset))), dtype=torch.long)
         test_index = torch.tensor(list(range(len(self.validset))), dtype=torch.long)

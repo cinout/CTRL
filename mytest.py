@@ -8,7 +8,5 @@ import copy
 from collections import Counter
 import random
 
-aa = [0, 2, 3]
-print(aa[-2:])
-print(aa[-2:-1])
-print(aa[-2:0])
+aa = int(50.0 / 224 * 32)
+print(aa)

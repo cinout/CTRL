@@ -17,10 +17,11 @@ from methods import set_model
 from methods.base import CLTrainer
 from utils.util import *
 from utils.frequency import PoisonFre
+from utils.htba import PoisonHTBA
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 
-
+parser.add_argument("--trigger_type", default="ftrojan", choices=["ftrojan", "htba"])
 parser.add_argument(
     "--pretrained_ssl_model",
     type=str,
@@ -330,7 +331,7 @@ def main(args):
     ) = set_aug_diff(args)
 
     # create poisoning dataset
-    if args.poisoning:
+    if args.trigger_type == "ftrojan":
         poison_frequency_agent = PoisonFre(
             args,
             args.channel,
@@ -339,15 +340,20 @@ def main(args):
             False,
             True,
         )
-        poison = PoisonAgent(
+    elif args.trigger_type == "htba":
+        poison_frequency_agent = PoisonHTBA(
             args,
-            poison_frequency_agent,
-            train_dataset,
-            test_dataset,
-            memory_loader,
-            args.magnitude_train,
-            args.magnitude_val,
         )
+
+    poison = PoisonAgent(
+        args,
+        poison_frequency_agent,
+        train_dataset,
+        test_dataset,
+        memory_loader,
+        args.magnitude_train,
+        args.magnitude_val,
+    )
 
     all_args = "\n".join(
         "%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())

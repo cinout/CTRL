@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="cf100"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-03:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -29,12 +29,10 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-### TODO: update model checkpoints
 ### TODO: update note
-### TODO: remove mask pruning
 
 ### TODO: rerun with checkpoints first
-### TODO: brings down the training time
+
 
 module purge
 
@@ -52,8 +50,8 @@ python -u main_train.py \
     \
     --use_linear_probing \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20240920_122148_13_42-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240920_122148_13_42-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
@@ -67,16 +65,16 @@ python -u main_train.py \
     \
     --minority_1st_lower_bound 0.000 \
     --minority_1st_upper_bound 0.010 \
+    \
+    --use_mask_pruning \
+    --clean_threshold 0.0 \
+    \
+    --note "check the checkpoint" \
     # \
     # --secondary_detector ss_score \
     # \
     # --minority_2nd_lower_bound 0.010 \
     # --minority_2nd_upper_bound 0.600 \
-    \
-    --use_mask_pruning \
-    --clean_threshold 0.0 \
-    \
-    --note "htba" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

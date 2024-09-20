@@ -68,7 +68,7 @@ class PoisonHTBA:
             transparent = Image.alpha_composite(transparent, base_image)
 
             # TODO: visualize transparent (REMOVE later)
-            transparent.save(f"demo_{i}.png", "PNG")
+            transparent.save(f"demo_{self.args.dataset}_{i}.png", "PNG")
             if i == 20:
                 exit()
 

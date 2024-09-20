@@ -92,7 +92,7 @@ parser.add_argument(
     ],
 )
 parser.add_argument("--method", default="simclr", choices=["simclr", "byol", "mocov2"])
-parser.add_argument("--batch_size", default=512, type=int)
+parser.add_argument("--batch_size", default=128, type=int)
 parser.add_argument("--epochs", default=800, type=int)
 parser.add_argument("--frequency_detector_epochs", default=500, type=int)
 parser.add_argument("--start_epoch", default=0, type=int)
@@ -119,11 +119,11 @@ parser.add_argument("--target_class", default=0, type=int)
 parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
 parser.add_argument("--pin_memory", action="store_true", default=False)
 parser.add_argument("--reverse", action="store_true", default=False)
-parser.add_argument("--trigger_position", nargs="+", type=int)
+parser.add_argument("--trigger_position", nargs="+", type=int, default=[15, 31])
 parser.add_argument("--magnitude_train", default=50.0, type=float)  # right value
 parser.add_argument("--magnitude_val", default=100.0, type=float)  # right value
 parser.add_argument("--trigger_size", default=5, type=int)
-parser.add_argument("--channel", nargs="+", type=int)
+parser.add_argument("--ftrojan_channel", nargs="+", type=int, default=[1, 2])
 parser.add_argument("--loss_alpha", default=2.0, type=float)
 parser.add_argument("--strength", default=1.0, type=float)  ### augmentation strength
 
@@ -172,11 +172,7 @@ parser.add_argument(
     help="how to find minority (bd samples)",
 )
 
-parser.add_argument(
-    "--minority_percent",
-    type=float,
-    default=0.005,
-)
+
 parser.add_argument(
     "--minority_1st_lower_bound",
     type=float,
@@ -186,6 +182,17 @@ parser.add_argument(
     "--minority_1st_upper_bound",
     type=float,
     default=0.020,
+)
+# TODO: add to slurms
+parser.add_argument(
+    "--minority_2nd_lower_bound",
+    type=float,
+    default=0.005,
+)
+parser.add_argument(
+    "--minority_2nd_upper_bound",
+    type=float,
+    default=0.500,
 )
 parser.add_argument(
     "--replacement_value",
@@ -332,7 +339,7 @@ def main(args):
     if args.trigger_type == "ftrojan":
         poison_frequency_agent = PoisonFre(
             args,
-            args.channel,
+            args.ftrojan_channel,
             args.window_size,
             args.trigger_position,
             False,

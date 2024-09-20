@@ -8,5 +8,10 @@ import copy
 from collections import Counter
 import random
 
-aa = int(50.0 / 224 * 32)
-print(aa)
+arr_1 = np.array([9, 21, 2, 10, 4, 3, 11, 20, 7])
+arr_2 = np.array([7, 2, 21, 20])
+
+
+arr_1 = np.array([index for index in arr_1 if index in arr_2])
+
+print(arr_1.shape[0])

@@ -540,8 +540,8 @@ def find_trigger_channels(
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
 
-    minority_lb = int(total_images * args.minority_1st_lower_bound)
-    minority_ub = int(total_images * args.minority_1st_upper_bound)
+    minority_lb_1st = int(total_images * args.minority_1st_lower_bound)
+    minority_ub_1st = int(total_images * args.minority_1st_upper_bound)
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
@@ -552,24 +552,40 @@ def find_trigger_channels(
         all_frequencies_indices = np.argsort(
             all_frequencies
         )  # indices, sorted from low to high by entropy value
-        if minority_lb > 0:
-            minority_indices = all_frequencies_indices[-minority_ub:-minority_lb]
+        if minority_lb_1st > 0:
+            minority_indices = all_frequencies_indices[
+                -minority_ub_1st:-minority_lb_1st
+            ]  # numpy array
         else:
-            minority_indices = all_frequencies_indices[-minority_ub:]
+            minority_indices = all_frequencies_indices[-minority_ub_1st:]
 
-    # TODO: update from here (all_secondary_scores are now higher for poisoend samples)
     # update minority indices
-    else:
+    if args.secondary_detector != "":
         all_secondary_scores = np.array(all_secondary_scores)
-        score = roc_auc_score(y_true=is_poisoned, y_score=-all_secondary_scores)
-        print(f"the AUROC score of all_secondary_scores is: {score*100}")
-
         all_secondary_scores_indices = np.argsort(
             all_secondary_scores
-        )  # indices, sorted from low to high by entropy value
-        minority_indices = all_secondary_scores_indices[minority_lb:minority_ub]
+        )  # indices, sorted from low to high by entropy value, numpy array
 
-    # TODO: [END]
+        # keep the indices that appear in minority_indices
+        all_secondary_scores_indices = np.array(
+            [
+                index
+                for index in all_secondary_scores_indices
+                if index in minority_indices
+            ]
+        )
+
+        # cut off by 2nd bounds
+        minority_count = all_secondary_scores_indices.shape[0]
+        minority_lb_2nd = int(minority_count * args.minority_2nd_lower_bound)
+        minority_ub_2nd = int(minority_count * args.minority_2nd_upper_bound)
+
+        if minority_lb_2nd > 0:
+            minority_indices = all_secondary_scores_indices[
+                -minority_ub_2nd:-minority_lb_2nd
+            ]  # numpy array
+        else:
+            minority_indices = all_secondary_scores_indices[-minority_ub_2nd:]
 
     all_votes = all_votes[
         minority_indices

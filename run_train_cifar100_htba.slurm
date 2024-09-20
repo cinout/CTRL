@@ -36,17 +36,8 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --channel 1 2 \
-    --window_size 32 \
-    --trigger_position 15 31 \
-    --poison_ratio 0.01 \
     --trigger_type htba \
     \
-    --batch_size 128 \
-    --eval_batch_size 512 \
-    --linear_probe_batch_size 128 \
-    \
-    --epochs 800 \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar100 \

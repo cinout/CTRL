@@ -33,6 +33,9 @@
 ### TODO: update note
 ### TODO: remove mask pruning
 
+### TODO: rerun with checkpoints first
+### TODO: brings down the training time
+
 module purge
 
 eval "$(conda shell.bash hook)"

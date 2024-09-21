@@ -96,15 +96,9 @@ class PoisonAgent:
         magnitude_val,
     ):
         self.args = args
-        self.trainset = (
-            trainset  # third 3rd element returned by set_aug_diff(), train_dataset
-        )
-        self.validset = (
-            validset  # seventh 7th element returned by set_aug_diff(), test_dataset
-        )
-        self.memory_loader = (
-            memory_loader  # eighth 8th element returned by set_aug_diff()
-        )
+        self.trainset = trainset
+        self.validset = validset
+        self.memory_loader = memory_loader
         self.poison_num = int(
             len(trainset) * self.args.poison_ratio
         )  #  determine how many to be poisoned
@@ -152,38 +146,23 @@ class PoisonAgent:
 
             print("transform training data")
 
-            if self.args.load_cached_tensors:
-                with open(f"x_train_tensor_{self.args.dataset}.t", "rb") as f:
-                    x_train_tensor = torch.load(f, map_location=device)
-                with open(f"y_train_tensor_{self.args.dataset}.t", "rb") as f:
-                    y_train_tensor = torch.load(f, map_location=device)
-            else:
-                x_train_tensor, y_train_tensor = get_data_and_label(
-                    train_paths, self.args.image_size
-                )
-                x_train_tensor = torch.stack(x_train_tensor)
-                y_train_tensor = torch.stack(y_train_tensor)
-                with open(f"x_train_tensor_{self.args.dataset}.t", "wb") as f:
-                    torch.save(x_train_tensor, f)
-                with open(f"y_train_tensor_{self.args.dataset}.t", "wb") as f:
-                    torch.save(y_train_tensor, f)
+            x_train_tensor, y_train_tensor = get_data_and_label(
+                train_paths, self.args.image_size
+            )
+            x_train_tensor = torch.stack(x_train_tensor)
+            y_train_tensor = torch.stack(y_train_tensor)
 
             print("transform validation data")
-            if self.args.load_cached_tensors:
-                with open(f"x_test_tensor_{self.args.dataset}.t", "rb") as f:
-                    x_test_tensor = torch.load(f, map_location=device)
-                with open(f"y_test_tensor_{self.args.dataset}.t", "rb") as f:
-                    y_test_tensor = torch.load(f, map_location=device)
-            else:
-                x_test_tensor, y_test_tensor = get_data_and_label(
-                    val_paths, self.args.image_size
-                )
-                x_test_tensor = torch.stack(x_test_tensor)
-                y_test_tensor = torch.stack(y_test_tensor)
-                with open(f"x_test_tensor_{self.args.dataset}.t", "wb") as f:
-                    torch.save(x_test_tensor, f)
-                with open(f"y_test_tensor_{self.args.dataset}.t", "wb") as f:
-                    torch.save(y_test_tensor, f)
+
+            x_test_tensor, y_test_tensor = get_data_and_label(
+                val_paths, self.args.image_size
+            )
+            x_test_tensor = torch.stack(x_test_tensor)
+            y_test_tensor = torch.stack(y_test_tensor)
+            # with open(f"x_test_tensor_{self.args.dataset}.t", "wb") as f:
+            #     torch.save(x_test_tensor, f)
+            # with open(f"y_test_tensor_{self.args.dataset}.t", "wb") as f:
+            #     torch.save(y_test_tensor, f)
 
             # memory
             x_memory_tensor = x_train_tensor.clone().detach()

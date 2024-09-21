@@ -59,7 +59,8 @@ python -u main_train.py \
     \
     --bd_detectors frequency ss_score entropy \
     \
-    --note "try 3 detectors" \
+    --note "try 3 detectors, and in 3" \
+    --in_n_detectors 3 \
     # \
     # --use_mask_pruning \
     # --clean_threshold 0.0 \

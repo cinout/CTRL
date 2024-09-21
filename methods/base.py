@@ -557,7 +557,9 @@ def find_trigger_channels(
         minority_indices.extend(minority_indices_local.tolist())
     minority_indices_counter = Counter(minority_indices)
     minority_indices = [
-        idx for idx, count in minority_indices_counter.items() if count in [2, 3]
+        idx
+        for idx, count in minority_indices_counter.items()
+        if count in args.in_n_detectors
     ]
 
     # if args.use_frequency_detector:

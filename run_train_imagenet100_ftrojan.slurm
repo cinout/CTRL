@@ -54,12 +54,12 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
+    --minority_lower_bound 0.005 \
+    --minority_upper_bound 0.015 \
     \
     --bd_detectors frequency,ss_score,entropy \
     \
-    --note "set 4 [2nd detector]" \
+    --note "try three detectors" \
     
 
 ##Log this job's resource usage stats###

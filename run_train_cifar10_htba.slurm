@@ -54,15 +54,15 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
+    --minority_lower_bound 0.005 \
+    --minority_upper_bound 0.015 \
     \
-    --use_mask_pruning \
-    --clean_threshold 0.0 \
+    --bd_detectors frequency,ss_score,entropy \
     \
-    --note "check the checkpoint" \
+    --note "try three detectors" \
     # \
-    # --bd_detectors frequency,ss_score,entropy \
+    # --use_mask_pruning \
+    # --clean_threshold 0.0 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -325,7 +325,7 @@ class PoisonAgent:
             shuffle=False,
         )
 
-        # create 1% train set for classifier training
+        # create 1% train probe set for classifier training
         percent = 0.01
         id_and_label = dict()
         for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
@@ -354,6 +354,7 @@ class PoisonAgent:
             shuffle=True,
         )
 
+        #  create frequency detector probe set
         train_probe_freq_detector_loader = None
         if "frequency" in self.args.bd_detectors:
             train_probe_freq_detector_loader = DataLoader(

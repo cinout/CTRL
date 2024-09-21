@@ -143,19 +143,12 @@ parser.add_argument("--debug", action="store_true", default=False)
 parser.add_argument("--distributed", action="store_true", help="distributed training")
 parser.add_argument("--seed", default=42, type=int)
 
-### linear probing
-parser.add_argument(
-    "--use_linear_probing",
-    action="store_true",
-    help="evaluate the performance using linear probing",
-)
 
-# for frequency detector
-parser.add_argument(
-    "--use_frequency_detector",
-    action="store_true",
-    help="use_frequency_detector to detect BD samples",
-)
+# parser.add_argument(
+#     "--use_frequency_detector",
+#     action="store_true",
+#     help="use_frequency_detector to detect BD samples",
+# )
 
 
 # for finding trigger channels
@@ -165,35 +158,38 @@ parser.add_argument(
     help="use spectral signature to detect channels, this requires N augmented views to be generated",
 )
 parser.add_argument(
-    "--secondary_detector",
+    "--bd_detectors",
     type=str,
-    choices=["", "entropy", "ss_score", "ss_score_elements"],
-    default="entropy",
-    help="how to find minority (bd samples)",
+    nargs="+",
+    default=["frequency"],
+    # choices=["entropy", "ss_score", "frequency"],
+    help="applied detectors",
 )
 
 
 parser.add_argument(
-    "--minority_1st_lower_bound",
+    "--minority_lower_bound",
     type=float,
     default=0.005,
 )
 parser.add_argument(
-    "--minority_1st_upper_bound",
+    "--minority_upper_bound",
     type=float,
     default=0.020,
 )
-# TODO: add to slurms
-parser.add_argument(
-    "--minority_2nd_lower_bound",
-    type=float,
-    default=0.005,
-)
-parser.add_argument(
-    "--minority_2nd_upper_bound",
-    type=float,
-    default=0.500,
-)
+
+
+# parser.add_argument(
+#     "--minority_2nd_lower_bound",
+#     type=float,
+#     default=0.005,
+# )
+# parser.add_argument(
+#     "--minority_2nd_upper_bound",
+#     type=float,
+#     default=0.500,
+# )
+
 parser.add_argument(
     "--replacement_value",
     type=str,
@@ -370,19 +366,18 @@ def main(args):
     )
     trainer.train_freq(model, optimizer, train_transform, poison)
 
-    if args.use_linear_probing:
-        trained_linear = trainer.linear_probing(model, poison, use_ss_detector=False)
+    trained_linear = trainer.linear_probing(model, poison, use_ss_detector=False)
 
-        if args.detect_trigger_channels:
-            # comparison w. or w.o. SS Detector
-            trainer.linear_probing(
-                model, poison, use_ss_detector=True, trained_linear=trained_linear
-            )
+    if args.detect_trigger_channels:
+        # comparison w. or w.o. SS Detector
+        trainer.linear_probing(
+            model, poison, use_ss_detector=True, trained_linear=trained_linear
+        )
 
-        if args.use_mask_pruning:
-            trainer.linear_probing(
-                model, poison, use_mask_pruning=True, trained_linear=trained_linear
-            )
+    if args.use_mask_pruning:
+        trainer.linear_probing(
+            model, poison, use_mask_pruning=True, trained_linear=trained_linear
+        )
 
 
 if __name__ == "__main__":

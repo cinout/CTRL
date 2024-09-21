@@ -305,11 +305,7 @@ class PoisonAgent:
         # clean validation set (used in knn eval only, in base.py)
         test_loader = DataLoader(
             TensorDataset(x_test_tensor, y_test_tensor, test_index),
-            batch_size=(
-                self.args.linear_probe_batch_size
-                if self.args.use_linear_probing
-                else self.args.eval_batch_size
-            ),
+            batch_size=self.args.linear_probe_batch_size,
             shuffle=False,
         )
 
@@ -318,58 +314,48 @@ class PoisonAgent:
             TensorDataset(
                 x_test_pos_tensor, y_test_pos_tensor, y_test_tensor, test_index
             ),  # y_test_tensor serves as the original label tensor (for correcting ASR)
-            batch_size=(
-                self.args.linear_probe_batch_size
-                if self.args.use_linear_probing
-                else self.args.eval_batch_size
-            ),
+            batch_size=self.args.linear_probe_batch_size,
             shuffle=False,
         )
 
         # memory set is never poisoned (used in knn eval only, in base.py)
         memory_loader = DataLoader(
             TensorDataset(x_memory_tensor, y_memory_tensor, memory_index),
-            batch_size=(
-                self.args.linear_probe_batch_size
-                if self.args.use_linear_probing
-                else self.args.eval_batch_size
-            ),
+            batch_size=self.args.linear_probe_batch_size,
             shuffle=False,
         )
 
-        train_probe_loader = None
+        # create 1% train set for classifier training
+        percent = 0.01
+        id_and_label = dict()
+        for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
+            if label in id_and_label.keys():
+                id_and_label[label].append(i)
+            else:
+                id_and_label[label] = [i]
+
+        x_probe_tensor = []
+        y_probe_tensor = []
+        for label, indices in id_and_label.items():
+
+            # for each label (class)
+            random.shuffle(indices)
+            indices = torch.tensor(indices[: int(len(indices) * percent)])
+
+            x_probe_tensor.append(x_memory_tensor[indices])
+            y_probe_tensor.append(y_memory_tensor[indices])
+        x_probe_tensor = torch.cat(x_probe_tensor, dim=0)
+        y_probe_tensor = torch.cat(y_probe_tensor, dim=0)
+        probe_index = torch.tensor(list(range(len(x_probe_tensor))), dtype=torch.long)
+
+        train_probe_loader = DataLoader(
+            TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
+            batch_size=self.args.linear_probe_batch_size,
+            shuffle=True,
+        )
+
         train_probe_freq_detector_loader = None
-        if self.args.use_linear_probing:
-            # create 1% train set for classifier training
-            percent = 0.01
-            id_and_label = dict()
-            for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
-                if label in id_and_label.keys():
-                    id_and_label[label].append(i)
-                else:
-                    id_and_label[label] = [i]
-
-            x_probe_tensor = []
-            y_probe_tensor = []
-            for label, indices in id_and_label.items():
-
-                # for each label (class)
-                random.shuffle(indices)
-                indices = torch.tensor(indices[: int(len(indices) * percent)])
-
-                x_probe_tensor.append(x_memory_tensor[indices])
-                y_probe_tensor.append(y_memory_tensor[indices])
-            x_probe_tensor = torch.cat(x_probe_tensor, dim=0)
-            y_probe_tensor = torch.cat(y_probe_tensor, dim=0)
-            probe_index = torch.tensor(
-                list(range(len(x_probe_tensor))), dtype=torch.long
-            )
-
-            train_probe_loader = DataLoader(
-                TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
-                batch_size=self.args.linear_probe_batch_size,
-                shuffle=True,
-            )
+        if "frequency" in self.args.bd_detectors:
             train_probe_freq_detector_loader = DataLoader(
                 TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
                 batch_size=64,

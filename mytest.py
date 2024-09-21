@@ -8,10 +8,9 @@ import copy
 from collections import Counter
 import random
 
-arr_1 = np.array([9, 21, 2, 10, 4, 3, 11, 20, 7])
-arr_2 = np.array([7, 2, 21, 20])
+a = [12, 3, 4, 3, 5, 11, 12, 6, 7]
 
+x = Counter(a)
 
-arr_1 = np.array([index for index in arr_1 if index in arr_2])
-
-print(arr_1.shape[0])
+res = [key for key, count in x.items() if count == 2]
+print(res)

@@ -300,14 +300,15 @@ def find_trigger_channels(
     backbone,
     ss_transform,
 ):
-    all_secondary_scores = []  # for all images in the dataset
+    bd_detector_scores = dict()
+    for detector in args.bd_detectors:
+        bd_detector_scores[detector] = []
+
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
-
     total_images = 0
 
-    if args.use_frequency_detector:
-        all_frequencies = []  # for all images in the dataset
+    if "frequency" in args.bd_detectors:
         freq_detector = FrequencyDetector(height=args.image_size, width=args.image_size)
         freq_detector = freq_detector.to(device)
         if args.pretrained_frequency_model == "":
@@ -368,7 +369,7 @@ def find_trigger_channels(
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    print(f"> epoch is {epoch}; loss is {loss.item()}")
+                print(f"> epoch is {epoch}; loss is {loss.item()}")
             save_model(
                 freq_detector.state_dict(),
                 filename=os.path.join(args.saved_path, "freq_detector.pth.tar"),
@@ -470,11 +471,6 @@ def find_trigger_channels(
         max_indices = max_indices.reshape(bs, n_views, C)  # [bs, n_view, C]
 
         take_channel = max(args.channel_num)
-        # take_channel = (
-        #     max(args.channel_num) + args.ignore_probe_channel_num
-        #     if args.ignore_probe_channels
-        #     else max(args.channel_num)
-        # )
 
         max_indices_at_channel = max_indices[
             :, :, -take_channel:
@@ -483,7 +479,7 @@ def find_trigger_channels(
             bs, -1
         )  # [bs, n_view*take_channel]
 
-        if args.use_frequency_detector:
+        if "frequency" in args.bd_detectors:
             # evaluate
             freq_detector.eval()
             images = torch.permute(images, (0, 2, 3, 1))
@@ -501,97 +497,114 @@ def find_trigger_channels(
                 images
             )  # [bs, 2], the second element is anomaly score
             output = output[:, 1].detach().cpu().tolist()
-            all_frequencies.extend(output)
+            bd_detector_scores["frequency"].extend(output)
 
-        secondary_score = []  # bs elements
-        if args.secondary_detector == "entropy":
+        if "entropy" in args.bd_detectors:
             for votes in max_indices_at_channel:  # for each original image
                 votes_counter = Counter(votes).most_common()
                 counts = np.array([c for (name, c) in votes_counter])
                 p = counts / counts.sum()
                 h = -np.sum(p * np.log(p))
                 entropy = -1 * np.exp(h)
-                secondary_score.append(entropy)
-        elif args.secondary_detector == "ss_score":
+                bd_detector_scores["entropy"].append(entropy)
+
+        if "ss_score" in args.bd_detectors:
             corrs = np.abs(corrs)
             corrs = corrs.reshape(-1, n_views)  #  [bs,n_views]
             ss_scores = np.max(corrs, axis=1)  # [bs]
-            secondary_score.extend(ss_scores.tolist())
-        elif args.secondary_detector == "ss_score_elements":
-            num_interested_channels = 1  # FIXME:  changeale
-            top_channel_votes = max_indices[
-                :, :, -num_interested_channels:
-            ].flatten()  # [bs*n_view*num_interested_channels]
-            votes_of_batch = Counter(top_channel_votes).most_common(
-                num_interested_channels
-            )
-            chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
-            scores = elementwise[:, chosen_channels]
-            scores = np.sum(scores, axis=1)  # [bs*n_view, ]
+            bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
-            scores = scores.reshape(-1, n_views)  # [ bs, n_views]
-            ss_scores = np.max(scores, axis=1)  # [bs]
-            secondary_score.extend(ss_scores.tolist())
+        # if args.bd_detectors == "ss_score_elements":
+        #     num_interested_channels = 1  # FIXME:  changeale
+        #     top_channel_votes = max_indices[
+        #         :, :, -num_interested_channels:
+        #     ].flatten()  # [bs*n_view*num_interested_channels]
+        #     votes_of_batch = Counter(top_channel_votes).most_common(
+        #         num_interested_channels
+        #     )
+        #     chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
+        #     scores = elementwise[:, chosen_channels]
+        #     scores = np.sum(scores, axis=1)  # [bs*n_view, ]
 
-        all_secondary_scores.extend(secondary_score)
+        #     scores = scores.reshape(-1, n_views)  # [ bs, n_views]
+        #     ss_scores = np.max(scores, axis=1)  # [bs]
+        #     secondary_score.extend(ss_scores.tolist())
+
         all_votes.append(max_indices_at_channel)
         is_poisoned.append(is_batch_poisoned)
 
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
 
-    minority_lb_1st = int(total_images * args.minority_1st_lower_bound)
-    minority_ub_1st = int(total_images * args.minority_1st_upper_bound)
+    minority_lb = int(total_images * args.minority_lower_bound)
+    minority_ub = int(total_images * args.minority_upper_bound)
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
-    if args.use_frequency_detector:
-        all_frequencies = np.array(all_frequencies)
-        freq_auc_score = roc_auc_score(y_true=is_poisoned, y_score=all_frequencies)
-        print(f"the AUROC score of frequency detector is: {freq_auc_score*100}")
-        all_frequencies_indices = np.argsort(
-            all_frequencies
-        )  # indices, sorted from low to high by entropy value
-        if minority_lb_1st > 0:
-            minority_indices = all_frequencies_indices[
-                -minority_ub_1st:-minority_lb_1st
+    minority_indices = []
+    num_detectors = len(args.bd_detectors)
+    for detector in args.bd_detectors:
+        bd_scores = np.array(bd_detector_scores[detector])
+        auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+        print(f"the AUROC score of detector '{detector}' is: {auroc*100}")
+        bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+        if minority_lb > 0:
+            minority_indices_local = bd_indices[
+                -minority_ub:-minority_lb
             ]  # numpy array
         else:
-            minority_indices = all_frequencies_indices[-minority_ub_1st:]
+            minority_indices_local = bd_indices[-minority_ub:]
+        minority_indices.extend(minority_indices_local.tolist())
+    minority_indices_counter = Counter(minority_indices)
+    minority_indices = [
+        idx for idx, count in minority_indices_counter.items() if count == num_detectors
+    ]
 
-    # update minority indices
-    if args.secondary_detector != "":
-        all_secondary_scores = np.array(all_secondary_scores)
-        all_secondary_scores_indices = np.argsort(
-            all_secondary_scores
-        )  # indices, sorted from low to high by entropy value, numpy array
+    # if args.use_frequency_detector:
+    #     all_frequencies = np.array(all_frequencies)
+    #     freq_auc_score = roc_auc_score(y_true=is_poisoned, y_score=all_frequencies)
+    #     print(f"the AUROC score of frequency detector is: {freq_auc_score*100}")
+    #     all_frequencies_indices = np.argsort(
+    #         all_frequencies
+    #     )  # indices, sorted from low to high by entropy value
+    #     if minority_lb > 0:
+    #         minority_indices = all_frequencies_indices[
+    #             -minority_ub:-minority_lb
+    #         ]  # numpy array
+    #     else:
+    #         minority_indices = all_frequencies_indices[-minority_ub:]
 
-        # keep the indices that appear in minority_indices
-        all_secondary_scores_indices = np.array(
-            [
-                index
-                for index in all_secondary_scores_indices
-                if index in minority_indices
-            ]
-        )
+    # # update minority indices
+    # if args.bd_detectors != "":
+    #     all_secondary_scores = np.array(all_secondary_scores)
+    #     all_secondary_scores_indices = np.argsort(
+    #         all_secondary_scores
+    #     )  # indices, sorted from low to high by entropy value, numpy array
 
-        # cut off by 2nd bounds
-        minority_count = all_secondary_scores_indices.shape[0]
-        minority_lb_2nd = int(minority_count * args.minority_2nd_lower_bound)
-        minority_ub_2nd = int(minority_count * args.minority_2nd_upper_bound)
+    #     # keep the indices that appear in minority_indices
+    #     all_secondary_scores_indices = np.array(
+    #         [
+    #             index
+    #             for index in all_secondary_scores_indices
+    #             if index in minority_indices
+    #         ]
+    #     )
 
-        if minority_lb_2nd > 0:
-            minority_indices = all_secondary_scores_indices[
-                -minority_ub_2nd:-minority_lb_2nd
-            ]  # numpy array
-        else:
-            minority_indices = all_secondary_scores_indices[-minority_ub_2nd:]
+    #     # cut off by 2nd bounds
+    #     minority_count = all_secondary_scores_indices.shape[0]
+    #     minority_lb_2nd = int(minority_count * args.minority_2nd_lower_bound)
+    #     minority_ub_2nd = int(minority_count * args.minority_2nd_upper_bound)
+
+    #     if minority_lb_2nd > 0:
+    #         minority_indices = all_secondary_scores_indices[
+    #             -minority_ub_2nd:-minority_lb_2nd
+    #         ]  # numpy array
+    #     else:
+    #         minority_indices = all_secondary_scores_indices[-minority_ub_2nd:]
 
     all_votes = all_votes[
         minority_indices
     ]  # votes by minority, [minority_num, n_view*take_channel]
-
-    ### for debugging, reporting percentage of poisoned images
 
     is_poisoned = is_poisoned[minority_indices]
     poisoned_found = is_poisoned.sum()
@@ -1016,14 +1029,14 @@ class CLTrainer:
             else:
                 _, feat_dim = model_dict[self.args.arch]
 
-            train_probe_feats_mean = None
+            # train_probe_feats_mean = None
             if self.args.use_ref_norm or self.args.replacement_value == "ref_mean":
                 train_probe_feats = get_feats(
                     poison.train_probe_loader, backbone, self.args
                 )  # shape: ? [N, D]
-                train_probe_feats_mean = torch.mean(
-                    train_probe_feats, dim=0
-                )  # shape: [D, ], used if replacement_value == "ref_mean"
+                # train_probe_feats_mean = torch.mean(
+                #     train_probe_feats, dim=0
+                # )  # shape: [D, ], used if replacement_value == "ref_mean"
 
             if use_ss_detector:
                 # it means a linear classifier is already trained in the last step

@@ -29,10 +29,6 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-### TODO: update note
-
-### TODO: rerun with checkpoints first
-
 
 module purge
 
@@ -48,8 +44,6 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --use_linear_probing \
-    \
     --pretrained_ssl_model "./Experiments/20240920_122144_36_100-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "./Experiments/20240920_122144_36_100-cifar10-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     --pretrained_frequency_model "" \
@@ -60,21 +54,15 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --use_frequency_detector \
-    --frequency_detector_epochs 500 \
-    \
-    --minority_1st_lower_bound 0.000 \
-    --minority_1st_upper_bound 0.010 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.010 \
     \
     --use_mask_pruning \
     --clean_threshold 0.0 \
     \
     --note "check the checkpoint" \
     # \
-    # --secondary_detector ss_score \
-    # \
-    # --minority_2nd_lower_bound 0.010 \
-    # --minority_2nd_upper_bound 0.600 \
+    # --bd_detectors frequency,ss_score,entropy \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

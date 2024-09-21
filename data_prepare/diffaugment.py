@@ -408,68 +408,33 @@ def set_aug_diff(args):
     ####################### Define Diff Transforms #######################
 
     if "cifar" in args.dataset or args.dataset == "imagenet100":
+        # this is applied during training, not during poison generation, so don't worry
+        train_transform = nn.Sequential(
+            aug.RandomResizedCrop(
+                size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+            ),
+            aug.RandomHorizontalFlip(),
+            RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
+            aug.RandomGrayscale(p=0.2),
+            normalize,
+        )
 
-        if not args.disable_normalize:
-            # arrive here
-            # this is applied during training, not during poison generation, so don't worry
-            train_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
-                aug.RandomGrayscale(p=0.2),
-                normalize,
-            )
+        # # NOT USED, don't worry about it
+        # ft_transform = nn.Sequential(
+        #     aug.RandomResizedCrop(
+        #         size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+        #     ),
+        #     aug.RandomHorizontalFlip(),
+        #     aug.RandomGrayscale(p=0.2),
+        #     normalize,
+        # )
 
-            # not used, don't worry about it
-            ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                aug.RandomGrayscale(p=0.2),
-                normalize,
-            )
+        # # NOT USED, don't worry about it
+        # test_transform = nn.Sequential(normalize)
 
-            # not used, don't worry about it
-            test_transform = nn.Sequential(normalize)
-
-        else:
-
-            train_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
-                aug.RandomGrayscale(p=0.2),
-            )
-
-            ft_transform = nn.Sequential(
-                aug.RandomResizedCrop(
-                    size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-                ),
-                aug.RandomHorizontalFlip(),
-                aug.RandomGrayscale(p=0.2),
-            )
-
-            test_transform = nn.Sequential(
-                nn.Identity(),
-            )
-
-    ####################### Define Load Transform ####################
-    if "cifar" in args.dataset or args.dataset == "imagenet100":
         # applied to a PIL image
         transform_load = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                (
-                    transforms.Normalize(mean, std)  # arrive here
-                    if not args.disable_normalize
-                    else transforms.Lambda(lambda x: x)
-                ),
-            ]
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]  # arrive here
         )
 
     else:
@@ -481,9 +446,9 @@ def set_aug_diff(args):
         train_dataset = CIFAR10(
             root=args.data_path, train=True, transform=transform_load, download=True
         )
-        ft_dataset = CIFAR10(
-            root=args.data_path, transform=transform_load, download=False
-        )
+        # ft_dataset = CIFAR10(
+        #     root=args.data_path, transform=transform_load, download=False
+        # )
         test_dataset = CIFAR10(
             root=args.data_path, train=False, transform=transform_load, download=True
         )
@@ -495,9 +460,9 @@ def set_aug_diff(args):
         train_dataset = CIFAR100(
             root=args.data_path, train=True, transform=transform_load, download=True
         )
-        ft_dataset = CIFAR100(
-            root=args.data_path, transform=transform_load, download=False
-        )
+        # ft_dataset = CIFAR100(
+        #     root=args.data_path, transform=transform_load, download=False
+        # )
         test_dataset = CIFAR100(
             root=args.data_path, train=False, transform=transform_load, download=True
         )
@@ -519,44 +484,44 @@ def set_aug_diff(args):
         train_dataset = train_file_list
         memory_dataset = train_file_list
         test_dataset = val_file_list
-        ft_dataset = val_file_list  # dummy placeholder here, not used anyway
+        # ft_dataset = val_file_list  # dummy placeholder here, not used anyway
     else:
         raise NotImplementedError
 
-    train_sampler = None
-    ft_sampler = None
+    # train_sampler = None
+    # ft_sampler = None
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=(train_sampler is None),
-        num_workers=args.num_workers,
-        pin_memory=True,
-        sampler=train_sampler,
-        drop_last=True,
-    )
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_dataset,
+    #     batch_size=args.batch_size,
+    #     shuffle=(train_sampler is None),
+    #     num_workers=args.num_workers,
+    #     pin_memory=True,
+    #     sampler=train_sampler,
+    #     drop_last=True,
+    # )
 
-    ft_loader = torch.utils.data.DataLoader(
-        ft_dataset,
-        batch_size=args.eval_batch_size,
-        shuffle=(ft_sampler is None),
-        num_workers=args.num_workers,
-        pin_memory=True,
-        sampler=ft_sampler,
-    )
+    # ft_loader = torch.utils.data.DataLoader(
+    #     ft_dataset,
+    #     batch_size=args.eval_batch_size,
+    #     shuffle=(ft_sampler is None),
+    #     num_workers=args.num_workers,
+    #     pin_memory=True,
+    #     sampler=ft_sampler,
+    # )
 
     # indices  = np.random.choice(len(test_dataset), 1024, replace=False)
     # sampler = SubsetRandomSampler(indices)
 
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset,
-        args.eval_batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=True,
-        drop_last=True,
-        sampler=None,
-    )
+    # test_loader = torch.utils.data.DataLoader(
+    #     test_dataset,
+    #     args.eval_batch_size,
+    #     shuffle=False,
+    #     num_workers=args.num_workers,
+    #     pin_memory=True,
+    #     drop_last=True,
+    #     sampler=None,
+    # )
 
     memory_loader = torch.utils.data.DataLoader(
         memory_dataset,
@@ -567,17 +532,17 @@ def set_aug_diff(args):
     )
 
     return (
-        train_loader,  # used only in clean (no trigger poisoning) mode
-        train_sampler,
-        train_dataset,  # used as PoisonAgent's train_dataset
-        ft_loader,  # [don't care]
-        ft_sampler,  # [don't care]
-        test_loader,  # used only in clean (no trigger poisoning) mode
-        test_dataset,  # used as PoisonAgent's val_dataset
-        memory_loader,  # used as PoisonAgent's memory_loader
-        train_transform,  # used in train_loader iteration, not in poisoning
-        ft_transform,  # [don't care]
-        test_transform,  # [don't care]
+        # train_loader,  # [don't care]
+        # train_sampler,  # [don't care]
+        train_dataset,  # TODO: [double check] used as PoisonAgent's train_dataset
+        # ft_loader,  # [don't care]
+        # ft_sampler,  # [don't care]
+        # test_loader,  # [don't care]
+        test_dataset,  # TODO: [double check] used as PoisonAgent's val_dataset
+        memory_loader,  # TODO: [double check] used as PoisonAgent's memory_loader
+        train_transform,  # TODO: [double check] used in train_loader iteration, not in poisoning
+        # ft_transform,  # [don't care]
+        # test_transform,  # [don't care]
     )
 
 

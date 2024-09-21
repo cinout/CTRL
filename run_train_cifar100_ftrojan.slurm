@@ -57,7 +57,7 @@ python -u main_train.py \
     \
     --bd_detectors frequency,ss_score \
     \
-    --note "try 2 detectors: freq, ss" \
+    --note "try 3 detectors" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

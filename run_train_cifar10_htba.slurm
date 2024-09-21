@@ -59,7 +59,7 @@ python -u main_train.py \
     \
     --bd_detectors frequency,ss_score \
     \
-    --note "try 2 detectors: freq, ss" \
+    --note "try 3 detectors" \
     # \
     # --use_mask_pruning \
     # --clean_threshold 0.0 \

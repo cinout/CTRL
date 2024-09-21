@@ -318,17 +318,17 @@ def main(args):
 
     # create data loader
     (
-        train_loader,
-        train_sampler,
+        # train_loader,
+        # train_sampler,
         train_dataset,
-        ft_loader,
-        ft_sampler,
-        test_loader,
+        # ft_loader,
+        # ft_sampler,
+        # test_loader,
         test_dataset,
         memory_loader,
         train_transform,
-        ft_transform,
-        test_transform,
+        # ft_transform,
+        # test_transform,
     ) = set_aug_diff(args)
 
     # create poisoning dataset

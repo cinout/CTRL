@@ -58,9 +58,9 @@ python -u main_train.py \
     --minority_lower_bound 0.005 \
     --minority_upper_bound 0.015 \
     \
-    --bd_detectors frequency,ss_score,entropy \
+    --bd_detectors frequency,ss_score \
     \
-    --note "try three detectors" \
+    --note "try 2 detectors: freq, ss" \
     
 
 ##Log this job's resource usage stats###

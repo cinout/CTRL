@@ -53,11 +53,11 @@ python -u main_train.py \
     --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.055 \
+    --minority_upper_bound 0.030 \
     \
     --bd_detectors frequency ss_score entropy \
     \
-    --note "try 3 detectors, and in 3" \
+    --note "try 3 detectors, and in 3 [0.5-3.0%]" \
     --in_n_detectors 3 \
 
 

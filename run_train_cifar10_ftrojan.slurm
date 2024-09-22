@@ -53,7 +53,7 @@ python -u main_train.py \
     --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.015 \
+    --minority_upper_bound 0.055 \
     \
     --bd_detectors frequency ss_score entropy \
     \

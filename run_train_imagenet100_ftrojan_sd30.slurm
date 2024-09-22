@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img100"
 #SBATCH --account=punim1623
-#SBATCH --time=0-04:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -58,9 +58,12 @@ python -u main_train.py \
     --minority_upper_bound 0.030 \
     \
     --bd_detectors frequency ss_score entropy \
-    \
-    --note "try 3 detectors, and in 3 [0.5-3.0%]" \
     --in_n_detectors 3 \
+    \
+    --seed 30 \
+    \
+    --note "seed 30" \
+    
     
 
 ##Log this job's resource usage stats###

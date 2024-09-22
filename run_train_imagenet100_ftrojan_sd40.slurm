@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="img100"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-20:00:00
 

@@ -335,7 +335,7 @@ class PoisonAgent:
 
         #  create frequency detector probe set
         train_probe_freq_detector_loader = None
-        if "frequency" in self.args.bd_detectors:
+        if "frequency_ensemble" in self.args.bd_detectors:
             train_probe_freq_detector_loader = DataLoader(
                 TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
                 batch_size=64,
@@ -513,13 +513,13 @@ def set_aug_diff(args):
     return (
         # train_loader,  # [don't care]
         # train_sampler,  # [don't care]
-        train_dataset,  # TODO: [double check] used as PoisonAgent's train_dataset
+        train_dataset,  # [double check] used as PoisonAgent's train_dataset
         # ft_loader,  # [don't care]
         # ft_sampler,  # [don't care]
         # test_loader,  # [don't care]
-        test_dataset,  # TODO: [double check] used as PoisonAgent's val_dataset
-        memory_loader,  # TODO: [double check] used as PoisonAgent's memory_loader
-        train_transform,  # TODO: [double check] used in train_loader iteration, not in poisoning
+        test_dataset,  # [double check] used as PoisonAgent's val_dataset
+        memory_loader,  #  [double check] used as PoisonAgent's memory_loader
+        train_transform,  #  [double check] used in train_loader iteration, not in poisoning
         # ft_transform,  # [don't care]
         # test_transform,  # [don't care]
     )

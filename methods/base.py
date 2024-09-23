@@ -302,85 +302,99 @@ def find_trigger_channels(
 ):
     bd_detector_scores = dict()
     for detector in args.bd_detectors:
-        bd_detector_scores[detector] = []
+        if detector == "frequency_ensemble":
+            for i in range(args.frequency_ensemble_size):
+                bd_detector_scores[f"{detector}_{i}"] = []
+        else:
+            bd_detector_scores[detector] = []
 
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
     total_images = 0
 
-    if "frequency" in args.bd_detectors:
-        freq_detector = FrequencyDetector(height=args.image_size, width=args.image_size)
-        freq_detector = freq_detector.to(device)
-        if args.pretrained_frequency_model == "":
-            # train from scratch
-            optimizer = torch.optim.Adadelta(
-                freq_detector.parameters(), lr=0.05, weight_decay=1e-4
+    if "frequency_ensemble" in args.bd_detectors:
+        freq_detector_ensemble = []
+        for ensemble_id in range(args.frequency_ensemble_size):
+            freq_detector = FrequencyDetector(
+                height=args.image_size, width=args.image_size
             )
-            criterion = nn.CrossEntropyLoss()
-            freq_detector.train()
+            freq_detector = freq_detector.to(device)
+            if args.pretrained_frequency_model == "":
+                # train from scratch
+                optimizer = torch.optim.Adadelta(
+                    freq_detector.parameters(), lr=0.05, weight_decay=1e-4
+                )
+                criterion = nn.CrossEntropyLoss()
+                freq_detector.train()
 
-            for epoch in range(args.frequency_detector_epochs):
-                for content in train_probe_freq_detector_loader:
-                    # prepare data in this batch
-                    (images_clean, _, _) = content
-                    images_clean = images_clean.to(device)
-                    images_clean = torch.permute(images_clean, (0, 2, 3, 1))
-                    images_clean = np.array(
-                        images_clean.cpu(), dtype=np.float32
-                    )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
-                    images_poi = np.zeros_like(images_clean)
-                    for i in range(images_clean.shape[0]):
-                        images_poi[i] = patching_train(
-                            images_clean[i], images_clean, args.image_size
+                for epoch in range(args.frequency_detector_epochs):
+                    for content in train_probe_freq_detector_loader:
+                        # prepare data in this batch
+                        (images_clean, _, _) = content
+                        images_clean = images_clean.to(device)
+                        images_clean = torch.permute(images_clean, (0, 2, 3, 1))
+                        images_clean = np.array(
+                            images_clean.cpu(), dtype=np.float32
+                        )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+                        images_poi = np.zeros_like(images_clean)
+                        for i in range(images_clean.shape[0]):
+                            images_poi[i] = patching_train(
+                                images_clean[i],
+                                images_clean,
+                                args.image_size,
+                                ensemble_id,
+                            )
+
+                        images = np.concatenate(
+                            [images_clean, images_poi], axis=0
+                        )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                        for i in range(images.shape[0]):
+                            for channel in range(3):
+                                images[i][:, :, channel] = dct2(
+                                    (images[i][:, :, channel] * 255).astype(np.uint8)
+                                )
+                        labels = np.concatenate(
+                            (
+                                np.zeros(images_clean.shape[0]),
+                                np.ones(images_clean.shape[0]),
+                            ),
+                            axis=0,
                         )
 
-                    images = np.concatenate(
-                        [images_clean, images_poi], axis=0
-                    )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                    for i in range(images.shape[0]):
-                        for channel in range(3):
-                            images[i][:, :, channel] = dct2(
-                                (images[i][:, :, channel] * 255).astype(np.uint8)
-                            )
-                    labels = np.concatenate(
-                        (
-                            np.zeros(images_clean.shape[0]),
-                            np.ones(images_clean.shape[0]),
-                        ),
-                        axis=0,
-                    )
+                        idx = np.arange(images.shape[0])
+                        random.shuffle(idx)
+                        images = images[
+                            idx
+                        ]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+                        images = torch.tensor(images, device=device)
+                        images = torch.permute(
+                            images, (0, 3, 1, 2)
+                        )  # shape: [2*bs, 3, 32, 32]
 
-                    idx = np.arange(images.shape[0])
-                    random.shuffle(idx)
-                    images = images[
-                        idx
-                    ]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                    images = torch.tensor(images, device=device)
-                    images = torch.permute(
-                        images, (0, 3, 1, 2)
-                    )  # shape: [2*bs, 3, 32, 32]
+                        labels = labels[idx]  # shape: [2*bs]
+                        labels = torch.tensor(labels, device=device, dtype=torch.long)
 
-                    labels = labels[idx]  # shape: [2*bs]
-                    labels = torch.tensor(labels, device=device, dtype=torch.long)
-
-                    # obtain loss and update params
-                    output = freq_detector(images)  # [2*bs, 2]
-                    loss = criterion(output, labels)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                print(f"> epoch is {epoch}; loss is {loss.item()}")
-            save_model(
-                freq_detector.state_dict(),
-                filename=os.path.join(args.saved_path, "freq_detector.pth.tar"),
-            )
-        else:
-            # load model
-            pretrained_state_dict = torch.load(
-                args.pretrained_frequency_model, map_location=device
-            )
-            freq_detector.load_state_dict(pretrained_state_dict, strict=True)
-
+                        # obtain loss and update params
+                        output = freq_detector(images)  # [2*bs, 2]
+                        loss = criterion(output, labels)
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+                    print(f"> epoch is {epoch}; loss is {loss.item()}")
+                save_model(
+                    freq_detector.state_dict(),
+                    filename=os.path.join(
+                        args.saved_path, f"frequency_ensemble_{ensemble_id}.pth.tar"
+                    ),
+                )
+            else:
+                # load model
+                pretrained_state_dict = torch.load(
+                    f"{args.pretrained_frequency_model}_{ensemble_id}.pth.tar",
+                    map_location=device,
+                )
+                freq_detector.load_state_dict(pretrained_state_dict, strict=True)
+            freq_detector_ensemble.append(freq_detector)
     if args.ignore_probe_channels:
         all_probe_votes = []
         for i, content in enumerate(train_probe_loader):
@@ -394,6 +408,7 @@ def find_trigger_channels(
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
             vision_features = backbone(views)  # [bs*n_views, 512]
+            # TODO: TRY: vision_features = torch.nn.funtional.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
             vision_features = vision_features.detach().cpu().numpy()
             u, s, v = np.linalg.svd(
@@ -479,25 +494,27 @@ def find_trigger_channels(
             bs, -1
         )  # [bs, n_view*take_channel]
 
-        if "frequency" in args.bd_detectors:
+        if "frequency_ensemble" in args.bd_detectors:
             # evaluate
-            freq_detector.eval()
-            images = torch.permute(images, (0, 2, 3, 1))
-            images = np.array(
-                images.cpu(), dtype=np.float32
-            )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
-            for i in range(images.shape[0]):
-                for channel in range(3):
-                    images[i][:, :, channel] = dct2(
-                        (images[i][:, :, channel] * 255).astype(np.uint8)
-                    )
-            images = torch.tensor(images, device=device)
-            images = torch.permute(images, (0, 3, 1, 2))  # shape: [bs, 3, 32, 32]
-            output = freq_detector(
-                images
-            )  # [bs, 2], the second element is anomaly score
-            output = output[:, 1].detach().cpu().tolist()
-            bd_detector_scores["frequency"].extend(output)
+            for ensemble_id in range(args.frequency_ensemble_size):
+                freq_detector = freq_detector_ensemble[ensemble_id]
+                freq_detector.eval()
+                images = torch.permute(images, (0, 2, 3, 1))
+                images = np.array(
+                    images.cpu(), dtype=np.float32
+                )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+                for i in range(images.shape[0]):
+                    for channel in range(3):
+                        images[i][:, :, channel] = dct2(
+                            (images[i][:, :, channel] * 255).astype(np.uint8)
+                        )
+                images = torch.tensor(images, device=device)
+                images = torch.permute(images, (0, 3, 1, 2))  # shape: [bs, 3, 32, 32]
+                output = freq_detector(
+                    images
+                )  # [bs, 2], the second element is anomaly score
+                output = output[:, 1].detach().cpu().tolist()
+                bd_detector_scores[f"frequency_ensemble_{ensemble_id}"].extend(output)
 
         if "entropy" in args.bd_detectors:
             for votes in max_indices_at_channel:  # for each original image
@@ -542,9 +559,16 @@ def find_trigger_channels(
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
     minority_indices = []
-    num_detectors = len(args.bd_detectors)
-    for detector in args.bd_detectors:
-        bd_scores = np.array(bd_detector_scores[detector])
+
+    # update detector names if frequency_ensemble is in it
+    # actual_detectors = args.bd_detectors
+    # if "frequency_ensemble" in args.bd_detectors:
+    #     actual_detectors.remove("frequency_ensemble")
+    #     for ensemble_id in range(args.frequency_ensemble_size):
+    #         actual_detectors.append(f"frequency_ensemble_{ensemble_id}")
+
+    for detector, values in bd_detector_scores.items():
+        bd_scores = np.array(values)
         auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
         print(f"the AUROC score of detector '{detector}' is: {auroc*100}")
         bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
@@ -555,6 +579,7 @@ def find_trigger_channels(
         else:
             minority_indices_local = bd_indices[-minority_ub:]
         minority_indices.extend(minority_indices_local.tolist())
+
     minority_indices_counter = Counter(minority_indices)
     minority_indices = [
         idx
@@ -1056,6 +1081,16 @@ class CLTrainer:
                         ),  # the train_var/mean are from L2-normed features
                         nn.Linear(feat_dim, self.args.num_classes),
                     )
+                # TODO:
+                # elif xxx:
+                #     linear = nn.Sequential(
+                #         nn.BatchNorm1d(feat_dim, affine=False),
+                #         nn.Linear(feat_dim, self.args.num_classes),
+                #     )
+                # elif xxx:
+                #     linear = nn.Linear(
+                #         feat_dim, self.args.num_classes
+                #     )  # tune learning rate
                 else:
                     linear = nn.Sequential(
                         Normalize(),  # L2 norm

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-03:00:00
+#SBATCH --time=0-05:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -53,9 +53,10 @@ python -u main_train.py \
     --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.030 \
+    --minority_upper_bound 0.050 \
     \
-    --bd_detectors frequency ss_score entropy \
+    --bd_detectors frequency_ensemble \
+    --frequency_ensemble_size 3 \
     \
     --note "try 3 detectors, and in 3 [0.5-3.0%]" \
     --in_n_detectors 3 \

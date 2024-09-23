@@ -8,9 +8,8 @@ import copy
 from collections import Counter
 import random
 
-a = [12, 3, 4, 3, 5, 11, 12, 6, 7]
-
-x = Counter(a)
-
-res = [key for key, count in x.items() if count == 2]
-print(res)
+a = ["red", "blue"]
+a.remove("red")
+a.append("green")
+a.append("orange")
+print(a)

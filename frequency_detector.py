@@ -25,11 +25,18 @@ def randshadow(img, image_size):
     return auged
 
 
-def patching_train(clean_sample, x_train, image_size):
+def patching_train(clean_sample, x_train, image_size, ensemble_id):
     """
     this code conducts a patching procedure with random white blocks or random noise block
     """
-    attack = np.random.randint(0, 5)
+    # FIXME: hack code
+    if ensemble_id == 0:
+        attack = np.random.choice([0, 2], 1)[0]
+    elif ensemble_id == 1:
+        attack = np.random.choice([1, 3], 1)[0]
+    elif ensemble_id == 2:
+        attack = np.random.choice([1, 4], 1)[0]
+
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)
     output = np.copy(clean_sample)

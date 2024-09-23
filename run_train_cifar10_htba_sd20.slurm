@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-03:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -44,8 +44,8 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "/last.pth.tar" \
+    --pretrained_linear_model "/linear.pth.tar" \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \

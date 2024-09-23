@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-04:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -44,8 +44,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "/last.pth.tar" \
+    --pretrained_linear_model "/linear.pth.tar" \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \

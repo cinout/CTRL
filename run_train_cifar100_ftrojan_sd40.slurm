@@ -42,8 +42,8 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "/last.pth.tar" \
-    --pretrained_linear_model "/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20240922_230939_60_96-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240922_230939_60_96-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \

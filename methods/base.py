@@ -496,20 +496,20 @@ def find_trigger_channels(
 
         if "frequency_ensemble" in args.bd_detectors:
             # evaluate
+            images = torch.permute(images, (0, 2, 3, 1))
+            images = np.array(
+                images.cpu(), dtype=np.float32
+            )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+            for i in range(images.shape[0]):
+                for channel in range(3):
+                    images[i][:, :, channel] = dct2(
+                        (images[i][:, :, channel] * 255).astype(np.uint8)
+                    )
+            images = torch.tensor(images, device=device)
+            images = torch.permute(images, (0, 3, 1, 2))  # shape: [bs, 3, 32, 32]
             for ensemble_id in range(args.frequency_ensemble_size):
                 freq_detector = freq_detector_ensemble[ensemble_id]
                 freq_detector.eval()
-                images = torch.permute(images, (0, 2, 3, 1))
-                images = np.array(
-                    images.cpu(), dtype=np.float32
-                )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
-                for i in range(images.shape[0]):
-                    for channel in range(3):
-                        images[i][:, :, channel] = dct2(
-                            (images[i][:, :, channel] * 255).astype(np.uint8)
-                        )
-                images = torch.tensor(images, device=device)
-                images = torch.permute(images, (0, 3, 1, 2))  # shape: [bs, 3, 32, 32]
                 output = freq_detector(
                     images
                 )  # [bs, 2], the second element is anomaly score

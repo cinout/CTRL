@@ -30,12 +30,14 @@ def patching_train(clean_sample, x_train, image_size, ensemble_id):
     this code conducts a patching procedure with random white blocks or random noise block
     """
     # FIXME: hack code
-    if ensemble_id == 0:
-        attack = np.random.choice([0, 1, 2], 1)[0]
-    elif ensemble_id == 1:
-        attack = np.random.choice([1, 2, 3], 1)[0]
-    elif ensemble_id == 2:
-        attack = np.random.choice([2, 3, 4], 1)[0]
+    # [0, 2] works, [1,3], [1, 4] not
+    # if ensemble_id == 0:
+    #     attack = np.random.choice([0, 1, 2], 1)[0]
+    # elif ensemble_id == 1:
+    #     attack = np.random.choice([1, 2, 3], 1)[0]
+    # elif ensemble_id == 2:
+
+    attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)

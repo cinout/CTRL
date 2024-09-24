@@ -46,7 +46,8 @@ python -u main_train.py \
     --target_class 0 \
     \
     --pretrained_ssl_model "./Experiments/20240920_122148_13_42-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240920_122148_13_42-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
+    --pretrained_linear_model "" \
+    --linear_probe_normalize none \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
@@ -63,7 +64,7 @@ python -u main_train.py \
     --frequency_train_trigger_size 4 \
     --in_n_detectors 3 \
     \
-    --note "try 3 detectors, and in 3 [0.5-3.0%]" \
+    --note "linear_probe_normalize none" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

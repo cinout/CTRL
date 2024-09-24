@@ -459,6 +459,7 @@ def find_trigger_channels(
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
         vision_features = backbone(views)  # [bs*n_views, 512]
+        # TODO: normalize
         _, C = vision_features.shape
         vision_features = vision_features.detach().cpu().numpy()
         u, s, v = np.linalg.svd(
@@ -1058,7 +1059,10 @@ class CLTrainer:
                 _, feat_dim = model_dict[self.args.arch]
 
             # train_probe_feats_mean = None
-            if self.args.use_ref_norm or self.args.replacement_value == "ref_mean":
+            if (
+                self.args.linear_probe_normalize == "ref_set"
+                or self.args.replacement_value == "ref_mean"
+            ):
                 train_probe_feats = get_feats(
                     poison.train_probe_loader, backbone, self.args
                 )  # shape: ? [N, D]
@@ -1072,7 +1076,7 @@ class CLTrainer:
             else:
                 # training linear
 
-                if self.args.use_ref_norm:
+                if self.args.linear_probe_normalize == "ref_set":
                     train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
                     linear = nn.Sequential(
@@ -1082,17 +1086,16 @@ class CLTrainer:
                         ),  # the train_var/mean are from L2-normed features
                         nn.Linear(feat_dim, self.args.num_classes),
                     )
-                # TODO:
-                # elif xxx:
-                #     linear = nn.Sequential(
-                #         nn.BatchNorm1d(feat_dim, affine=False),
-                #         nn.Linear(feat_dim, self.args.num_classes),
-                #     )
-                # elif xxx:
-                #     linear = nn.Linear(
-                #         feat_dim, self.args.num_classes
-                #     )  # tune learning rate
-                else:
+                elif self.args.linear_probe_normalize == "batch":
+                    linear = nn.Sequential(
+                        nn.BatchNorm1d(feat_dim, affine=False),
+                        nn.Linear(feat_dim, self.args.num_classes),
+                    )
+                elif self.args.linear_probe_normalize == "none":
+                    linear = nn.Linear(
+                        feat_dim, self.args.num_classes
+                    )  # TODO: tune learning rate
+                elif self.args.linear_probe_normalize == "regular":
                     linear = nn.Sequential(
                         Normalize(),  # L2 norm
                         nn.Linear(feat_dim, self.args.num_classes),

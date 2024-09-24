@@ -48,10 +48,13 @@ parser.add_argument(
 
 parser.add_argument("--note", type=str, default="")
 parser.add_argument("--image_size", type=int, default=32)
+
+# TODO: remove linear checkpoint
+# TODO: add to slurm
 parser.add_argument(
-    "--use_ref_norm",
-    action="store_true",
-    help="normalize features by 1% trainset's mean and var",
+    "--linear_probe_normalize",
+    default="regular",
+    choices=["regular", "none", "ref_set", "batch"],
 )
 
 ### dataloader

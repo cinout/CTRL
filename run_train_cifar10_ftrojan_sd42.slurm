@@ -58,9 +58,9 @@ python -u main_train.py \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
+    --in_n_detectors 3 \
     \
     --note "try 3 detectors, and in 3 [0.5-3.0%]" \
-    --in_n_detectors 3 \
 
 
 ##Log this job's resource usage stats###

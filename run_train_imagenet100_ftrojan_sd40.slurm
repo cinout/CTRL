@@ -45,7 +45,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --pretrained_ssl_model "./Experiments/20240922_231315_56_97-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240922_231315_56_97-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
+    --pretrained_linear_model "" \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \

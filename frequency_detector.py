@@ -25,17 +25,40 @@ def randshadow(img, image_size):
     return auged
 
 
-def patching_train(clean_sample, x_train, image_size, ensemble_id):
+def patching_train(
+    clean_sample, x_train, image_size, ensemble_id, frequency_train_trigger_size
+):
     """
     this code conducts a patching procedure with random white blocks or random noise block
     """
     # FIXME: hack code
     if ensemble_id == 0:
-        attack = np.random.choice([0, 1], 1)[0]
+        if frequency_train_trigger_size == 2:
+            attack = np.random.choice([0, 1], 1)[0]
+        elif frequency_train_trigger_size == 3:
+            attack = np.random.choice([0, 1, 2], 1)[0]
+        elif frequency_train_trigger_size == 4:
+            attack = np.random.choice([0, 1, 2, 3], 1)[0]
+        elif frequency_train_trigger_size == 5:
+            attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
     elif ensemble_id == 1:
-        attack = np.random.choice([2, 3], 1)[0]
+        if frequency_train_trigger_size == 2:
+            attack = np.random.choice([2, 3], 1)[0]
+        elif frequency_train_trigger_size == 3:
+            attack = np.random.choice([2, 3, 4], 1)[0]
+        elif frequency_train_trigger_size == 4:
+            attack = np.random.choice([1, 2, 3, 4], 1)[0]
+        elif frequency_train_trigger_size == 5:
+            attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
     elif ensemble_id == 2:
-        attack = np.random.choice([1, 4], 1)[0]
+        if frequency_train_trigger_size == 2:
+            attack = np.random.choice([1, 4], 1)[0]
+        elif frequency_train_trigger_size == 3:
+            attack = np.random.choice([0, 3, 4], 1)[0]
+        elif frequency_train_trigger_size == 4:
+            attack = np.random.choice([1, 2, 4, 5], 1)[0]
+        elif frequency_train_trigger_size == 5:
+            attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)

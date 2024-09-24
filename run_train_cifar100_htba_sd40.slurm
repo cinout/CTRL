@@ -60,7 +60,7 @@ python -u main_train.py \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
-    --frequency_train_trigger_size 3 \
+    --frequency_train_trigger_size 4 \
     --in_n_detectors 3 \
     \
     --seed 40 \

@@ -46,7 +46,7 @@ python -u main_train.py \
     \
     --pretrained_ssl_model "./Experiments/20240906_183318_46_6-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs512-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
     --pretrained_linear_model "" \
-    --linear_probe_normalize ref_set \
+    --linear_probe_normalize batch \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
@@ -63,7 +63,7 @@ python -u main_train.py \
     --frequency_train_trigger_size 4 \
     --in_n_detectors 3 \
     \
-    --note "linear_probe_normalize ref_set" \
+    --note "linear_probe_normalize batch" \
     
 
 ##Log this job's resource usage stats###

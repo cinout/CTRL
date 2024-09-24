@@ -46,7 +46,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --pretrained_ssl_model "./Experiments/20240920_122142_53_0-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
-    --pretrained_linear_model "" \
+    --pretrained_linear_model "./Experiments/20240924_155156_28_85-imagenet100-simclr-resnet18-poi0.01-magtrain300.0-magval300.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \

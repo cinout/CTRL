@@ -56,15 +56,14 @@ def patching_train(
         elif frequency_train_trigger_size == 3:
             attack = np.random.choice([0, 3, 4], 1)[0]
         elif frequency_train_trigger_size == 4:
-            attack = np.random.choice([1, 2, 4, 5], 1)[0]
+            attack = np.random.choice([0, 1, 2, 4], 1)[0]
         elif frequency_train_trigger_size == 5:
             attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)
     output = np.copy(clean_sample)
-    # TODO: remove later
-    print(f"attack is {attack}")
+
     if attack == 0:
         block = np.ones((pat_size_x, pat_size_y, 3))
     elif attack == 1:
@@ -79,14 +78,10 @@ def patching_train(
         mid = output + 0.3 * tri
         mid[mid > 1] = 1
         return mid
-    # TODO: remove later
-    print(f"block.shape is {block.shape}")
 
     margin = np.random.randint(0, 6)
     rand_loc = np.random.randint(0, 4)
 
-    print(f"rand_loc is {rand_loc}")
-    print("==================")
     if rand_loc == 0:
         output[margin : margin + pat_size_x, margin : margin + pat_size_y, :] = (
             block  # upper left

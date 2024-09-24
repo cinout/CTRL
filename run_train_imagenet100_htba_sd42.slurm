@@ -57,14 +57,14 @@ python -u main_train.py \
     --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.080 \
+    --minority_upper_bound 0.050 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \
-    --note "refset + 5 trigger [RERUN]" \
+    --note "refset + 5 trigger [0.5-5.0]" \
     
 
 ##Log this job's resource usage stats###

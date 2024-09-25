@@ -43,8 +43,8 @@ python -u main_train.py \
     --target_class 0 \
     \
     --pretrained_ssl_model "./Experiments/20240906_183247_52_10_cifar100_ftrojan_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_155257_49_55_cifar100_ftrojan_linear_batchnorm_sd42/linear.pth.tar" \
-    --linear_probe_normalize batch \
+    --pretrained_linear_model "./Experiments/20240924_152615_65_68_cifar100_ftrojan_linear_none_sd42/linear.pth.tar" \
+    --linear_probe_normalize none \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
@@ -61,7 +61,7 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \
-    --note "batchnorm + 5 trigger [0.5-8.0]" \
+    --note "none + 5 trigger [0.5-8.0]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -408,6 +408,7 @@ if __name__ == "__main__":
     if args.debug:  #### in the debug setting
         args.saved_path = os.path.join("./{}/test".format(args.log_path))
     else:
+        # TODO: update
         args.saved_path = os.path.join(
             "./{}/{}_{}".format(
                 args.log_path,

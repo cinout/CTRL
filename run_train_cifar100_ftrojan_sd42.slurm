@@ -43,7 +43,7 @@ python -u main_train.py \
     --target_class 0 \
     \
     --pretrained_ssl_model "./Experiments/20240906_183247_52_10_cifar100_ftrojan_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_153220_96_33-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/linear.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240924_153220_96_33_cifar100_ftrojan_linear_refset_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \

@@ -64,7 +64,8 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \
-    --note "three different detectors, linear_norm=refset, detector_norm=NONE" \
+    --detector_normalize l2 \
+    --note "three different detectors, linear_norm=refset, detector_norm=l2" \
     
 
 ##Log this job's resource usage stats###

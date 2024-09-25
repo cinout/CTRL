@@ -410,7 +410,8 @@ def find_trigger_channels(
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
             vision_features = backbone(views)  # [bs*n_views, 512]
-            # TODO: TRY: vision_features = torch.nn.funtional.normalize(vision_features, dim=-1)
+            if args.detector_normalize == "l2":
+                vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
             vision_features = vision_features.detach().cpu().numpy()
             u, s, v = np.linalg.svd(
@@ -460,7 +461,8 @@ def find_trigger_channels(
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
         vision_features = backbone(views)  # [bs*n_views, 512]
-        # TODO: normalize
+        if args.detector_normalize == "l2":
+            vision_features = F.normalize(vision_features, dim=-1)
         _, C = vision_features.shape
         vision_features = vision_features.detach().cpu().numpy()
         u, s, v = np.linalg.svd(

@@ -55,6 +55,11 @@ parser.add_argument(
     default="regular",
     choices=["regular", "none", "ref_set", "batch"],
 )
+parser.add_argument(
+    "--detector_normalize",
+    default="none",
+    choices=["l2", "none"],
+)
 
 ### dataloader
 parser.add_argument("--data_path", default="./datasets/")

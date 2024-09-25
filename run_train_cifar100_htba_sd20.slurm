@@ -58,8 +58,8 @@ python -u main_train.py \
     --minority_lower_bound 0.005 \
     --minority_upper_bound 0.080 \
     \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
+    --bd_detectors frequency_ensemble entropy ss_score \
+    --frequency_ensemble_size 1 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \

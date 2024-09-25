@@ -396,6 +396,7 @@ def find_trigger_channels(
                 )
                 freq_detector.load_state_dict(pretrained_state_dict, strict=True)
             freq_detector_ensemble.append(freq_detector)
+
     if args.ignore_probe_channels:
         all_probe_votes = []
         for i, content in enumerate(train_probe_loader):

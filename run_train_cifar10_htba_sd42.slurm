@@ -45,8 +45,8 @@ python -u main_train.py \
     --target_class 0 \
     \
     --pretrained_ssl_model "./Experiments/20240920_122144_36_100_cifar10_htba_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_153020_69_29_cifar10_htba_linear_none_sd42/linear.pth.tar" \
-    --linear_probe_normalize none \
+    --pretrained_linear_model "./Experiments/20240924_155056_19_48_cifar10_htba_linear_refset_sd42/linear.pth.tar" \
+    --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
@@ -58,12 +58,12 @@ python -u main_train.py \
     --minority_lower_bound 0.005 \
     --minority_upper_bound 0.080 \
     \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
+    --bd_detectors frequency_ensemble entropy ss_score \
+    --frequency_ensemble_size 1 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \
-    --note "none + 5 trigger [0.5-8.0]" \
+    --note "three different detectors, linear_norm=refset, detector_norm=NONE" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

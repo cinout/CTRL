@@ -404,18 +404,9 @@ def main(args):
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    # for Logging
-    if args.debug:  #### in the debug setting
-        args.saved_path = os.path.join("./{}/test".format(args.log_path))
-    else:
-        # TODO: update
-        args.saved_path = os.path.join(
-            "./{}/{}_{}".format(
-                args.log_path,
-                args.timestamp,
-                args.dataset,
-            )
-        )
+    args.saved_path = os.path.join(
+        f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_linear_{args.linear_probe_normalize}_sd{args.seed}_[RAW]"
+    )
     if not os.path.exists(args.saved_path):
         os.makedirs(args.saved_path)
 

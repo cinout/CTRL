@@ -409,7 +409,7 @@ if __name__ == "__main__":
         args.saved_path = os.path.join("./{}/test".format(args.log_path))
     else:
         args.saved_path = os.path.join(
-            "./{}/{}-{}".format(
+            "./{}/{}_{}".format(
                 args.log_path,
                 args.timestamp,
                 args.dataset,

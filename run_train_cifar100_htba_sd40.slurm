@@ -45,7 +45,7 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240922_230947_49_67-cifar100-simclr-resnet18-poi0.01-magtrain50.0-magval100.0-bs128-lr0.06-knnfreq5-SSDYes/last.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20240922_230947_49_67_cifar100_htba_linear_regular_sd40/last.pth.tar" \
     --pretrained_linear_model "" \
     --pretrained_frequency_model "" \
     \

@@ -1094,7 +1094,7 @@ class CLTrainer:
                 elif self.args.linear_probe_normalize == "none":
                     linear = nn.Linear(
                         feat_dim, self.args.num_classes
-                    )  # TODO: tune learning rate
+                    )  # FIXME: tune learning rate
                 elif self.args.linear_probe_normalize == "regular":
                     linear = nn.Sequential(
                         Normalize(),  # L2 norm

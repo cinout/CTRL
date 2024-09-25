@@ -49,8 +49,7 @@ parser.add_argument(
 parser.add_argument("--note", type=str, default="")
 parser.add_argument("--image_size", type=int, default=32)
 
-# TODO: remove linear checkpoint
-# TODO: add to slurm
+
 parser.add_argument(
     "--linear_probe_normalize",
     default="regular",
@@ -410,19 +409,10 @@ if __name__ == "__main__":
         args.saved_path = os.path.join("./{}/test".format(args.log_path))
     else:
         args.saved_path = os.path.join(
-            "./{}/{}-{}-{}-{}-poi{}-magtrain{}-magval{}-bs{}-lr{}-knnfreq{}-SSD{}".format(
+            "./{}/{}-{}".format(
                 args.log_path,
                 args.timestamp,
                 args.dataset,
-                args.method,
-                args.arch,
-                args.poison_ratio,
-                args.magnitude_train,
-                args.magnitude_val,
-                args.batch_size,
-                args.lr,
-                args.knn_eval_freq,
-                "Yes" if args.detect_trigger_channels else "No",
             )
         )
     if not os.path.exists(args.saved_path):

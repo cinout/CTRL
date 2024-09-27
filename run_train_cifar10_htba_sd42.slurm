@@ -63,8 +63,9 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
     \
-    --detector_normalize l2 \
-    --note "three different detectors, linear_norm=refset, detector_norm=l2" \
+    --unlearn_before_finding_trigger_channels \
+    --clean_threshold 0.05 \
+    --note "unlearn before finding trigger channels" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

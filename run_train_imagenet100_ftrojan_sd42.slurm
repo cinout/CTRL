@@ -64,9 +64,10 @@ python -u main_train.py \
     --in_n_detectors 3 \
     \
     --unlearn_before_finding_trigger_channels \
-    --clean_threshold 0.05 \
+    --clean_threshold 0.10 \
+    --unlearning_lr 0.001 \
     --unlearning_epochs 50 \
-    --note "unlearn before finding trigger channels" \
+    --note "clean_thres=0.1, unlearning_lr=0.001" \
     
 
 ##Log this job's resource usage stats###

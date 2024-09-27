@@ -313,7 +313,7 @@ parser.add_argument(
 
 # TODO: add to slurm
 parser.add_argument(
-    "--unlearnt_before_finding_trigger_channels",
+    "--unlearn_before_finding_trigger_channels",
     action="store_true",
     help="unlearn the model before finding trigger channels",
 )
@@ -398,13 +398,13 @@ def main(args):
     )
     trainer.train_freq(model, optimizer, train_transform, poison)
 
-    trained_linear = trainer.linear_probing(model, poison, use_ss_detector=False)
+    trained_linear = trainer.linear_probing(model, poison)
 
     if args.detect_trigger_channels:
-        # comparison w. or w.o. SS Detector
-        trainer.linear_probing(
-            model, poison, use_ss_detector=True, trained_linear=trained_linear
-        )
+        trainer.trigger_channel_removal(model, poison, trained_linear)
+        # trainer.linear_probing(
+        #     model, poison, use_ss_detector=True, trained_linear=trained_linear
+        # )
 
     if args.use_mask_pruning:
         trainer.linear_probing(

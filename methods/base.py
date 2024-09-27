@@ -298,6 +298,7 @@ def find_trigger_channels(
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
+    linear,
     ss_transform,
 ):
     bd_detector_scores = dict()
@@ -311,6 +312,38 @@ def find_trigger_channels(
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset
     total_images = 0
+
+    if args.unlearn_before_finding_trigger_channels:
+        unlearnt_backbone = copy.deepcopy(backbone)
+        unlearnt_linear = copy.deepcopy(linear)
+        criterion = torch.nn.CrossEntropyLoss().to(device)
+        optimizer = torch.optim.SGD(
+            list(backbone.parameters()) + list(linear.parameters()),
+            lr=args.unlearning_lr,
+            momentum=0.9,
+            weight_decay=5e-4,
+        )
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer, milestones=args.schedule, gamma=0.1
+        )
+        for epoch in range(0, args.unlearning_epochs + 1):
+            train_acc = train_step_unlearning(
+                args=args,
+                model=unlearnt_backbone,
+                linear=unlearnt_linear,
+                criterion=criterion,
+                optimizer=optimizer,
+                data_loader=train_probe_loader,
+            )
+
+            scheduler.step()
+            print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
+
+            if train_acc <= args.clean_threshold:
+                print(f">>>>>>>> arrive at early break of unlearning at epoch {epoch}")
+                break
+        unlearnt_backbone.eval()
+        unlearnt_linear.eval()
 
     if "frequency_ensemble" in args.bd_detectors:
         freq_detector_ensemble = []
@@ -409,7 +442,10 @@ def find_trigger_channels(
 
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-            vision_features = backbone(views)  # [bs*n_views, 512]
+            if args.unlearn_before_finding_trigger_channels:
+                vision_features = unlearnt_backbone(views)
+            else:
+                vision_features = backbone(views)  # [bs*n_views, 512]
             if args.detector_normalize == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
@@ -460,7 +496,10 @@ def find_trigger_channels(
 
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        vision_features = backbone(views)  # [bs*n_views, 512]
+        if args.unlearn_before_finding_trigger_channels:
+            vision_features = unlearnt_backbone(views)
+        else:
+            vision_features = backbone(views)  # [bs*n_views, 512]
         if args.detector_normalize == "l2":
             vision_features = F.normalize(vision_features, dim=-1)
         _, C = vision_features.shape
@@ -897,7 +936,6 @@ class CLTrainer:
         self,  # call self.args for options
         model,
         poison,
-        use_ss_detector=False,
         use_mask_pruning=False,
         trained_linear=None,
     ):
@@ -1073,82 +1111,75 @@ class CLTrainer:
                 #     train_probe_feats, dim=0
                 # )  # shape: [D, ], used if replacement_value == "ref_mean"
 
-            if use_ss_detector:
-                # it means a linear classifier is already trained in the last step
-                linear = copy.deepcopy(trained_linear)
-            else:
-                # training linear
+            # training linear
+            if self.args.linear_probe_normalize == "ref_set":
+                train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
 
-                if self.args.linear_probe_normalize == "ref_set":
-                    train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+                linear = nn.Sequential(
+                    Normalize(),  # L2 norm
+                    FullBatchNorm(
+                        train_var, train_mean
+                    ),  # the train_var/mean are from L2-normed features
+                    nn.Linear(feat_dim, self.args.num_classes),
+                )
+            elif self.args.linear_probe_normalize == "batch":
+                linear = nn.Sequential(
+                    nn.BatchNorm1d(feat_dim, affine=False),
+                    nn.Linear(feat_dim, self.args.num_classes),
+                )
+            elif self.args.linear_probe_normalize == "none":
+                linear = nn.Linear(
+                    feat_dim, self.args.num_classes
+                )  # FIXME: tune learning rate
+            elif self.args.linear_probe_normalize == "regular":
+                linear = nn.Sequential(
+                    Normalize(),  # L2 norm
+                    nn.Linear(feat_dim, self.args.num_classes),
+                )
 
-                    linear = nn.Sequential(
-                        Normalize(),  # L2 norm
-                        FullBatchNorm(
-                            train_var, train_mean
-                        ),  # the train_var/mean are from L2-normed features
-                        nn.Linear(feat_dim, self.args.num_classes),
+            if self.args.pretrained_linear_model != "":
+                pretrained_state_dict = torch.load(
+                    self.args.pretrained_linear_model, map_location=device
+                )
+                linear.load_state_dict(pretrained_state_dict, strict=True)
+
+            linear = linear.to(device)
+
+            if self.args.pretrained_linear_model == "":
+                optimizer = torch.optim.SGD(
+                    linear.parameters(),
+                    lr=0.06,
+                    momentum=0.9,
+                    weight_decay=1e-4,
+                )
+                sched = [15, 30, 40]
+                lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                    optimizer, milestones=sched
+                )
+
+                # train linear classifier
+                linear_probing_epochs = 40
+
+                for epoch in range(linear_probing_epochs):
+                    print(f"training linear classifier, epoch: {epoch}")
+                    train_linear_classifier(
+                        poison.train_probe_loader,
+                        backbone,
+                        linear,
+                        optimizer,
+                        self.args,
                     )
-                elif self.args.linear_probe_normalize == "batch":
-                    linear = nn.Sequential(
-                        nn.BatchNorm1d(feat_dim, affine=False),
-                        nn.Linear(feat_dim, self.args.num_classes),
+                    # modify lr
+                    lr_scheduler.step()
+
+                if not self.args.distributed or (
+                    self.args.distributed
+                    and self.args.local_rank % self.args.ngpus_per_node == 0
+                ):
+                    save_model(
+                        linear.state_dict(),
+                        filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
                     )
-                elif self.args.linear_probe_normalize == "none":
-                    linear = nn.Linear(
-                        feat_dim, self.args.num_classes
-                    )  # FIXME: tune learning rate
-                elif self.args.linear_probe_normalize == "regular":
-                    linear = nn.Sequential(
-                        Normalize(),  # L2 norm
-                        nn.Linear(feat_dim, self.args.num_classes),
-                    )
-
-                if self.args.pretrained_linear_model != "":
-                    pretrained_state_dict = torch.load(
-                        self.args.pretrained_linear_model, map_location=device
-                    )
-                    linear.load_state_dict(pretrained_state_dict, strict=True)
-
-                linear = linear.to(device)
-
-                if self.args.pretrained_linear_model == "":
-                    optimizer = torch.optim.SGD(
-                        linear.parameters(),
-                        lr=0.06,
-                        momentum=0.9,
-                        weight_decay=1e-4,
-                    )
-                    sched = [15, 30, 40]
-                    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                        optimizer, milestones=sched
-                    )
-
-                    # train linear classifier
-                    linear_probing_epochs = 40
-
-                    for epoch in range(linear_probing_epochs):
-                        print(f"training linear classifier, epoch: {epoch}")
-                        train_linear_classifier(
-                            poison.train_probe_loader,
-                            backbone,
-                            linear,
-                            optimizer,
-                            self.args,
-                        )
-                        # modify lr
-                        lr_scheduler.step()
-
-                    if not self.args.distributed or (
-                        self.args.distributed
-                        and self.args.local_rank % self.args.ngpus_per_node == 0
-                    ):
-                        save_model(
-                            linear.state_dict(),
-                            filename=os.path.join(
-                                self.args.saved_path, "linear.pth.tar"
-                            ),
-                        )
 
             # eval linear classifier
             backbone.eval()
@@ -1161,7 +1192,7 @@ class CLTrainer:
                 linear,
                 self.args,
                 val_mode="clean",
-                use_ss_detector=use_ss_detector,
+                use_ss_detector=False,
                 contributing_indices=self.contributing_indices,
             )
 
@@ -1172,20 +1203,13 @@ class CLTrainer:
                 linear,
                 self.args,
                 val_mode="poison",
-                use_ss_detector=use_ss_detector,
+                use_ss_detector=False,
                 contributing_indices=self.contributing_indices,
             )
 
-            if use_ss_detector:
-                for k in self.args.channel_num:
-                    print(
-                        f"by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
-                    )
-            else:
-
-                print(
-                    f"with the DEFAULT linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
-                )
+            print(
+                f"with the DEFAULT linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
+            )
 
             return linear  # the returned linear is only used if use_ss_detector=False
 
@@ -1266,7 +1290,7 @@ class CLTrainer:
 
                 warmup_scheduler.step()
 
-            # (KNN-eval) why this eval step? (this code combines training and eval together)
+            # (KNN-eval)  combines training and eval together
             if epoch + 1 == self.args.epochs or (
                 self.args.pretrained_ssl_model == ""
                 and epoch % self.args.knn_eval_freq == 0
@@ -1282,7 +1306,6 @@ class CLTrainer:
                     backbone,
                     poison.memory_loader,
                     test_loader,
-                    epoch,
                     self.args,
                     classes=self.args.num_classes,
                     subset=False,
@@ -1298,44 +1321,6 @@ class CLTrainer:
                         cl_losses.avg,
                     )
                 )
-
-                # Apply channel removal (our method) to see its efficacy in KNN classification
-                if epoch + 1 == self.args.epochs and self.args.detect_trigger_channels:
-                    # if last epoch, also evaluate with SS detctor
-
-                    model.eval()
-                    if self.args.method == "mocov2":
-                        backbone = copy.deepcopy(model.encoder_q)
-                        backbone.fc = nn.Sequential()
-                    else:
-                        backbone = model.backbone
-
-                    self.contributing_indices = find_trigger_channels(
-                        self.args,
-                        poison.train_pos_loader,
-                        poison.train_probe_loader,
-                        poison.train_probe_freq_detector_loader,
-                        backbone,
-                        poison.ss_transform,
-                    )
-
-                    clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                        backbone,
-                        poison.memory_loader,
-                        test_loader,
-                        epoch,
-                        self.args,
-                        classes=self.args.num_classes,
-                        subset=False,
-                        backdoor_loader=test_back_loader,
-                        use_SS_detector=True,
-                        contributing_indices=self.contributing_indices,
-                    )
-
-                    for k in self.args.channel_num:
-                        print(
-                            f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
-                        )
 
         if self.args.pretrained_ssl_model == "":
             # Save final model
@@ -1356,13 +1341,80 @@ class CLTrainer:
 
         return model
 
+    def trigger_channel_removal(self, model, poison, trained_linear):
+        ######## Prepare backbone and linear, and set them to eval mode
+        linear = copy.deepcopy(trained_linear)
+        linear.eval()
+        model.eval()
+        if self.args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = model.backbone
+        backbone.eval()
+
+        ######## Find trigger channels
+        self.contributing_indices = find_trigger_channels(
+            self.args,
+            poison.train_pos_loader,
+            poison.train_probe_loader,
+            poison.train_probe_freq_detector_loader,
+            backbone,
+            linear,
+            poison.ss_transform,
+        )
+
+        ############# KNN
+        clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+            backbone,
+            poison.memory_loader,
+            poison.test_loader,
+            self.args,
+            classes=self.args.num_classes,
+            subset=False,
+            backdoor_loader=poison.test_pos_loader,
+            use_SS_detector=True,
+            contributing_indices=self.contributing_indices,
+        )
+
+        for k in self.args.channel_num:
+            print(
+                f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+            )
+
+        ########### Linear Probe
+        print(f"<<<<<<<<< evaluating linear on CLEAN val")
+        clean_acc1 = eval_linear_classifier(
+            poison.test_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="clean",
+            use_ss_detector=True,
+            contributing_indices=self.contributing_indices,
+        )
+
+        print(f"<<<<<<<<< evaluating linear on POISON val")
+        poison_acc1 = eval_linear_classifier(
+            poison.test_pos_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="poison",
+            use_ss_detector=True,
+            contributing_indices=self.contributing_indices,
+        )
+        for k in self.args.channel_num:
+            print(
+                f"by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+            )
+
     @torch.no_grad()
     def knn_monitor_fre(
         self,
         net,
         memory_data_loader,
         test_data_loader,
-        epoch,
         args,
         k=200,
         t=0.1,

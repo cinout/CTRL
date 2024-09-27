@@ -63,9 +63,9 @@ python -u main_train.py \
     \
     --unlearn_before_finding_trigger_channels \
     --clean_threshold 0.10 \
-    --unlearning_lr 0.0005 \
+    --unlearning_lr 0.0001 \
     --unlearning_epochs 50 \
-    --note "clean_thres=0.1, unlearning_lr=0.0005" \
+    --note "clean_thres=0.1, unlearning_lr=0.0001" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

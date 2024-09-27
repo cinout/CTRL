@@ -575,7 +575,7 @@ def find_trigger_channels(
     for detector, values in bd_detector_scores.items():
         bd_scores = np.array(values)
         auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-        print(f"the AUROC score of detector '{detector}' is: {auroc*100}")
+        print(f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}")
         bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
         if minority_lb > 0:
             minority_indices_local = bd_indices[
@@ -642,7 +642,7 @@ def find_trigger_channels(
     poisoned_found = is_poisoned.sum()
 
     print(
-        f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,2)}"
+        f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
     )
 
     if args.ignore_probe_channels:
@@ -1179,12 +1179,12 @@ class CLTrainer:
             if use_ss_detector:
                 for k in self.args.channel_num:
                     print(
-                        f"by replacing {k} channels, the ACC on clean val is: {clean_acc1[k]}, the ASR on poisoned val is: {poison_acc1[k]}"
+                        f"by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                     )
             else:
 
                 print(
-                    f"with the DEFAULT linear classifier, the ACC on clean val is: {clean_acc1}, the ASR on poisoned val is: {poison_acc1}"
+                    f"with the DEFAULT linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
                 )
 
             return linear  # the returned linear is only used if use_ss_detector=False
@@ -1334,7 +1334,7 @@ class CLTrainer:
 
                     for k in self.args.channel_num:
                         print(
-                            f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.3f} | back acc: {back_acc_SSDETECTOR[k]:.3f}"
+                            f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                         )
 
         if self.args.pretrained_ssl_model == "":

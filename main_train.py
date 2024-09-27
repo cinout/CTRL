@@ -311,6 +311,12 @@ parser.add_argument(
     help="Decrease learning rate at these epochs.",
 )
 
+# TODO: add to slurm
+parser.add_argument(
+    "--unlearnt_before_finding_trigger_channels",
+    action="store_true",
+    help="unlearn the model before finding trigger channels",
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

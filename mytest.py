@@ -8,8 +8,5 @@ import copy
 from collections import Counter
 import random
 
-a = ["red", "blue"]
-a.remove("red")
-a.append("green")
-a.append("orange")
+a = np.round(222.452, 1)
 print(a)

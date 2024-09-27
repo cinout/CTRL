@@ -1406,7 +1406,7 @@ class CLTrainer:
         )
         for k in self.args.channel_num:
             print(
-                f"by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+                f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
             )
 
     @torch.no_grad()

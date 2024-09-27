@@ -318,7 +318,7 @@ def find_trigger_channels(
         unlearnt_linear = copy.deepcopy(linear)
         criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.SGD(
-            list(backbone.parameters()) + list(linear.parameters()),
+            list(unlearnt_backbone.parameters()) + list(unlearnt_linear.parameters()),
             lr=args.unlearning_lr,
             momentum=0.9,
             weight_decay=5e-4,

@@ -65,6 +65,7 @@ python -u main_train.py \
     \
     --unlearn_before_finding_trigger_channels \
     --clean_threshold 0.05 \
+    --unlearning_epochs 50 \
     --note "unlearn before finding trigger channels" \
     
 

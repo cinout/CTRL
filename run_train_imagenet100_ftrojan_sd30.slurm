@@ -54,8 +54,8 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.080 \
+    --minority_lower_bound 0.002 \
+    --minority_upper_bound 0.012 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 1 \

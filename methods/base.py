@@ -1586,11 +1586,11 @@ class CLTrainer:
         # feature_bank: [dim, clean_val_total_num]
         # feature_labels: [clean_val_total_num]
 
-        # TODO: REMOVE LATER
-        print(f"[___DEBUG___]: ==============================")
-        print(f"[___DEBUG___]: feature.shape: {feature.shape}")
-        print(f"[___DEBUG___]: feature_bank.shape: {feature_bank.shape}")
-        print(f"[___DEBUG___]: feature_labels.shape: {feature_labels.shape}")
+        # #  REMOVE LATER
+        # print(f"[___DEBUG___]: ==============================")
+        # print(f"[___DEBUG___]: feature.shape: {feature.shape}")
+        # print(f"[___DEBUG___]: feature_bank.shape: {feature_bank.shape}")
+        # print(f"[___DEBUG___]: feature_labels.shape: {feature_labels.shape}")
 
         # compute cos similarity between each feature vector and feature bank ---> [B, N]
         sim_matrix = torch.mm(feature, feature_bank)
@@ -1607,12 +1607,12 @@ class CLTrainer:
         one_hot_label = torch.zeros(
             feature.size(0) * knn_k, classes, device=sim_labels.device
         )
-        print(f"[___DEBUG___]: one_hot_label.shape: {one_hot_label.shape}")
+        # print(f"[___DEBUG___]: one_hot_label.shape: {one_hot_label.shape}")
         # one_hot_label: [bsz*K, C]
         one_hot_label = one_hot_label.scatter(
             dim=-1, index=sim_labels.view(-1, 1), value=1.0
         )  # for each row, only one column is 1, which is the label of k-nearest this neighbor
-        print(f"[___DEBUG___]: one_hot_label.shape: {one_hot_label.shape}")
+        # print(f"[___DEBUG___]: one_hot_label.shape: {one_hot_label.shape}")
 
         # weighted score ---> [bsz, C]
         pred_scores = torch.sum(

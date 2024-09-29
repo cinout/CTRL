@@ -68,7 +68,7 @@ python -u main_train.py \
     --clean_threshold 0.10 \
     --unlearning_lr 0.0001 \
     --unlearning_epochs 50 \
-    --note "clean_thres=0.1, unlearning_lr=0.0001" \
+    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, ignore_probe_c=30]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -53,9 +53,6 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
-    \
     --minority_lower_bound 0.002 \
     --minority_upper_bound 0.012 \
     \
@@ -68,7 +65,7 @@ python -u main_train.py \
     --clean_threshold 0.10 \
     --unlearning_lr 0.0001 \
     --unlearning_epochs 50 \
-    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, ignore_probe_c=30]" \
+    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, no ignore probe channel]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

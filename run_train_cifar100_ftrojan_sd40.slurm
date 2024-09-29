@@ -49,9 +49,6 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
-    \
     --minority_lower_bound 0.002 \
     --minority_upper_bound 0.012 \
     \

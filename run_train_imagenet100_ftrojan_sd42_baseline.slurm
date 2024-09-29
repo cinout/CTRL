@@ -52,9 +52,6 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
-    \
     --minority_lower_bound 0.002 \
     --minority_upper_bound 0.012 \
     \
@@ -63,7 +60,7 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 1 \
     \
-    --note "baseline [1 freq, ignore_probe_c=30]" \
+    --note "baseline [1 freq, no ignore probe channel]" \
     
 
 ##Log this job's resource usage stats###

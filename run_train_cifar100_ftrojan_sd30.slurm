@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -49,8 +49,11 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --minority_lower_bound 0.002 \
-    --minority_upper_bound 0.012 \
+    --ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
+    \
+    --minority_lower_bound 0.005 \
+    --minority_upper_bound 0.080 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \

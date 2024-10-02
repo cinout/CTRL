@@ -53,13 +53,18 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --minority_lower_bound 0.002 \
-    --minority_upper_bound 0.012 \
+    --ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
+    \
+    --minority_lower_bound 0.005 \
+    --minority_upper_bound 0.080 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
+    \
+    --seed 42 \
     \
     --note "with new simulated trigger choices [up to 8]" \
     

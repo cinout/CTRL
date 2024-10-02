@@ -11,7 +11,7 @@
 #SBATCH --qos=gpgpudeeplearn
 #SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_h"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-02:30:00
 
@@ -36,7 +36,6 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --trigger_type htba \
     \
     --image_size 64 \
     \
@@ -45,8 +44,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20240920_122142_53_0_imagenet100_htba_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_155156_28_85_imagenet100_htba_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20240906_183318_46_6_imagenet100_ftrojan_linear_regular_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240924_155056_66_73_imagenet100_ftrojan_linear_refset_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
@@ -61,7 +60,11 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 1 \
     \
-    --note "baseline [1 freq, no ignore probe channel]" \
+    --unlearn_before_finding_trigger_channels \
+    --clean_threshold 0.10 \
+    --unlearning_lr 0.0001 \
+    --unlearning_epochs 50 \
+    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, no ignore probe channel]" \
     
 
 ##Log this job's resource usage stats###

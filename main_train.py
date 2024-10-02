@@ -310,8 +310,6 @@ parser.add_argument(
     default=[10, 20],
     help="Decrease learning rate at these epochs.",
 )
-
-# TODO: add to slurm
 parser.add_argument(
     "--unlearn_before_finding_trigger_channels",
     action="store_true",

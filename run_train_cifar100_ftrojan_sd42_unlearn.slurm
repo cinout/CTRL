@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_h"
+#SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-01:00:00
 
@@ -29,8 +29,6 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-
-
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -38,15 +36,14 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240920_122148_13_42_cifar100_htba_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_154224_30_31_cifar100_htba_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20240906_183247_52_10_cifar100_ftrojan_linear_regular_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240924_153220_96_33_cifar100_ftrojan_linear_refset_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
@@ -61,7 +58,11 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 1 \
     \
-    --note "baseline [1 freq, no ignore probe channel]" \
+    --unlearn_before_finding_trigger_channels \
+    --clean_threshold 0.10 \
+    --unlearning_lr 0.0001 \
+    --unlearning_epochs 50 \
+    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, no ignore probe channel]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

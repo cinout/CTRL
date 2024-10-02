@@ -61,11 +61,7 @@ python -u main_train.py \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 1 \
     \
-    --unlearn_before_finding_trigger_channels \
-    --clean_threshold 0.10 \
-    --unlearning_lr 0.0001 \
-    --unlearning_epochs 50 \
-    --note "clean_thres=0.1, unlearning_lr=0.0001 [1 freq, no ignore probe channel]" \
+    --note "baseline [1 freq, no ignore probe channel]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

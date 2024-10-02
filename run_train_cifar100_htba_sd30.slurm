@@ -56,9 +56,9 @@ python -u main_train.py \
     --minority_upper_bound 0.012 \
     \
     --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 1 \
+    --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
-    --in_n_detectors 1 \
+    --in_n_detectors 3 \
     \
     --seed 30 \
     \

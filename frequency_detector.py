@@ -567,8 +567,8 @@ def patching_train(
         #     attack = np.random.choice([0, 1, 2, 3], 1)[0]
         # elif frequency_train_trigger_size == 5:
 
-        # attack = np.random.choice([2, 3, 4, 5, 14], 1)[0]
-        attack = np.random.choice([10, 11, 12, 13], 1)[0]
+        attack = np.random.choice([2, 3, 4, 5, 14], 1)[0]
+
     elif ensemble_id == 1:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([2, 3], 1)[0]
@@ -578,8 +578,8 @@ def patching_train(
         #     attack = np.random.choice([1, 2, 3, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
 
-        # attack = np.random.choice([6, 7, 8, 9], 1)[0]
-        attack = np.random.choice([10, 11, 12, 13], 1)[0]
+        attack = np.random.choice([6, 7, 8, 9], 1)[0]
+
     elif ensemble_id == 2:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([1, 4], 1)[0]
@@ -588,7 +588,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([0, 1, 2, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        
+
         attack = np.random.choice([10, 11, 12, 13], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)

@@ -65,7 +65,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --note "with new simulated trigger choices [up to 8]" \
+    --note "[2, 3, 4, 5, 14] [6, 7, 8, 9] [10, 11, 12, 13]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

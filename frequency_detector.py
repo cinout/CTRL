@@ -78,6 +78,27 @@ def pixel_dropout(img):
     return auged
 
 
+def spatter_rain(img):
+    aug = albumentations.Spatter(p=1, mode="rain")
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
+def spatter_mud(img):
+    aug = albumentations.Spatter(p=1, mode="mud")
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
+def defocus(img):
+    aug = albumentations.Defocus(p=1, radius=3)
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
 class CutPasteNormal(object):
     """Randomly copy one patche from the image and paste it somewere else.
     Args:
@@ -545,7 +566,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([0, 1, 2, 3], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([0, 1, 2, 3], 1)[0]
+        attack = np.random.choice([2, 3, 4, 5, 14], 1)[0]
     elif ensemble_id == 1:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([2, 3], 1)[0]
@@ -554,7 +575,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([1, 2, 3, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([4, 5, 6, 7], 1)[0]
+        attack = np.random.choice([6, 7, 8, 9], 1)[0]
     elif ensemble_id == 2:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([1, 4], 1)[0]
@@ -563,7 +584,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([0, 1, 2, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([8, 9, 10, 11], 1)[0]
+        attack = np.random.choice([10, 11, 12, 13], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)
@@ -606,7 +627,12 @@ def patching_train(
         return posterize(output)
     elif attack == 11:
         return pixel_dropout(output)
-
+    elif attack == 12:
+        return spatter_rain(output)
+    elif attack == 13:
+        return spatter_mud(output)
+    elif attack == 14:
+        return defocus(output)
     # TODO: more options
 
     margin = np.random.randint(0, 6)

@@ -19,12 +19,15 @@ from frequency_detector import (
     addnoise,
     confetti_noise,
     confetti_poisoning,
+    defocus,
     pixel_dropout,
     posterize,
     rand_rain,
     rand_sunflare,
     randshadow,
     smooth_noise,
+    spatter_mud,
+    spatter_rain,
 )
 
 image_size = 64
@@ -38,6 +41,39 @@ img = np.array(
     img.cpu(), dtype=np.float32
 )  # shape: [32, 32, 3]; value range: [0, 1], channels in RGB order
 
+
+"""
+Defocus
+"""
+augmented = defocus(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_defocus.png", "PNG")
+exit()
+
+"""
+Spatter Mud
+"""
+augmented = spatter_mud(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_spattermud.png", "PNG")
+exit()
+
+"""
+Spatter Rain
+"""
+augmented = spatter_rain(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_spatterrain.png", "PNG")
+exit()
 
 """
 Shadow

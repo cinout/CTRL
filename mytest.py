@@ -16,8 +16,14 @@ import imgaug.augmenters as iaa
 
 from frequency_detector import (
     CutPasteNormal,
+    addnoise,
     confetti_noise,
     confetti_poisoning,
+    pixel_dropout,
+    posterize,
+    rand_rain,
+    rand_sunflare,
+    randshadow,
     smooth_noise,
 )
 
@@ -32,6 +38,72 @@ img = np.array(
     img.cpu(), dtype=np.float32
 )  # shape: [32, 32, 3]; value range: [0, 1], channels in RGB order
 
+
+"""
+Shadow
+"""
+augmented = randshadow(img, image_size)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_shadow.png", "PNG")
+exit()
+
+"""
+Guassian Noise
+"""
+augmented = addnoise(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_gaussiannoise.png", "PNG")
+exit()
+
+"""
+rain
+"""
+augmented = rand_rain(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_randrain.png", "PNG")
+exit()
+
+"""
+posterize
+"""
+augmented = posterize(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_posterize.png", "PNG")
+exit()
+
+"""
+rand_sunflare
+"""
+augmented = rand_sunflare(img, image_size)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_randsunflare.png", "PNG")
+exit()
+
+"""
+PIXEL DROPOUT
+"""
+augmented = pixel_dropout(img)
+augmented = augmented * 255.0
+augmented = np.clip(augmented, 0, 255)
+augmented = np.array(augmented, dtype=np.uint8)
+augmented = PIL.Image.fromarray(augmented)
+augmented.save("test_pixeldropout.png", "PNG")
+exit()
 
 """
 CUTPASTE

@@ -31,6 +31,53 @@ def randshadow(img, image_size):
     return auged
 
 
+def rand_rain(img):
+    aug = albumentations.RandomRain(
+        p=1,
+        drop_length=random.randrange(3, 8),
+        drop_width=random.randrange(1, 2),
+        drop_color=(
+            random.randrange(0, 255),
+            random.randrange(0, 255),
+            random.randrange(0, 255),
+        ),
+        blur_value=1,
+        brightness_coefficient=0.9,
+    )
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
+def rand_sunflare(img, image_size):
+    aug = albumentations.RandomSunFlare(
+        p=1,
+        src_radius=int(image_size * 0.2),
+        src_color=(
+            random.randrange(0, 255),
+            random.randrange(0, 255),
+            random.randrange(0, 255),
+        ),
+    )
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
+def posterize(img):
+    aug = albumentations.Posterize(p=1, num_bits=random.randrange(2, 3))
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
+def pixel_dropout(img):
+    aug = albumentations.PixelDropout(p=1)
+    augmented = aug(image=(img * 255).astype(np.uint8))
+    auged = augmented["image"] / 255
+    return auged
+
+
 class CutPasteNormal(object):
     """Randomly copy one patche from the image and paste it somewere else.
     Args:
@@ -498,7 +545,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([0, 1, 2, 3], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
+        attack = np.random.choice([0, 1, 2, 3], 1)[0]
     elif ensemble_id == 1:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([2, 3], 1)[0]
@@ -507,7 +554,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([1, 2, 3, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
+        attack = np.random.choice([4, 5, 6, 7], 1)[0]
     elif ensemble_id == 2:
         # if frequency_train_trigger_size == 2:
         #     attack = np.random.choice([1, 4], 1)[0]
@@ -516,7 +563,7 @@ def patching_train(
         # elif frequency_train_trigger_size == 4:
         #     attack = np.random.choice([0, 1, 2, 4], 1)[0]
         # elif frequency_train_trigger_size == 5:
-        attack = np.random.choice([0, 1, 2, 3, 4], 1)[0]
+        attack = np.random.choice([8, 9, 10, 11], 1)[0]
 
     pat_size_x = np.random.randint(2, 8)
     pat_size_y = np.random.randint(2, 8)
@@ -551,6 +598,15 @@ def patching_train(
     elif attack == 7:
         # Confetti
         return confetti_poisoning(output, image_size)
+    elif attack == 8:
+        return rand_rain(output)
+    elif attack == 9:
+        return rand_sunflare(output, image_size)
+    elif attack == 10:
+        return posterize(output)
+    elif attack == 11:
+        return pixel_dropout(output)
+
     # TODO: more options
 
     margin = np.random.randint(0, 6)

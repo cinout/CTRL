@@ -551,6 +551,7 @@ def patching_train(
     elif attack == 7:
         # Confetti
         return confetti_poisoning(output, image_size)
+    # TODO: more options
 
     margin = np.random.randint(0, 6)
     rand_loc = np.random.randint(0, 4)

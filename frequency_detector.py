@@ -24,18 +24,26 @@ def addnoise(img):
 
 
 def randshadow(img, image_size):
-    aug = albumentations.RandomShadow(p=1)
+    aug = albumentations.RandomShadow(
+        p=1,
+        shadow_roi=(0, 0.5, 1, 1),
+        num_shadows_limit=(1, 1),
+        shadow_dimension=random.randrange(3, 5),
+        shadow_intensity_range=(0.6, 0.75),
+    )
     test = (img * 255).astype(np.uint8)
     augmented = aug(image=cv2.resize(test, (image_size, image_size)))
     auged = augmented["image"] / 255
     return auged
 
 
-def rand_rain(img):
+def rand_rain(img, image_size):
     aug = albumentations.RandomRain(
         p=1,
-        drop_length=random.randrange(3, 8),
-        drop_width=random.randrange(1, 2),
+        drop_length=(
+            random.randrange(3, 8) if image_size == 64 else random.randrange(1, 3)
+        ),
+        drop_width=random.randrange(1, 2) if image_size == 64 else 1,
         drop_color=(
             random.randrange(0, 255),
             random.randrange(0, 255),
@@ -43,6 +51,7 @@ def rand_rain(img):
         ),
         blur_value=1,
         brightness_coefficient=0.9,
+        rain_type="drizzle",
     )
     augmented = aug(image=(img * 255).astype(np.uint8))
     auged = augmented["image"] / 255
@@ -58,6 +67,8 @@ def rand_sunflare(img, image_size):
             random.randrange(0, 255),
             random.randrange(0, 255),
         ),
+        num_flare_circles_range=(2, 3),
+        angle_range=(0, 1),
     )
     augmented = aug(image=(img * 255).astype(np.uint8))
     auged = augmented["image"] / 255
@@ -224,6 +235,7 @@ def draem_augment(image, image_size):
     anomaly_source_img = cv2.cvtColor(anomaly_source_img, cv2.COLOR_BGR2RGB)
     anomaly_source_img = cv2.resize(anomaly_source_img, dsize=(image_size, image_size))
     anomaly_img_augmented = aug(image=anomaly_source_img)
+
     perlin_scalex = 2 ** (
         torch.randint(min_perlin_scale, perlin_scale, (1,)).numpy()[0]
     )
@@ -626,7 +638,7 @@ def patching_train(
         # Confetti
         return confetti_poisoning(output, image_size)
     elif attack == 8:
-        return rand_rain(output)
+        return rand_rain(output, image_size)
     elif attack == 9:
         return rand_sunflare(output, image_size)
     elif attack == 10:

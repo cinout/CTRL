@@ -63,10 +63,11 @@ python -u main_train.py \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
+    --frequency_detector_epochs 800 \
     \
     --seed 42 \
     \
-    --note "[2, 3, 4, 5, 14] [6, 7, 8, 9] [10, 11, 12, 13]" \
+    --note "[2, 3, 4, 5, 6, 7, 8, 9, 12]" \
     
 
 ##Log this job's resource usage stats###

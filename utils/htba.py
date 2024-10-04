@@ -68,10 +68,10 @@ class PoisonHTBA:
             transparent = Image.alpha_composite(transparent, base_image)
             transparent = transparent.convert("RGB")
 
-            #  TODO:  (REMOVE later) visualize transparent
-            transparent.save(f"demo_{self.args.dataset}_{i}.png", "PNG")
-            if i == 20:
-                exit()
+            # #  FIXME:  (REMOVE later) visualize transparent
+            # transparent.save(f"demo_{self.args.dataset}_{i}.png", "PNG")
+            # if i == 20:
+            #     exit()
 
             # CONVERT to the tensor format
             transparent = np.asarray(transparent).astype(np.float32) / 255.0

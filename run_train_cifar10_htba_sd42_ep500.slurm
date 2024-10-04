@@ -66,7 +66,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --note "[2, 3, 4, 5, 6, 7, 8, 9, 12], [0.3-5.0]% [ep=500]" \
+    --note "[1, 2, 5, 7, 8], [0.3-5.0]% [ep=500]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -570,7 +570,8 @@ def patching_train(
     """
     # TODO: update attack range
     # attack = np.random.choice([2, 3, 4, 5, 6, 7, 8, 9, 12], 1)[0]
-    attack = np.random.choice([1, 2, 5, 7, 8], 1)[0]
+    # attack = np.random.choice([1, 2, 5, 7, 8], 1)[0]
+    attack = np.random.choice([0, 3, 4, 9, 12], 1)[0]
 
     # if ensemble_id == 0:
     #     # if frequency_train_trigger_size == 2:

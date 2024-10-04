@@ -56,8 +56,8 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.080 \
+    --minority_lower_bound 0.003 \
+    --minority_upper_bound 0.050 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
@@ -67,7 +67,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --note "[2, 3, 4, 5, 6, 7, 8, 9, 12]" \
+    --note "[2, 3, 4, 5, 6, 7, 8, 9, 12], [0.3-5.0]%" \
     
 
 ##Log this job's resource usage stats###

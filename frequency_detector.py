@@ -18,14 +18,14 @@ def dct2(block):
 
 def addnoise(img):
     # TODO: use more complicated noise
-    aug = albumentations.GaussNoise(
-        p=1,
-        mean=random.randrange(-30, 30, 1),
-        var_limit=(10, 70),
-        noise_scale_factor=random.randrange(0.25, 1, 0.05),
-        per_channel=random.choice([True, False]),
-    )
-    # aug = albumentations.GaussNoise(p=1, mean=25, var_limit=(10, 70))
+    # aug = albumentations.GaussNoise(
+    #     p=1,
+    #     mean=random.randrange(-30, 30, 1),
+    #     var_limit=(10, 70),
+    #     noise_scale_factor=random.randrange(0.25, 1, 0.05),
+    #     per_channel=random.choice([True, False]),
+    # )
+    aug = albumentations.GaussNoise(p=1, mean=25, var_limit=(10, 70))
 
     augmented = aug(image=(img * 255).astype(np.uint8))
     auged = augmented["image"] / 255

@@ -31,7 +31,8 @@ from frequency_detector import (
     spatter_rain,
 )
 
-image_size = 32
+
+image_size = 64
 img = Image.open(
     "/Users/haitianh/Downloads/Code/_datasets/Imagenet100/val/n02087046/ILSVRC2012_val_00014912.jpg"
 ).convert("RGB")

@@ -60,12 +60,12 @@ python -u main_train.py \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
-    --frequency_detector_epochs 600 \
+    --frequency_detector_epochs 500 \
     --attack_trigger_ids 2 \
     \
     --seed 42 \
     \
-    --note "attack_trigger_ids=2, [0.3-5.0]%, EP=600" \
+    --note "attack_trigger_ids=2, [0.3-5.0]%, EP=500, [More Complex GaussNoise]" \
 
 
 ##Log this job's resource usage stats###

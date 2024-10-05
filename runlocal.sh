@@ -28,4 +28,4 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --note "[2, 3, 4, 5, 6, 7, 8, 9, 12], [0.3-5.0]%" \
+    --note "attack_trigger_ids=2, [0.3-5.0]%" \

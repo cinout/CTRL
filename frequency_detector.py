@@ -16,16 +16,18 @@ def dct2(block):
     return dct(dct(block.T, norm="ortho").T, norm="ortho")
 
 
-def addnoise(img):
+def addnoise(img, complex_gaussian):
     # TODO: use more complicated noise
-    # aug = albumentations.GaussNoise(
-    #     p=1,
-    #     mean=random.randrange(-30, 30, 1),
-    #     var_limit=(10, 70),
-    #     noise_scale_factor=random.randrange(0.25, 1, 0.05),
-    #     per_channel=random.choice([True, False]),
-    # )
-    aug = albumentations.GaussNoise(p=1, mean=25, var_limit=(10, 70))
+    if complex_gaussian:
+        aug = albumentations.GaussNoise(
+            p=1,
+            mean=random.randrange(-30, 30, 1),
+            var_limit=(10, 70),
+            noise_scale_factor=random.randrange(0.25, 1, 0.05),
+            per_channel=random.choice([True, False]),
+        )
+    else:
+        aug = albumentations.GaussNoise(p=1, mean=25, var_limit=(10, 70))
 
     augmented = aug(image=(img * 255).astype(np.uint8))
     auged = augmented["image"] / 255
@@ -577,6 +579,7 @@ def patching_train(
     ensemble_id,
     frequency_train_trigger_size,
     attack_trigger_ids,
+    complex_gaussian,
 ):
     """
     this code conducts a patching procedure with random white blocks or random noise block
@@ -633,7 +636,7 @@ def patching_train(
         block = np.random.rand(pat_size_x, pat_size_y, 3)
     elif attack == 2:
         # Gaussian noise
-        return addnoise(output)
+        return addnoise(output, complex_gaussian)
     elif attack == 3:
         # drawing shadows
         return randshadow(output, image_size)

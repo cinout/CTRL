@@ -192,6 +192,10 @@ parser.add_argument(
     help="the number of detectors the trigger index should be predicted in",
 )
 parser.add_argument("--attack_trigger_ids", type=int, nargs="+", default=2)
+parser.add_argument(
+    "--complex_gaussian",
+    action="store_true",
+)
 
 
 parser.add_argument(

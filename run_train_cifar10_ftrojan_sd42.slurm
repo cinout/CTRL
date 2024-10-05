@@ -62,6 +62,7 @@ python -u main_train.py \
     --in_n_detectors 3 \
     --frequency_detector_epochs 500 \
     --attack_trigger_ids 2 \
+    --complex_gaussian \
     \
     --seed 42 \
     \

@@ -378,6 +378,7 @@ def find_trigger_channels(
                                 ensemble_id,
                                 args.frequency_train_trigger_size,
                                 args.attack_trigger_ids,
+                                args.complex_gaussian,
                             )
 
                         images = np.concatenate(

@@ -63,11 +63,12 @@ python -u main_train.py \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
+    --frequency_detector_epochs 400 \
+    --attack_trigger_id 0 \
     \
     --seed 42 \
     \
-    --note "[1, 2, 5, 7, 8], [0.3-5.0]% [ep=500]" \
+    --note "attack_trigger_id=0 [ep=400]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

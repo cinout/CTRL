@@ -62,7 +62,7 @@ python -u main_train.py \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
     --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
+    --frequency_detector_epochs 600 \
     \
     --seed 20 \
     \

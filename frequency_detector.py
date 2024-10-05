@@ -567,7 +567,7 @@ def patching_train(
     image_size,
     ensemble_id,
     frequency_train_trigger_size,
-    attack_trigger_id,
+    attack_trigger_ids,
 ):
     """
     this code conducts a patching procedure with random white blocks or random noise block
@@ -576,7 +576,7 @@ def patching_train(
     # TODO: update attack range
     # attack = np.random.choice([2, 3, 4, 5, 6, 7, 8, 9, 12], 1)[0]
     # attack = np.random.choice([1, 2, 5, 7, 8], 1)[0]
-    attack = attack_trigger_id
+    attack = np.random.choice(attack_trigger_ids, 1)[0]
 
     # if ensemble_id == 0:
     #     # if frequency_train_trigger_size == 2:

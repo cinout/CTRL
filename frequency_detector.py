@@ -23,7 +23,7 @@ def addnoise(img, complex_gaussian):
             p=1,
             mean=random.randrange(-30, 30, 1),
             var_limit=(10, 70),
-            noise_scale_factor=random.randrange(0.25, 1, 0.05),
+            noise_scale_factor=random.uniform(0.25, 1),
             per_channel=random.choice([True, False]),
         )
     else:

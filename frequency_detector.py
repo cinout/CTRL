@@ -21,7 +21,7 @@ def addnoise(img, complex_gaussian):
     if complex_gaussian:
         aug = albumentations.GaussNoise(
             p=1,
-            mean=random.randrange(-30, 30, 1),
+            mean=random.randrange(-10, 30, 1),
             var_limit=(10, 70),
             noise_scale_factor=random.uniform(0.5, 1),
             # noise_scale_factor=random.uniform(0.25, 1),

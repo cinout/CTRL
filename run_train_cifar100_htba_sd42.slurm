@@ -67,8 +67,9 @@ python -u main_train.py \
     --attack_trigger_ids 2 \
     \
     --seed 42 \
+    --complex_gaussian \
     \
-    --note "attack_trigger_ids=2, [0.0-1.0]%, EP=500" \
+    --note "attack_trigger_ids=2, [0.0-1.0]%, EP=500 [complex_gaussian]\" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

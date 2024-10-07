@@ -55,8 +55,8 @@ python -u main_train.py \
     --ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.050 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.010 \
     \
     --bd_detectors frequency_ensemble \
     --frequency_ensemble_size 3 \
@@ -64,11 +64,10 @@ python -u main_train.py \
     --in_n_detectors 3 \
     --frequency_detector_epochs 500 \
     --attack_trigger_ids 2 \
-    --complex_gaussian \
     \
     --seed 42 \
     \
-    --note "attack_trigger_ids=2, [0.3-5.0]%, EP=500 [complex Gaussian]" \
+    --note "attack_trigger_ids=2, [0.0-1.0]%, EP=500" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

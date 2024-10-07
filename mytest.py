@@ -43,6 +43,80 @@ img = np.array(
     img.cpu(), dtype=np.float32
 )  # shape: [32, 32, 3]; value range: [0, 1], channels in RGB order
 
+"""
+BLEND
+"""
+blend_img_1 = Image.open(
+    "/Users/haitianh/Downloads/Code/_datasets/Imagenet100/val/n03259280/ILSVRC2012_val_00009837.jpg"
+).convert("RGB")
+blend_img_1 = blend_img_1.resize((image_size, image_size))
+blend_img_1 = np.asarray(blend_img_1).astype(np.float32) / 255.0
+blend_img_1 = torch.tensor(blend_img_1)
+blend_img_1 = np.array(blend_img_1.cpu(), dtype=np.float32)
+
+blend_img_2 = Image.open(
+    "/Users/haitianh/Downloads/Code/_datasets/Imagenet100/val/n03594734/ILSVRC2012_val_00019687.jpg"
+).convert("RGB")
+blend_img_2 = blend_img_2.resize((image_size, image_size))
+blend_img_2 = np.asarray(blend_img_2).astype(np.float32) / 255.0
+blend_img_2 = torch.tensor(blend_img_2)
+blend_img_2 = np.array(blend_img_2.cpu(), dtype=np.float32)
+
+blend_1 = np.copy(img) + 0.3 * blend_img_1
+blend_1[blend_1 > 1] = 1
+blend_1 = blend_1 * 255.0
+blend_1 = np.clip(blend_1, 0, 255)
+blend_1 = np.array(blend_1, dtype=np.uint8)
+blend_1 = PIL.Image.fromarray(blend_1)
+blend_1.save("test_blend1.png", "PNG")
+
+blend_2 = np.copy(img) + 0.3 * blend_img_2
+blend_2[blend_2 > 1] = 1
+blend_2 = blend_2 * 255.0
+blend_2 = np.clip(blend_2, 0, 255)
+blend_2 = np.array(blend_2, dtype=np.uint8)
+blend_2 = PIL.Image.fromarray(blend_2)
+blend_2.save("test_blend2.png", "PNG")
+exit()
+
+"""
+White Box
+"""
+pat_size_x = np.random.randint(2, 8)
+pat_size_y = np.random.randint(2, 8)
+block = np.random.rand(pat_size_x, pat_size_y, 3)
+# block = np.ones((pat_size_x, pat_size_y, 3))
+margin = np.random.randint(0, 6)
+rand_loc = np.random.randint(0, 4)
+
+if rand_loc == 0:
+    img[margin : margin + pat_size_x, margin : margin + pat_size_y, :] = (
+        block  # upper left
+    )
+elif rand_loc == 1:
+    img[
+        margin : margin + pat_size_x,
+        image_size - margin - pat_size_y : image_size - margin,
+        :,
+    ] = block
+elif rand_loc == 2:
+    img[
+        image_size - margin - pat_size_x : image_size - margin,
+        margin : margin + pat_size_y,
+        :,
+    ] = block
+elif rand_loc == 3:
+    img[
+        image_size - margin - pat_size_x : image_size - margin,
+        image_size - margin - pat_size_y : image_size - margin,
+        :,
+    ] = block  # right bottom
+img = img * 255.0
+img = np.clip(img, 0, 255)
+img = np.array(img, dtype=np.uint8)
+img = PIL.Image.fromarray(img)
+img.save("test_colorbox.png", "PNG")
+exit()
 
 """
 Guassian Noise

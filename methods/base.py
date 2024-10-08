@@ -21,7 +21,7 @@ from networks.mask_batchnorm import MaskBatchNorm2d
 import PIL
 import random
 from frequency_detector import FrequencyDetector, patching_train, dct2
-from maskprune import (
+from methods.maskprune import (
     test_maskprune,
     evaluate_by_threshold,
     read_data,

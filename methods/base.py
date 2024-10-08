@@ -268,8 +268,13 @@ def find_trigger_channels(
 
     # Actual train loader with 1% poisoned images
     for i, content in tqdm(enumerate(data_loader)):
-        (images, is_batch_poisoned, _, _) = content
-        is_batch_poisoned = is_batch_poisoned.to(device)
+        if args.ideal_case:
+            images = content[0]
+            is_batch_poisoned = torch.ones(size=(images.shape[0]))
+            is_batch_poisoned = is_batch_poisoned.to(device)
+        else:
+            (images, is_batch_poisoned, _, _) = content
+            is_batch_poisoned = is_batch_poisoned.to(device)
 
         images = images.to(device)
 

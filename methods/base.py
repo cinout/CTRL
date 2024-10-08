@@ -9,255 +9,29 @@ from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
 from sklearn.metrics import roc_auc_score
-from collections import Counter, OrderedDict
+from collections import Counter
 from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
 from utils.util import AverageMeter, save_model
-from utils.knn import knn_monitor
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.models as models
 from networks.mask_batchnorm import MaskBatchNorm2d
-import pandas as pd
+
 import PIL
 import random
 from frequency_detector import FrequencyDetector, patching_train, dct2
-
+from maskprune import (
+    test_maskprune,
+    evaluate_by_threshold,
+    read_data,
+    save_mask_scores,
+    refill_unlearned_model,
+    train_step_recovering,
+    train_step_unlearning,
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-def pruning(net, neuron):
-    state_dict = net.state_dict()
-    weight_name = "{}.{}".format(neuron[0], "weight")
-    state_dict[weight_name][int(neuron[1])] = 0.0
-    net.load_state_dict(state_dict)
-
-
-# for evaluating performances at different stages
-def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
-    model.eval()
-    linear.eval()
-
-    total_correct = 0
-    total_loss = 0.0
-    total_count = 0
-    with torch.no_grad():
-        for content in data_loader:
-            # if args.detect_trigger_channels:
-            #     if val_mode == "poison":
-            #         (images, views, labels, original_label, _) = content
-            #         original_label = original_label.to(device)
-            #     elif val_mode == "clean":
-            #         (images, views, labels, _) = content
-            #     else:
-            #         raise Exception(f"unimplemented val_mode {val_mode}")
-            # else:
-            if val_mode == "poison":
-                (images, labels, original_label, _) = content
-                original_label = original_label.to(device)
-            elif val_mode == "clean":
-                (images, labels, _) = content
-            else:
-                raise Exception(f"unimplemented val_mode {val_mode}")
-
-            images, labels = images.to(device), labels.to(device)
-            if val_mode == "poison":
-                valid_indices = original_label != args.target_class
-                if torch.all(~valid_indices):
-                    # all inputs are from target class, skip this iteration
-                    continue
-
-                images = images[valid_indices]
-                labels = labels[valid_indices]
-
-            output = model(images)
-            output = linear(output)
-
-            total_loss += criterion(output, labels).item()
-
-            _, pred = output.topk(
-                1, 1, True, True
-            )  # k=1, dim=1, largest, sorted; pred is the indices of largest class
-            # pred.shape: [bs, k=1]
-            pred = pred.squeeze(1)  # shape: [bs, ]
-            total_count += labels.shape[0]
-            total_correct += (pred == labels).float().sum().item()
-
-    loss = total_loss / len(data_loader)
-    acc = float(total_correct) / total_count
-    return loss, acc
-
-
-# called at 3rd pruning stage
-def evaluate_by_threshold(
-    args,
-    model,
-    linear,
-    mask_values,  # sorted by [2], from low to high
-    pruning_max,  # 0.9
-    pruning_step,  # 0.05
-    criterion,
-    clean_loader,
-    poison_loader,
-):
-    model.eval()
-    linear.eval()
-
-    thresholds = np.arange(0, pruning_max + pruning_step, pruning_step)
-    start = 0  # prune from which idx in mask_values
-    for threshold in thresholds:
-        idx = start
-        for idx in range(start, len(mask_values)):
-            if float(mask_values[idx][2]) <= threshold:
-                pruning(model, mask_values[idx])
-                start += 1
-            else:
-                break
-        layer_name, neuron_idx, value = (
-            mask_values[idx][0],
-            mask_values[idx][1],
-            mask_values[idx][2],
-        )
-        cl_loss, cl_acc = test_maskprune(
-            args=args,
-            model=model,
-            linear=linear,
-            criterion=criterion,
-            data_loader=clean_loader,
-            val_mode="clean",
-        )
-        po_loss, po_acc = test_maskprune(
-            args=args,
-            model=model,
-            linear=linear,
-            criterion=criterion,
-            data_loader=poison_loader,
-            val_mode="poison",
-        )
-        print(
-            "{} \t {} \t {} \t {:.2f} \t {:.4f} \t {:.4f}".format(
-                start,
-                layer_name,
-                neuron_idx,
-                threshold,
-                # po_loss,
-                po_acc * 100,
-                # cl_loss,
-                cl_acc * 100,
-            )
-        )
-
-
-# called at 3rd stage to read mask (use mask_values.txt as reference)
-def read_data(file_name):
-    tempt = pd.read_csv(file_name, sep="\s+", skiprows=1, header=None)
-    layer = tempt.iloc[:, 1]
-    idx = tempt.iloc[:, 2]
-    value = tempt.iloc[:, 3]
-    mask_values = list(zip(layer, idx, value))
-    return mask_values
-
-
-# called at the end of 2nd stage
-def save_mask_scores(state_dict, file_name):
-    mask_values = []
-    count = 0
-    for name, param in state_dict.items():
-        if "neuron_mask" in name:
-            for idx in range(param.size(0)):
-                neuron_name = ".".join(name.split(".")[:-1])
-                mask_values.append(
-                    "{} \t {} \t {} \t {:.4f} \n".format(
-                        count, neuron_name, idx, param[idx].item()
-                    )
-                )
-                count += 1
-    with open(file_name, "w") as f:
-        f.write("No \t Layer Name \t Neuron Idx \t Mask Score \n")
-        f.writelines(mask_values)
-
-
-# clip value to be witihin 0 and 1
-def clip_mask(unlearned_model, lower=0.0, upper=1.0):
-    params = [
-        param
-        for name, param in unlearned_model.named_parameters()
-        if "neuron_mask" in name
-    ]
-    with torch.no_grad():
-        for param in params:
-            param.clamp_(lower, upper)
-
-
-def refill_unlearned_model(net, orig_state_dict):
-    new_state_dict = OrderedDict()
-    for k, v in net.state_dict().items():
-        if k in orig_state_dict.keys():
-            new_state_dict[k] = orig_state_dict[k]
-        else:
-            new_state_dict[k] = v
-    net.load_state_dict(new_state_dict)
-
-
-def train_step_recovering(
-    args, unlearned_model, linear, criterion, mask_opt, data_loader
-):
-    unlearned_model.train()
-    linear.train()
-
-    for content in data_loader:
-
-        images, labels, _ = content
-
-        images, labels = images.to(device), labels.to(device)
-
-        mask_opt.zero_grad()
-        output = unlearned_model(images)
-        output = linear(output)
-
-        loss = criterion(output, labels)
-        loss = args.alpha * loss
-
-        loss.backward()
-        mask_opt.step()
-        clip_mask(unlearned_model)
-
-
-def train_step_unlearning(args, model, linear, criterion, optimizer, data_loader):
-    model.train()
-    linear.train()
-    total_correct = 0
-    total_count = 0
-    for content in data_loader:
-        images, labels, _ = content
-
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
-        output = model(images)
-        output = linear(output)
-
-        loss = criterion(output, labels)
-
-        _, pred = output.topk(
-            1, 1, True, True
-        )  # k=1, dim=1, largest, sorted; pred is the indices of largest class
-        # pred.shape: [bs, k=1]
-        pred = pred.squeeze(1)  # shape: [bs, ]
-
-        total_correct += (pred == labels).float().sum().item()
-        total_count += labels.shape[0]
-
-        nn.utils.clip_grad_norm_(
-            list(model.parameters()) + list(linear.parameters()),
-            max_norm=20,
-            norm_type=2,
-        )
-        (-loss).backward()
-        optimizer.step()
-
-    acc = float(total_correct) / total_count
-    return acc
 
 
 def generate_view_tensors(input, ss_transform):
@@ -313,6 +87,7 @@ def find_trigger_channels(
     is_poisoned = []  # for all images in the dataset
     total_images = 0
 
+    # if apply unlearning before finding trigger channles
     if args.unlearn_before_finding_trigger_channels:
         unlearnt_backbone = copy.deepcopy(backbone)
         unlearnt_linear = copy.deepcopy(linear)
@@ -345,6 +120,7 @@ def find_trigger_channels(
         unlearnt_backbone.eval()
         unlearnt_linear.eval()
 
+    # to train frequency detectors
     if "frequency_ensemble" in args.bd_detectors:
         freq_detector_ensemble = []
         for ensemble_id in range(args.frequency_ensemble_size):
@@ -432,7 +208,8 @@ def find_trigger_channels(
                 freq_detector.load_state_dict(pretrained_state_dict, strict=True)
             freq_detector_ensemble.append(freq_detector)
 
-    if args.ignore_probe_channels:
+    # called if we want to ignore some clean channels voted by train_probe dataset
+    if args.find_and_ignore_probe_channels:
         all_probe_votes = []
         for i, content in enumerate(train_probe_loader):
             (images, target, _) = content
@@ -452,6 +229,8 @@ def find_trigger_channels(
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
             vision_features = vision_features.detach().cpu().numpy()
+
+            # TODO: update here
             u, s, v = np.linalg.svd(
                 vision_features - np.mean(vision_features, axis=0, keepdims=True),
                 full_matrices=False,
@@ -487,7 +266,8 @@ def find_trigger_channels(
             )  # [bs, n_view*take_channel]
             all_probe_votes.append(max_indices_at_channel)
 
-    for i, content in tqdm(enumerate(data_loader)):  # actual train loader
+    # Actual train loader with 1% poisoned images
+    for i, content in tqdm(enumerate(data_loader)):
         (images, is_batch_poisoned, _, _) = content
         is_batch_poisoned = is_batch_poisoned.to(device)
 
@@ -506,6 +286,14 @@ def find_trigger_channels(
             vision_features = F.normalize(vision_features, dim=-1)
         _, C = vision_features.shape
         vision_features = vision_features.detach().cpu().numpy()
+
+        # # h5py numpy array stored on hard disk
+        # h5py_data['data'] = h5py(shape=(len(training_set),))
+        # h5py_data['data'][0:i*bs] = vision_features
+        # i*bs:(i+1)*bs = vision_features
+        # full_vision_feature = h5py_data['data']
+        # # TODO: knn clustering
+
         u, s, v = np.linalg.svd(
             vision_features - np.mean(vision_features, axis=0, keepdims=True),
             full_matrices=False,
@@ -577,22 +365,6 @@ def find_trigger_channels(
             ss_scores = np.max(corrs, axis=1)  # [bs]
             bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
-        # if args.bd_detectors == "ss_score_elements":
-        #     num_interested_channels = 1  # FIXME:  changeale
-        #     top_channel_votes = max_indices[
-        #         :, :, -num_interested_channels:
-        #     ].flatten()  # [bs*n_view*num_interested_channels]
-        #     votes_of_batch = Counter(top_channel_votes).most_common(
-        #         num_interested_channels
-        #     )
-        #     chosen_channels = [idx for (idx, occ_count) in votes_of_batch]
-        #     scores = elementwise[:, chosen_channels]
-        #     scores = np.sum(scores, axis=1)  # [bs*n_view, ]
-
-        #     scores = scores.reshape(-1, n_views)  # [ bs, n_views]
-        #     ss_scores = np.max(scores, axis=1)  # [bs]
-        #     secondary_score.extend(ss_scores.tolist())
-
         all_votes.append(max_indices_at_channel)
         is_poisoned.append(is_batch_poisoned)
 
@@ -605,13 +377,6 @@ def find_trigger_channels(
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
     minority_indices = []
-
-    # update detector names if frequency_ensemble is in it
-    # actual_detectors = args.bd_detectors
-    # if "frequency_ensemble" in args.bd_detectors:
-    #     actual_detectors.remove("frequency_ensemble")
-    #     for ensemble_id in range(args.frequency_ensemble_size):
-    #         actual_detectors.append(f"frequency_ensemble_{ensemble_id}")
 
     for detector, values in bd_detector_scores.items():
         bd_scores = np.array(values)
@@ -633,48 +398,6 @@ def find_trigger_channels(
         if count in args.in_n_detectors
     ]
 
-    # if args.use_frequency_detector:
-    #     all_frequencies = np.array(all_frequencies)
-    #     freq_auc_score = roc_auc_score(y_true=is_poisoned, y_score=all_frequencies)
-    #     print(f"the AUROC score of frequency detector is: {freq_auc_score*100}")
-    #     all_frequencies_indices = np.argsort(
-    #         all_frequencies
-    #     )  # indices, sorted from low to high by entropy value
-    #     if minority_lb > 0:
-    #         minority_indices = all_frequencies_indices[
-    #             -minority_ub:-minority_lb
-    #         ]  # numpy array
-    #     else:
-    #         minority_indices = all_frequencies_indices[-minority_ub:]
-
-    # # update minority indices
-    # if args.bd_detectors != "":
-    #     all_secondary_scores = np.array(all_secondary_scores)
-    #     all_secondary_scores_indices = np.argsort(
-    #         all_secondary_scores
-    #     )  # indices, sorted from low to high by entropy value, numpy array
-
-    #     # keep the indices that appear in minority_indices
-    #     all_secondary_scores_indices = np.array(
-    #         [
-    #             index
-    #             for index in all_secondary_scores_indices
-    #             if index in minority_indices
-    #         ]
-    #     )
-
-    #     # cut off by 2nd bounds
-    #     minority_count = all_secondary_scores_indices.shape[0]
-    #     minority_lb_2nd = int(minority_count * args.minority_2nd_lower_bound)
-    #     minority_ub_2nd = int(minority_count * args.minority_2nd_upper_bound)
-
-    #     if minority_lb_2nd > 0:
-    #         minority_indices = all_secondary_scores_indices[
-    #             -minority_ub_2nd:-minority_lb_2nd
-    #         ]  # numpy array
-    #     else:
-    #         minority_indices = all_secondary_scores_indices[-minority_ub_2nd:]
-
     all_votes = all_votes[
         minority_indices
     ]  # votes by minority, [minority_num, n_view*take_channel]
@@ -686,7 +409,7 @@ def find_trigger_channels(
         f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
     )
 
-    if args.ignore_probe_channels:
+    if args.find_and_ignore_probe_channels:
         # REMOVE channels that appear in probe dataset
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.channel_num) + args.ignore_probe_channel_num
@@ -718,7 +441,6 @@ def find_trigger_channels(
     return essential_indices
 
 
-# DISABLED, because it makes 0-channel_mean not 0, which is not good for our SS detecting strategy
 def get_feats(loader, model, args):
 
     # switch to evaluate mode
@@ -808,15 +530,6 @@ def eval_linear_classifier(
             total_count = 0
 
         for i, content in enumerate(val_loader):
-            # if args.detect_trigger_channels:
-            #     if val_mode == "poison":
-            #         (images, views, target, original_label, _) = content
-            #         original_label = original_label.to(device)
-            #     elif val_mode == "clean":
-            #         (images, views, target, _) = content
-            #     else:
-            #         raise Exception(f"unimplemented val_mode {val_mode}")
-            # else:
             if val_mode == "poison":
                 (images, target, original_label, _) = content
                 original_label = original_label.to(device)
@@ -931,9 +644,10 @@ class CLTrainer:
 
         self.args.warmup_epoch = 10
 
-        if self.args.detect_trigger_channels:
-            self.contributing_indices = None
+        # if self.args.detect_trigger_channels:
+        #     self.contributing_indices = None
 
+    # Linear Probe training and evalaution
     def linear_probing(
         self,  # call self.args for options
         model,
@@ -1052,7 +766,7 @@ class CLTrainer:
                 model=backbone,
                 linear=linear,
                 criterion=criterion,
-                data_loader=poison.test_loader,
+                data_loader=poison.test_clean_loader,
                 val_mode="clean",
             )
             po_loss, po_acc = test_maskprune(
@@ -1081,7 +795,7 @@ class CLTrainer:
                     pruning_max=self.args.pruning_max,
                     pruning_step=self.args.pruning_step,
                     criterion=criterion,
-                    clean_loader=poison.test_loader,
+                    clean_loader=poison.test_clean_loader,
                     poison_loader=poison.test_pos_loader,
                 )
             else:
@@ -1183,19 +897,19 @@ class CLTrainer:
                         filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
                     )
 
-            # eval linear classifier
             backbone.eval()
             linear.eval()
 
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
-                poison.test_loader,
+                poison.test_clean_loader,
                 backbone,
                 linear,
                 self.args,
                 val_mode="clean",
                 use_ss_detector=False,
-                contributing_indices=self.contributing_indices,
+                contributing_indices=None,
+                # contributing_indices=self.contributing_indices,
             )
 
             print(f"<<<<<<<<< evaluating linear on POISON val")
@@ -1206,7 +920,8 @@ class CLTrainer:
                 self.args,
                 val_mode="poison",
                 use_ss_detector=False,
-                contributing_indices=self.contributing_indices,
+                contributing_indices=None,
+                # contributing_indices=self.contributing_indices,
             )
 
             print(
@@ -1215,7 +930,7 @@ class CLTrainer:
 
             return linear  # the returned linear is only used if use_ss_detector=False
 
-    # entry point of this file, called in main_train.py
+    # SSL attack and kNN Evaluation
     def train_freq(self, model, optimizer, train_transform, poison):
 
         cosine_scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -1229,7 +944,7 @@ class CLTrainer:
         )
 
         train_loader = poison.train_pos_loader
-        test_loader = poison.test_loader  # clean val
+        test_clean_loader = poison.test_clean_loader  # clean val
         test_back_loader = poison.test_pos_loader  # poisoned val (test) set
 
         clean_acc = 0.0
@@ -1244,7 +959,7 @@ class CLTrainer:
             # 1 epoch training
             start = time.time()
 
-            # this is where training occurs
+            # TRAIN
             if self.args.pretrained_ssl_model == "":
                 for i, content in enumerate(
                     train_loader
@@ -1285,14 +1000,12 @@ class CLTrainer:
 
                     # compute gradient and do SGD step
                     optimizer.zero_grad()
-
                     loss.backward()
-
                     optimizer.step()
 
                 warmup_scheduler.step()
 
-            # (KNN-eval)  combines training and eval together
+            # EVAL
             if epoch + 1 == self.args.epochs or (
                 self.args.pretrained_ssl_model == ""
                 and epoch % self.args.knn_eval_freq == 0
@@ -1304,10 +1017,11 @@ class CLTrainer:
                     backbone.fc = nn.Sequential()
                 else:
                     backbone = model.backbone
+
                 clean_acc, back_acc = self.knn_monitor_fre(
                     backbone,
                     poison.memory_loader,
-                    test_loader,
+                    test_clean_loader,
                     self.args,
                     classes=self.args.num_classes,
                     subset=False,
@@ -1343,10 +1057,12 @@ class CLTrainer:
 
         return model
 
+    # Channel Voting Strategy
     def trigger_channel_removal(self, model, poison, trained_linear):
         ######## Prepare backbone and linear, and set them to eval mode
         linear = copy.deepcopy(trained_linear)
         linear.eval()
+
         model.eval()
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
@@ -1355,61 +1071,127 @@ class CLTrainer:
             backbone = model.backbone
         backbone.eval()
 
-        ######## Find trigger channels
-        self.contributing_indices = find_trigger_channels(
-            self.args,
-            poison.train_pos_loader,
-            poison.train_probe_loader,
-            poison.train_probe_freq_detector_loader,
-            backbone,
-            linear,
-            poison.ss_transform,
-        )
-
-        ############# KNN
-        clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-            backbone,
-            poison.memory_loader,
-            poison.test_loader,
-            self.args,
-            classes=self.args.num_classes,
-            subset=False,
-            backdoor_loader=poison.test_pos_loader,
-            use_SS_detector=True,
-            contributing_indices=self.contributing_indices,
-        )
-
-        for k in self.args.channel_num:
-            print(
-                f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+        if self.args.ideal_case:
+            clean_val_contributing_indices = find_trigger_channels(
+                self.args,
+                poison.test_clean_loader,  # poisoned training set
+                poison.train_probe_loader,  # 1% clean train probe dataset
+                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+                backbone,
+                linear,
+                poison.ss_transform,
+            )
+            poi_val_contributing_indices = find_trigger_channels(
+                self.args,
+                poison.test_pos_loader,  # poisoned training set
+                poison.train_probe_loader,  # 1% clean train probe dataset
+                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+                backbone,
+                linear,
+                poison.ss_transform,
+            )
+            ############# KNN
+            clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+                backbone,
+                poison.memory_loader,
+                poison.test_clean_loader,
+                self.args,
+                classes=self.args.num_classes,
+                subset=False,
+                backdoor_loader=poison.test_pos_loader,
+                use_SS_detector=True,
+                clean_val_contributing_indices=clean_val_contributing_indices,
+                poi_val_contributing_indices=poi_val_contributing_indices,
             )
 
-        ########### Linear Probe
-        print(f"<<<<<<<<< evaluating linear on CLEAN val")
-        clean_acc1 = eval_linear_classifier(
-            poison.test_loader,
-            backbone,
-            linear,
-            self.args,
-            val_mode="clean",
-            use_ss_detector=True,
-            contributing_indices=self.contributing_indices,
-        )
+            for k in self.args.channel_num:
+                print(
+                    f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+                )
 
-        print(f"<<<<<<<<< evaluating linear on POISON val")
-        poison_acc1 = eval_linear_classifier(
-            poison.test_pos_loader,
-            backbone,
-            linear,
-            self.args,
-            val_mode="poison",
-            use_ss_detector=True,
-            contributing_indices=self.contributing_indices,
-        )
-        for k in self.args.channel_num:
-            print(
-                f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+            ########### Linear Probe
+            print(f"<<<<<<<<< evaluating linear on CLEAN val")
+            clean_acc1 = eval_linear_classifier(
+                poison.test_clean_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="clean",
+                use_ss_detector=True,
+                contributing_indices=clean_val_contributing_indices,
             )
+
+            print(f"<<<<<<<<< evaluating linear on POISON val")
+            poison_acc1 = eval_linear_classifier(
+                poison.test_pos_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="poison",
+                use_ss_detector=True,
+                contributing_indices=poi_val_contributing_indices,
+            )
+            for k in self.args.channel_num:
+                print(
+                    f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+                )
+
+        else:
+            ######## Find trigger channels
+            contributing_indices = find_trigger_channels(
+                self.args,
+                poison.train_pos_loader,  # poisoned training set
+                poison.train_probe_loader,  # 1% clean train probe dataset
+                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+                backbone,
+                linear,
+                poison.ss_transform,
+            )
+
+            ############# KNN
+            clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+                backbone,
+                poison.memory_loader,
+                poison.test_clean_loader,
+                self.args,
+                classes=self.args.num_classes,
+                subset=False,
+                backdoor_loader=poison.test_pos_loader,
+                use_SS_detector=True,
+                contributing_indices=contributing_indices,
+            )
+
+            for k in self.args.channel_num:
+                print(
+                    f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+                )
+
+            ########### Linear Probe
+            print(f"<<<<<<<<< evaluating linear on CLEAN val")
+            clean_acc1 = eval_linear_classifier(
+                poison.test_clean_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="clean",
+                use_ss_detector=True,
+                contributing_indices=contributing_indices,
+            )
+
+            print(f"<<<<<<<<< evaluating linear on POISON val")
+            poison_acc1 = eval_linear_classifier(
+                poison.test_pos_loader,
+                backbone,
+                linear,
+                self.args,
+                val_mode="poison",
+                use_ss_detector=True,
+                contributing_indices=contributing_indices,
+            )
+            for k in self.args.channel_num:
+                print(
+                    f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+                )
 
     @torch.no_grad()
     def knn_monitor_fre(
@@ -1426,6 +1208,8 @@ class CLTrainer:
         backdoor_loader=None,
         use_SS_detector=False,
         contributing_indices=None,
+        clean_val_contributing_indices=None,
+        poi_val_contributing_indices=None,
     ):
 
         net.eval()
@@ -1477,7 +1261,12 @@ class CLTrainer:
 
             if use_SS_detector:
                 for k in args.channel_num:
-                    indices_toremove = contributing_indices[0:k]
+
+                    indices_toremove = (
+                        clean_val_contributing_indices[0:k]
+                        if args.ideal_case
+                        else contributing_indices[0:k]
+                    )
                     feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
@@ -1539,7 +1328,11 @@ class CLTrainer:
 
             if use_SS_detector:
                 for k in args.channel_num:
-                    indices_toremove = contributing_indices[0:k]
+                    indices_toremove = (
+                        poi_val_contributing_indices[0:k]
+                        if args.ideal_case
+                        else contributing_indices[0:k]
+                    )
                     feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
@@ -1553,7 +1346,6 @@ class CLTrainer:
                         + (pred_labels[:, 0] == target).float().sum().item()
                     )
             else:
-
                 feature = F.normalize(feature, dim=1)
                 # feature: [bsz, dim]
                 pred_labels = self.knn_predict(

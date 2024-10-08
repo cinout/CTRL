@@ -1,18 +1,9 @@
 import os
-import sys
 import argparse
-import warnings
 import random
-
-
 import torch.optim as optim
-import torch.backends.cudnn as cudnn
 from datetime import datetime
 from data_prepare.diffaugment import set_aug_diff, PoisonAgent
-
-
-# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
 from methods import set_model
 from methods.base import CLTrainer
 from utils.util import *
@@ -41,7 +32,7 @@ parser.add_argument(
     help="path for pretrained frequency detector (stage 2)",
 )
 parser.add_argument(
-    "--ignore_probe_channels",
+    "--find_and_ignore_probe_channels",
     action="store_true",
     help="ignore channels from clean probe dataset",
 )
@@ -151,13 +142,6 @@ parser.add_argument("--distributed", action="store_true", help="distributed trai
 parser.add_argument("--seed", default=42, type=int)
 
 
-# parser.add_argument(
-#     "--use_frequency_detector",
-#     action="store_true",
-#     help="use_frequency_detector to detect BD samples",
-# )
-
-
 # for finding trigger channels
 parser.add_argument(
     "--detect_trigger_channels",
@@ -209,17 +193,6 @@ parser.add_argument(
     default=0.020,
 )
 
-
-# parser.add_argument(
-#     "--minority_2nd_lower_bound",
-#     type=float,
-#     default=0.005,
-# )
-# parser.add_argument(
-#     "--minority_2nd_upper_bound",
-#     type=float,
-#     default=0.500,
-# )
 
 parser.add_argument(
     "--replacement_value",
@@ -321,13 +294,17 @@ parser.add_argument(
     help="unlearn the model before finding trigger channels",
 )
 
+# TODO: add to slurm
+parser.add_argument(
+    "--ideal_case",
+    action="store_true",
+    help="when trigger channels are found from val set directly",
+)
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def main(args):
-
-    # os.environ["PYTHONHASHSEED"] = str(seed)
-    # torch.initial_seed()  # dataloader multi processing
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -336,7 +313,9 @@ def main(args):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # create model
+    """
+    Create Model
+    """
     print("=> creating cnn model '{}'".format(args.arch))
     # this is where model like simclr, byol is determined
     model = set_model(args)
@@ -345,28 +324,26 @@ def main(args):
             args.pretrained_ssl_model, map_location=device
         )
         model.load_state_dict(pretrained_state_dict["state_dict"], strict=True)
-
     model = model.to(device)
 
-    # constrcut trainer
+    """
+    Constrcut Trainer
+    """
     trainer = CLTrainer(args)
 
-    # create data loader
+    """
+    Create Dataset/DataLoader
+    """
     (
-        # train_loader,
-        # train_sampler,
         train_dataset,
-        # ft_loader,
-        # ft_sampler,
-        # test_loader,
         test_dataset,
         memory_loader,
         train_transform,
-        # ft_transform,
-        # test_transform,
     ) = set_aug_diff(args)
 
-    # create poisoning dataset
+    """
+    Create Poisoning Dataset
+    """
     if args.trigger_type == "ftrojan":
         poison_frequency_agent = PoisonFre(
             args,
@@ -391,24 +368,31 @@ def main(args):
         args.magnitude_val,
     )
 
+    """
+    Print All Args
+    """
     all_args = "\n".join(
         "%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())
     )
     print(all_args)
 
+    """
+    Train and Evaluate
+    """
     optimizer = optim.SGD(
         model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
     )
+    # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
 
+    # Linear Probe and Evaluation
     trained_linear = trainer.linear_probing(model, poison)
 
+    # Channel Removal Strategy
     if args.detect_trigger_channels:
         trainer.trigger_channel_removal(model, poison, trained_linear)
-        # trainer.linear_probing(
-        #     model, poison, use_ss_detector=True, trained_linear=trained_linear
-        # )
 
+    # Mask Pruning Strategy
     if args.use_mask_pruning:
         trainer.linear_probing(
             model, poison, use_mask_pruning=True, trained_linear=trained_linear

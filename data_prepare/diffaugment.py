@@ -1,25 +1,14 @@
-import functools
 from torch.utils.data import DataLoader, TensorDataset
-import os
 import random
-from typing import Any, Callable, Optional, Tuple
 import numpy as np
-from PIL import Image, ImageFilter
-import pandas as pd
-from functools import partial
+from PIL import Image
 from torch import Tensor
-import glob
-from typing import Callable, Tuple
+from typing import Callable
 import torch
 import torch.nn as nn
-
-from torch.utils.data import SubsetRandomSampler
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from torchvision.datasets import VisionDataset
 from kornia import augmentation as aug
-
-import natsort
 import PIL
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -126,7 +115,7 @@ class PoisonAgent:
 
         (
             self.train_pos_loader,
-            self.test_loader,
+            self.test_clean_loader,
             self.test_pos_loader,
             self.memory_loader,
             self.train_probe_loader,
@@ -282,7 +271,7 @@ class PoisonAgent:
         )
 
         # clean validation set (used in knn eval only, in base.py)
-        test_loader = DataLoader(
+        test_clean_loader = DataLoader(
             TensorDataset(x_test_tensor, y_test_tensor, test_index),
             batch_size=self.args.linear_probe_batch_size,
             shuffle=False,
@@ -344,7 +333,7 @@ class PoisonAgent:
 
         return (
             train_loader,
-            test_loader,
+            test_clean_loader,
             test_pos_loader,
             memory_loader,
             train_probe_loader,
@@ -397,19 +386,6 @@ def set_aug_diff(args):
             aug.RandomGrayscale(p=0.2),
             normalize,
         )
-
-        # # NOT USED, don't worry about it
-        # ft_transform = nn.Sequential(
-        #     aug.RandomResizedCrop(
-        #         size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-        #     ),
-        #     aug.RandomHorizontalFlip(),
-        #     aug.RandomGrayscale(p=0.2),
-        #     normalize,
-        # )
-
-        # # NOT USED, don't worry about it
-        # test_transform = nn.Sequential(normalize)
 
         # applied to a PIL image
         transform_load = transforms.Compose(
@@ -467,41 +443,6 @@ def set_aug_diff(args):
     else:
         raise NotImplementedError
 
-    # train_sampler = None
-    # ft_sampler = None
-
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset,
-    #     batch_size=args.batch_size,
-    #     shuffle=(train_sampler is None),
-    #     num_workers=args.num_workers,
-    #     pin_memory=True,
-    #     sampler=train_sampler,
-    #     drop_last=True,
-    # )
-
-    # ft_loader = torch.utils.data.DataLoader(
-    #     ft_dataset,
-    #     batch_size=args.eval_batch_size,
-    #     shuffle=(ft_sampler is None),
-    #     num_workers=args.num_workers,
-    #     pin_memory=True,
-    #     sampler=ft_sampler,
-    # )
-
-    # indices  = np.random.choice(len(test_dataset), 1024, replace=False)
-    # sampler = SubsetRandomSampler(indices)
-
-    # test_loader = torch.utils.data.DataLoader(
-    #     test_dataset,
-    #     args.eval_batch_size,
-    #     shuffle=False,
-    #     num_workers=args.num_workers,
-    #     pin_memory=True,
-    #     drop_last=True,
-    #     sampler=None,
-    # )
-
     memory_loader = torch.utils.data.DataLoader(
         memory_dataset,
         args.eval_batch_size,
@@ -511,17 +452,10 @@ def set_aug_diff(args):
     )
 
     return (
-        # train_loader,  # [don't care]
-        # train_sampler,  # [don't care]
         train_dataset,  # [double check] used as PoisonAgent's train_dataset
-        # ft_loader,  # [don't care]
-        # ft_sampler,  # [don't care]
-        # test_loader,  # [don't care]
         test_dataset,  # [double check] used as PoisonAgent's val_dataset
         memory_loader,  #  [double check] used as PoisonAgent's memory_loader
         train_transform,  #  [double check] used in train_loader iteration, not in poisoning
-        # ft_transform,  # [don't care]
-        # test_transform,  # [don't care]
     )
 
 

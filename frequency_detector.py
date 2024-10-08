@@ -17,7 +17,6 @@ def dct2(block):
 
 
 def addnoise(img, complex_gaussian):
-    # TODO: use more complicated noise
     if complex_gaussian:
         aug = albumentations.GaussNoise(
             p=1,
@@ -586,7 +585,6 @@ def patching_train(
     this code conducts a patching procedure with random white blocks or random noise block
     clean_sample.shape: [32, 32, 3]; value range: [0, 1]
     """
-    # TODO: update attack range
     # attack = np.random.choice([2, 3, 4, 5, 6, 7, 8, 9, 12], 1)[0]
     # attack = np.random.choice([1, 2, 5, 7, 8], 1)[0]
     attack = np.random.choice(attack_trigger_ids, 1)[0]
@@ -671,7 +669,6 @@ def patching_train(
         return spatter_mud(output)
     elif attack == 14:
         return defocus(output)
-    # TODO: more options
 
     margin = np.random.randint(0, 6)
     rand_loc = np.random.randint(0, 4)

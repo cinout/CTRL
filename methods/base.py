@@ -385,8 +385,13 @@ def find_trigger_channels(
 
     for detector, values in bd_detector_scores.items():
         bd_scores = np.array(values)
-        auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-        print(f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}")
+
+        if not args.ideal_case:
+            auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+            print(
+                f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
+            )
+
         bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
         if minority_lb > 0:
             minority_indices_local = bd_indices[

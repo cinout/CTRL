@@ -48,7 +48,7 @@ python -u main_train.py \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
-    --channel_num 24 \
+    --channel_num 12  \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -59,7 +59,7 @@ python -u main_train.py \
     --seed 42 \
     \
     --ideal_case \
-    --note "[ideal]" \
+    --note "[ideal, c=12]" \
 
 
 ##Log this job's resource usage stats###

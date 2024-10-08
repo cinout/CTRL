@@ -270,7 +270,7 @@ def find_trigger_channels(
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:
             images = content[0]
-            is_batch_poisoned = torch.ones(size=(images.shape[0]))
+            is_batch_poisoned = torch.ones(size=(images.shape[0],))
             is_batch_poisoned = is_batch_poisoned.to(device)
         else:
             (images, is_batch_poisoned, _, _) = content

@@ -172,7 +172,7 @@ parser.add_argument(
     "--in_n_detectors",
     type=int,
     nargs="+",
-    default=[2, 3],
+    default=[1],
     help="the number of detectors the trigger index should be predicted in",
 )
 parser.add_argument("--attack_trigger_ids", type=int, nargs="+", default=2)
@@ -294,7 +294,7 @@ parser.add_argument(
     help="unlearn the model before finding trigger channels",
 )
 
-# TODO: add to slurm
+
 parser.add_argument(
     "--ideal_case",
     action="store_true",

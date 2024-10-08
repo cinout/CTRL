@@ -4,16 +4,16 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_h"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=1-10:00:00
+#SBATCH --time=0-04:30:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,7 +36,6 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --trigger_type htba \
     \
     --image_size 64 \
     \
@@ -45,32 +44,24 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20240906_183318_46_6_imagenet100_ftrojan_linear_regular_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20240924_155056_66_73_imagenet100_ftrojan_linear_refset_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.010 \
     \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.050 \
-    \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
-    --frequency_train_trigger_size 5 \
-    --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
-    --attack_trigger_ids 2 \
-    --complex_gaussian \
+    --bd_detectors entropy \
+    --in_n_detectors 1 \
     \
     --seed 42 \
-    --lr 0.0002 \
     \
-    --note "attack_trigger_ids=2, [0.3-5.0]%, EP=500 [complex Gaussian] [lr=0.0002]" \
+    --ideal_case \
+    --note "[ideal]" \
     
 
 ##Log this job's resource usage stats###

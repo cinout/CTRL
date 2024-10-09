@@ -420,9 +420,10 @@ def find_trigger_channels(
             trainset_features[start_pos : vision_features.shape[0]] = vision_features
             start_pos = start_pos + vision_features.shape[0]
             is_poisoned.append(is_batch_poisoned)
-            get_freq_detection_scores(
-                images, freq_detector_ensemble, bd_detector_scores, args
-            )
+            if "frequency_ensemble" in args.bd_detectors:
+                get_freq_detection_scores(
+                    images, freq_detector_ensemble, bd_detector_scores, args
+                )
 
         corrs, max_indices_at_channel = get_ss_statistics(
             trainset_features,
@@ -467,10 +468,10 @@ def find_trigger_channels(
             corrs, max_indices_at_channel = get_ss_statistics(
                 vision_features, bs, C, args
             )
-
-            get_freq_detection_scores(
-                images, freq_detector_ensemble, bd_detector_scores, args
-            )
+            if "frequency_ensemble" in args.bd_detectors:
+                get_freq_detection_scores(
+                    images, freq_detector_ensemble, bd_detector_scores, args
+                )
             get_detection_scores(
                 corrs, max_indices_at_channel, bd_detector_scores, args
             )

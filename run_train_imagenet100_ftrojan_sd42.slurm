@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=110G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -67,7 +67,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --num_views 64 \
+    --num_views 1 \
     --full_dataset_svd \
     --note "try full_dataset_svd" \
     

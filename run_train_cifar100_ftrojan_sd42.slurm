@@ -65,7 +65,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --num_views 1 \
+    --num_views 64 \
     --full_dataset_svd \
     --note "try full_dataset_svd" \
 

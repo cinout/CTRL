@@ -346,7 +346,7 @@ def find_trigger_channels(
             print(f"train_probe_set_features.shape: {train_probe_set_features.shape}")
             corrs, max_indices_at_channel = get_ss_statistics(
                 train_probe_set_features,
-                train_probe_set_features.shape[0],
+                int(train_probe_set_features.shape[0]/args.num_views),
                 train_probe_set_features.shape[1],
                 args,
                 probe_set=True,
@@ -430,7 +430,7 @@ def find_trigger_channels(
         print(f"trainset_features.shape: {trainset_features.shape}")
         corrs, max_indices_at_channel = get_ss_statistics(
             trainset_features,
-            trainset_features.shape[0],
+            int(trainset_features.shape[0]/args.num_views),
             trainset_features.shape[1],
             args,
         )

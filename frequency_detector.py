@@ -578,7 +578,7 @@ def patching_train(
     image_size,
     ensemble_id,
     frequency_train_trigger_size,
-    attack_trigger_ids,
+    frequency_attack_trigger_ids,
     complex_gaussian,
 ):
     """
@@ -587,7 +587,7 @@ def patching_train(
     """
     # attack = np.random.choice([2, 3, 4, 5, 6, 7, 8, 9, 12], 1)[0]
     # attack = np.random.choice([1, 2, 5, 7, 8], 1)[0]
-    attack = np.random.choice(attack_trigger_ids, 1)[0]
+    attack = np.random.choice(frequency_attack_trigger_ids, 1)[0]
 
     # if ensemble_id == 0:
     #     # if frequency_train_trigger_size == 2:

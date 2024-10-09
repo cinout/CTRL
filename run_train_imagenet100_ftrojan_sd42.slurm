@@ -55,20 +55,21 @@ python -u main_train.py \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.003 \
+    --minority_lower_bound 0.005 \
     --minority_upper_bound 0.025 \
     \
-    --bd_detectors frequency_ensemble \
+    --bd_detectors ss_score entropy \
+    --in_n_detectors 2 \
     --frequency_ensemble_size 3 \
     --frequency_train_trigger_size 5 \
-    --in_n_detectors 3 \
     --frequency_detector_epochs 500 \
-    --attack_trigger_ids 2 \
+    --frequency_attack_trigger_ids 2 \
     \
     --seed 42 \
-    --complex_gaussian \
     \
-    --note "attack_trigger_ids=2, [0.3-2.5]%, EP=500 [complex]" \
+    --num_views 1 \
+    --full_dataset_svd \
+    --note "try full_dataset_svd" \
     
 
 ##Log this job's resource usage stats###

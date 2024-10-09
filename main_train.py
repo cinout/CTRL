@@ -175,7 +175,7 @@ parser.add_argument(
     default=[1],
     help="the number of detectors the trigger index should be predicted in",
 )
-parser.add_argument("--attack_trigger_ids", type=int, nargs="+", default=2)
+parser.add_argument("--frequency_attack_trigger_ids", type=int, nargs="+", default=2)
 parser.add_argument(
     "--complex_gaussian",
     action="store_true",
@@ -212,6 +212,7 @@ parser.add_argument(
     type=int,
     help="ignore those appear in the probe dataset's voted channels",
 )
+
 parser.add_argument(
     "--num_views",
     type=int,
@@ -294,11 +295,15 @@ parser.add_argument(
     help="unlearn the model before finding trigger channels",
 )
 
-
 parser.add_argument(
     "--ideal_case",
     action="store_true",
     help="when trigger channels are found from val set directly",
+)
+parser.add_argument(
+    "--full_dataset_svd",
+    action="store_true",
+    help="apply spectral signature on whole dataset",
 )
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -342,6 +342,8 @@ def find_trigger_channels(
                 )
                 start_pos = start_pos + vision_features.shape[0]
 
+            # TODO: remove later
+            print(f"train_probe_set_features.shape: {train_probe_set_features.shape}")
             corrs, max_indices_at_channel = get_ss_statistics(
                 train_probe_set_features,
                 train_probe_set_features.shape[0],
@@ -424,7 +426,8 @@ def find_trigger_channels(
                 get_freq_detection_scores(
                     images, freq_detector_ensemble, bd_detector_scores, args
                 )
-
+        # TODO: remove later
+        print(f"trainset_features.shape: {trainset_features.shape}")
         corrs, max_indices_at_channel = get_ss_statistics(
             trainset_features,
             trainset_features.shape[0],

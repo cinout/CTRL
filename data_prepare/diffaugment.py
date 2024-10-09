@@ -267,7 +267,7 @@ class PoisonAgent:
             batch_size=self.args.batch_size,
             sampler=None,
             shuffle=True,
-            drop_last=True,
+            drop_last=False,
         )
 
         # clean validation set (used in knn eval only, in base.py)

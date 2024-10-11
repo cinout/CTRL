@@ -134,7 +134,7 @@ def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
             take_channel = args.ignore_probe_channel_num
         else:
             take_channel = max(args.channel_num)
-        max_indices_at_channel_total = np.zeros(shape=(bs, take_channel))
+        max_indices_at_channel_total = np.zeros(shape=(bs, take_channel),dtype=np.uint64)
 
         for cluster_id in range(args.knn_cluster_num):
             matching_indices = labels == cluster_id  # An array of True and False

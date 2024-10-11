@@ -32,6 +32,7 @@ from methods.maskprune import (
 )
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -131,7 +132,7 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
-        scaler = StandardScaler()
+        scaler = MinMaxScaler()
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
         ).fit(scaler.fit_transform(visual_features))

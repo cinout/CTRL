@@ -126,8 +126,9 @@ def get_ss_statistics(
 ):
 
     if args.knn_before_svd:
-        gt = torch.cat(is_poisoned)
-        gt = np.array(gt.cpu())  # [#dataset]
+        if is_poisoned:
+            gt = torch.cat(is_poisoned)
+            gt = np.array(gt.cpu())  # [#dataset]
 
         clusters = KMeans(n_clusters=args.knn_cluster_num).fit(visual_features)
         labels = clusters.labels_
@@ -144,10 +145,11 @@ def get_ss_statistics(
         for cluster_id in range(args.knn_cluster_num):
             matching_indices = labels == cluster_id  # An array of True and False
 
-            total_poisoned_in_cluster = gt[matching_indices].sum()
-            print(
-                f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster} poisoned images"
-            )
+            if is_poisoned:
+                total_poisoned_in_cluster = gt[matching_indices].sum()
+                print(
+                    f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster} poisoned images"
+                )
 
             cluster_features = visual_features[matching_indices]
             corrs, max_indices_at_channel = ss_statistics(

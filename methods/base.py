@@ -31,6 +31,7 @@ from methods.maskprune import (
     train_step_unlearning,
 )
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -130,9 +131,10 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
+        scaler = StandardScaler()
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
-        ).fit(visual_features)
+        ).fit(scaler.fit_transform(visual_features))
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

@@ -148,6 +148,16 @@ def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
             corrs_total[:, matching_indices] = corrs
             max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
 
+        # TODO: remove later
+        print(
+            f"max_indices_at_channel_total.dtype: {max_indices_at_channel_total.dtype}"
+        )
+        print(
+            f"max_indices_at_channel_total.shape: {max_indices_at_channel_total.shape}"
+        )
+        print(f"corrs_total.dtype: {corrs_total.dtype}")
+        print(f"corrs_total.shape: {corrs_total.shape}")
+
         return corrs_total, max_indices_at_channel_total
     else:
         return ss_statistics(visual_features, bs, feat_dim, args, probe_set)

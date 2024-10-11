@@ -72,7 +72,7 @@ python -u main_train.py \
     --full_dataset_svd \
     --knn_before_svd \
     --knn_cluster_num 10 \
-    --note "try full_dataset_svd [knn_clustering=10, minMaxScaler]" \
+    --note "try full_dataset_svd [knn_clustering=10, L2]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

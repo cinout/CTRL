@@ -150,7 +150,11 @@ def get_ss_statistics(
             if is_poisoned:
                 total_poisoned_in_cluster = gt[matching_indices].sum()
                 print(
-                    f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster}/{np.nonzero(matching_indices)[0].shape[0]} poisoned images"
+                    f">>>> [ProbeSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}"
+                )
+            else:
+                print(
+                    f">>>> [ProbeSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}"
                 )
 
             cluster_features = visual_features[matching_indices]

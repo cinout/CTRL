@@ -133,8 +133,6 @@ def get_ss_statistics(
             gt = np.array(gt.cpu())  # [#dataset]
 
         # scaler = MinMaxScaler()
-        print(type(visual_features))
-        exit()
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
         ).fit(F.normalize(visual_features[:], dim=-1))

@@ -65,7 +65,7 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --num_views 64 \
+    --num_views 1 \
     --note "debug" \
 
 ##Log this job's resource usage stats###

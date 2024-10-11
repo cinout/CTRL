@@ -30,6 +30,7 @@ from methods.maskprune import (
     train_step_recovering,
     train_step_unlearning,
 )
+from sklearn.cluster import KMeans
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -80,7 +81,7 @@ def get_detection_scores(
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
 
-def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
+def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     u, s, v = np.linalg.svd(
         visual_features - np.mean(visual_features, axis=0, keepdims=True),
         full_matrices=False,
@@ -91,6 +92,7 @@ def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
 
     # adjust direction (sign)
     corrs = np.matmul(eig_for_indexing, np.transpose(visual_features))  # [1, bs*n_view]
+
     coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
     coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
     elementwise = (
@@ -117,6 +119,38 @@ def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     )  # [bs, n_view*take_channel]
 
     return corrs, max_indices_at_channel
+
+
+def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
+
+    if args.knn_before_svd:
+        # TODO: look at where poisoned images are clustered in
+
+        clusters = KMeans(n_clusters=args.knn_cluster_num).fit(visual_features)
+        labels = clusters.labels_
+
+        corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
+        if probe_set:
+            take_channel = args.ignore_probe_channel_num
+        else:
+            take_channel = max(args.channel_num)
+        max_indices_at_channel_total = np.zeros(shape=(bs, take_channel))
+
+        for cluster_id in range(args.knn_cluster_num):
+            matching_indices = labels == cluster_id  # An array of True and False
+
+            cluster_features = visual_features[matching_indices]
+            corrs, max_indices_at_channel = ss_statistics(
+                cluster_features, cluster_features.shape[0], feat_dim, args, probe_set
+            )
+
+            # need to remember the indices of the statistics
+            corrs_total[:, matching_indices] = corrs
+            max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
+
+        return corrs_total, max_indices_at_channel_total
+    else:
+        return ss_statistics(visual_features, bs, feat_dim, args, probe_set)
 
 
 def generate_view_tensors(input, ss_transform):
@@ -297,7 +331,6 @@ def find_trigger_channels(
             f"{args.timestamp}_{args.dataset}_{args.trigger_type}_features.hdf5"
         )
         h5py_handler = h5py.File(h5py_filename, "w")
-        # # TODO: knn clustering for Spectral SIgnature?
 
         if "cifar" in args.dataset or "gtsrb" in args.dataset:
             _, feat_dim = model_dict_cifar[args.arch]

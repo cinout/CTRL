@@ -70,7 +70,9 @@ python -u main_train.py \
     \
     --num_views 1 \
     --full_dataset_svd \
-    --note "try full_dataset_svd" \
+    --knn_before_svd \
+    --knn_cluster_num 10 \
+    --note "try full_dataset_svd [knn_clustering=10]" \
     
 
 ##Log this job's resource usage stats###

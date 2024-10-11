@@ -11,7 +11,7 @@ from collections import Counter
 import random, math
 import torch.nn.functional as F
 import cv2
-
+from sklearn.cluster import KMeans
 import imgaug.augmenters as iaa
 
 from frequency_detector import (
@@ -31,6 +31,24 @@ from frequency_detector import (
     spatter_rain,
 )
 
+bs = 20
+cluster_id = 1
+visual_features = np.random.random(size=(bs, 10))
+clusters = KMeans(n_clusters=5).fit(visual_features)
+labels = clusters.labels_
+
+matching_indices = labels == cluster_id
+print(matching_indices)
+
+corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
+
+corrs = np.random.random(
+    size=(1, np.nonzero(matching_indices)[0].shape[0])
+)  # [1, bs*n_view]
+corrs_total[:, matching_indices] = corrs
+print(corrs_total)
+exit()
+
 
 image_size = 64
 img = Image.open(
@@ -42,6 +60,7 @@ img = torch.tensor(img)
 img = np.array(
     img.cpu(), dtype=np.float32
 )  # shape: [32, 32, 3]; value range: [0, 1], channels in RGB order
+
 
 """
 BLEND

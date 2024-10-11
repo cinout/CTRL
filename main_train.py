@@ -305,6 +305,17 @@ parser.add_argument(
     action="store_true",
     help="apply spectral signature on whole dataset",
 )
+parser.add_argument(
+    "--knn_before_svd",
+    action="store_true",
+    help="apply kNN to features before performing spectral signature",
+)
+parser.add_argument(
+    "--knn_cluster_num",
+    type=int,
+    default=50,
+    help="number of clusters",
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

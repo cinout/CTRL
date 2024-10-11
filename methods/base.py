@@ -33,6 +33,8 @@ from methods.maskprune import (
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import RobustScaler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -133,9 +135,15 @@ def get_ss_statistics(
             gt = np.array(gt.cpu())  # [#dataset]
 
         # scaler = MinMaxScaler()
+        # iso = IsolationForest(contamination=0.05)
+        # y_iso = iso.fit_predict(visual_features)
+        # X_filtered = visual_features[y_iso == 1]
+
+        scaler = RobustScaler()
+
         clusters = KMeans(
-            n_clusters=args.knn_cluster_num, n_init=30, init="k-means++"
-        ).fit(visual_features)
+            n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
+        ).fit(scaler.fit_transform(visual_features))
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

@@ -130,7 +130,9 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
-        clusters = KMeans(n_clusters=args.knn_cluster_num).fit(visual_features)
+        clusters = KMeans(n_clusters=args.knn_cluster_num, n_init="auto").fit(
+            visual_features
+        )
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
@@ -148,7 +150,7 @@ def get_ss_statistics(
             if is_poisoned:
                 total_poisoned_in_cluster = gt[matching_indices].sum()
                 print(
-                    f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster} poisoned images"
+                    f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster}/{np.nonzero(matching_indices)[0].shape[0]} poisoned images"
                 )
 
             cluster_features = visual_features[matching_indices]
@@ -160,15 +162,14 @@ def get_ss_statistics(
             corrs_total[:, matching_indices] = corrs
             max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
 
-        # TODO: remove later
-        print(
-            f"max_indices_at_channel_total.dtype: {max_indices_at_channel_total.dtype}"
-        )
-        print(
-            f"max_indices_at_channel_total.shape: {max_indices_at_channel_total.shape}"
-        )
-        print(f"corrs_total.dtype: {corrs_total.dtype}")
-        print(f"corrs_total.shape: {corrs_total.shape}")
+        # print(
+        #     f"max_indices_at_channel_total.dtype: {max_indices_at_channel_total.dtype}"
+        # )
+        # print(
+        #     f"max_indices_at_channel_total.shape: {max_indices_at_channel_total.shape}"
+        # )
+        # print(f"corrs_total.dtype: {corrs_total.dtype}")
+        # print(f"corrs_total.shape: {corrs_total.shape}")
 
         return corrs_total, max_indices_at_channel_total
     else:

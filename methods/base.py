@@ -130,9 +130,9 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
-        clusters = KMeans(n_clusters=args.knn_cluster_num, n_init="auto").fit(
-            visual_features
-        )
+        clusters = KMeans(
+            n_clusters=args.knn_cluster_num, n_init="auto", init="random"
+        ).fit(visual_features)
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

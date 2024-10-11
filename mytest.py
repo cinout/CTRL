@@ -34,19 +34,8 @@ from frequency_detector import (
 bs = 20
 cluster_id = 1
 visual_features = np.random.random(size=(bs, 10))
-clusters = KMeans(n_clusters=5).fit(visual_features)
-labels = clusters.labels_
-
-matching_indices = labels == cluster_id
-print(matching_indices)
-
-corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
-
-corrs = np.random.random(
-    size=(1, np.nonzero(matching_indices)[0].shape[0])
-)  # [1, bs*n_view]
-corrs_total[:, matching_indices] = corrs
-print(corrs_total)
+aa = visual_features / np.linalg.norm(visual_features, axis=-1, keepdims=True)
+print(aa)
 exit()
 
 

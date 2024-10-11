@@ -131,7 +131,7 @@ def get_ss_statistics(
             gt = np.array(gt.cpu())  # [#dataset]
 
         clusters = KMeans(
-            n_clusters=args.knn_cluster_num, n_init="auto", init="random"
+            n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
         ).fit(visual_features)
         labels = clusters.labels_
 

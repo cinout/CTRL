@@ -121,10 +121,13 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     return corrs, max_indices_at_channel
 
 
-def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
+def get_ss_statistics(
+    visual_features, bs, feat_dim, args, probe_set=False, is_poisoned=None
+):
 
     if args.knn_before_svd:
-        # TODO: look at where poisoned images are clustered in
+        gt = torch.cat(is_poisoned)
+        gt = np.array(gt.cpu())  # [#dataset]
 
         clusters = KMeans(n_clusters=args.knn_cluster_num).fit(visual_features)
         labels = clusters.labels_
@@ -134,10 +137,17 @@ def get_ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
             take_channel = args.ignore_probe_channel_num
         else:
             take_channel = max(args.channel_num)
-        max_indices_at_channel_total = np.zeros(shape=(bs, take_channel),dtype=np.uint64)
+        max_indices_at_channel_total = np.zeros(
+            shape=(bs, take_channel), dtype=np.int64
+        )
 
         for cluster_id in range(args.knn_cluster_num):
             matching_indices = labels == cluster_id  # An array of True and False
+
+            total_poisoned_in_cluster = gt[matching_indices].sum()
+            print(
+                f">>>> in cluster {cluster_id}, there are {total_poisoned_in_cluster} poisoned images"
+            )
 
             cluster_features = visual_features[matching_indices]
             corrs, max_indices_at_channel = ss_statistics(
@@ -475,6 +485,7 @@ def find_trigger_channels(
             int(trainset_features.shape[0] / args.num_views),
             trainset_features.shape[1],
             args,
+            is_poisoned=is_poisoned,
         )
         get_detection_scores(corrs, max_indices_at_channel, bd_detector_scores, args)
 

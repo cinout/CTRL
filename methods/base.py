@@ -137,7 +137,7 @@ def get_ss_statistics(
         exit()
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
-        ).fit(F.normalize(visual_features, dim=-1))
+        ).fit(F.normalize(visual_features[:], dim=-1))
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

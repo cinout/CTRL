@@ -138,6 +138,7 @@ def get_ss_statistics(
             gt = np.array(gt.cpu())  # [#dataset]
 
         # scaler = MinMaxScaler()
+        scaler = StandardScaler()
         # iso = IsolationForest(contamination=0.05)
         # y_iso = iso.fit_predict(visual_features)
         # X_filtered = visual_features[y_iso == 1]
@@ -151,7 +152,7 @@ def get_ss_statistics(
         # labels = clusters.labels_
 
         dbscan = DBSCAN(eps=0.5, min_samples=5)
-        labels = dbscan.fit_predict(visual_features)
+        labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
         # num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

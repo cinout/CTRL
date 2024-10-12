@@ -150,7 +150,7 @@ def get_ss_statistics(
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
 
-        dbscan = DBSCAN(eps=0.5, min_samples=50)
+        dbscan = DBSCAN(eps=0.5, min_samples=5)
         labels = dbscan.fit_predict(visual_features)
         # num_classes = set(labels)
 

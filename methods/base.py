@@ -141,7 +141,7 @@ def get_ss_statistics(
         # X_filtered = visual_features[y_iso == 1]
 
         # scaler = RobustScaler()
-        pca = PCA(n_components=20)
+        pca = PCA(n_components=2)
 
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"

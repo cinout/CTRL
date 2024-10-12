@@ -31,6 +31,11 @@ from frequency_detector import (
     spatter_rain,
 )
 
+labels = [-1, 0, 1]
+for i in set(labels):
+    print(i)
+exit()
+
 bs = 20
 cluster_id = 1
 visual_features = np.random.random(size=(bs, 10))

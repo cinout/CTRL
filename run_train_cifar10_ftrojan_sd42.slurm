@@ -69,7 +69,7 @@ python -u main_train.py \
     --full_dataset_svd \
     --knn_before_svd \
     --knn_cluster_num 10 \
-    --note "try full_dataset_svd [knn_clustering=10, PCA]" \
+    --note "try full_dataset_svd [DBSCAN, eps=0.5, min_samples=50]" \
 
 
 ##Log this job's resource usage stats###

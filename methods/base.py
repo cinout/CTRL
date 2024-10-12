@@ -36,6 +36,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
+from sklearn.cluster import DBSCAN
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -141,12 +142,16 @@ def get_ss_statistics(
         # X_filtered = visual_features[y_iso == 1]
 
         # scaler = RobustScaler()
-        pca = PCA(n_components=2)
+        # pca = PCA(n_components=2)
 
-        clusters = KMeans(
-            n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
-        ).fit(pca.fit_transform(visual_features))
-        labels = clusters.labels_
+        # clusters = KMeans(
+        #     n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
+        # ).fit(pca.fit_transform(visual_features))
+        # labels = clusters.labels_
+
+        dbscan = DBSCAN(eps=0.5, min_samples=50)
+        labels = dbscan.fit_predict(visual_features)
+        num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
         if probe_set:
@@ -157,7 +162,7 @@ def get_ss_statistics(
             shape=(bs, take_channel), dtype=np.int64
         )
 
-        for cluster_id in range(args.knn_cluster_num):
+        for cluster_id in range(num_classes):
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:

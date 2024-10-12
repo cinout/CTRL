@@ -155,7 +155,7 @@ def get_ss_statistics(
         # dbscan = DBSCAN(eps=0.5, min_samples=5)
         # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
 
-        gmm = GaussianMixture(n_components=k, random_state=42)
+        gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
         labels = gmm.fit_predict(scaler.fit_transform(visual_features))
         # num_classes = set(labels)
 

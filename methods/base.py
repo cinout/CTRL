@@ -151,7 +151,7 @@ def get_ss_statistics(
 
         dbscan = DBSCAN(eps=0.5, min_samples=50)
         labels = dbscan.fit_predict(visual_features)
-        num_classes = set(labels)
+        # num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
         if probe_set:
@@ -162,7 +162,7 @@ def get_ss_statistics(
             shape=(bs, take_channel), dtype=np.int64
         )
 
-        for cluster_id in range(num_classes):
+        for cluster_id in set(labels): # TODO: update
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:

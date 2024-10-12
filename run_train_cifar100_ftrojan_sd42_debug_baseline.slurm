@@ -59,7 +59,6 @@ python -u main_train.py \
     --bd_detectors ss_score entropy \
     --in_n_detectors 2 \
     --frequency_ensemble_size 3 \
-    --frequency_train_trigger_size 5 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
     \

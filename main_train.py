@@ -162,12 +162,12 @@ parser.add_argument(
     default=1,
     help="the number of detectors in the frequency detector ensemble",
 )
-parser.add_argument(
-    "--frequency_train_trigger_size",
-    type=int,
-    default=2,
-    help="the number of triggers to choose from for training frequency detector",
-)
+# parser.add_argument(
+#     "--frequency_train_trigger_size",
+#     type=int,
+#     default=2,
+#     help="the number of triggers to choose from for training frequency detector",
+# )
 parser.add_argument(
     "--in_n_detectors",
     type=int,

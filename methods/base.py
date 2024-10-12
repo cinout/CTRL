@@ -130,6 +130,7 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
 def get_ss_statistics(
     visual_features, bs, feat_dim, args, probe_set=False, is_poisoned=None
 ):
+    # is_poisoned is the GTs for poisoned train set, when not None, means the function is called by train set
 
     if args.knn_before_svd:
         if is_poisoned:
@@ -162,13 +163,13 @@ def get_ss_statistics(
             shape=(bs, take_channel), dtype=np.int64
         )
 
-        for cluster_id in set(labels): # TODO: update
+        for cluster_id in set(labels):  # TODO: update
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:
                 total_poisoned_in_cluster = gt[matching_indices].sum()
                 print(
-                    f">>>> [ProbeSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}"
+                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}"
                 )
             else:
                 print(

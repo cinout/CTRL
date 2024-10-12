@@ -71,7 +71,7 @@ python -u main_train.py \
     --full_dataset_svd \
     --knn_before_svd \
     --knn_cluster_num 10 \
-    --note "try full_dataset_svd [knn_clustering=10, RobustScaler]" \
+    --note "try full_dataset_svd [knn_clustering=10, PCA]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -37,6 +37,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import DBSCAN
+from sklearn.mixture import GaussianMixture
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -151,8 +152,11 @@ def get_ss_statistics(
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
 
-        dbscan = DBSCAN(eps=0.5, min_samples=5)
-        labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
+        # dbscan = DBSCAN(eps=0.5, min_samples=5)
+        # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
+
+        gmm = GaussianMixture(n_components=k, random_state=42)
+        labels = gmm.fit_predict(scaler.fit_transform(visual_features))
         # num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

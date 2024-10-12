@@ -35,6 +35,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
+from sklearn.decomposition import PCA
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -139,11 +140,12 @@ def get_ss_statistics(
         # y_iso = iso.fit_predict(visual_features)
         # X_filtered = visual_features[y_iso == 1]
 
-        scaler = RobustScaler()
+        # scaler = RobustScaler()
+        pca = PCA(n_components=20)
 
         clusters = KMeans(
             n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
-        ).fit(scaler.fit_transform(visual_features))
+        ).fit(pca.fit_transform(visual_features))
         labels = clusters.labels_
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

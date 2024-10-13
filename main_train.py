@@ -415,15 +415,14 @@ def main(args):
             model, poison, trained_linear
         )  # numpy
 
-        # print(
-        #     f"estimated_poisoned_file_indices.shape: {estimated_poisoned_file_indices.shape}"
-        # )
+        print(
+            f"estimated_poisoned_file_indices.shape: {estimated_poisoned_file_indices.shape}"
+        )
 
         original_trainset_length = len(poison.train_pos_loader.dataset)
         estimated_clean_indices = np.setdiff1d(
             np.array(range(original_trainset_length)), estimated_poisoned_file_indices
         )
-        # print(f"estimated_clean_indices.shape: {estimated_clean_indices.shape}")
 
         poison.train_pos_loader = DataLoader(
             Subset(poison.train_pos_loader.dataset, estimated_clean_indices),
@@ -432,6 +431,7 @@ def main(args):
             shuffle=True,
             drop_last=False,
         )
+        print(f"filtered_dataset.shape: {len(poison.train_pos_loader.dataset)}")
 
         # re-train the model here
         new_model = set_model(args)

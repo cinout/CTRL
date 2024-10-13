@@ -53,7 +53,7 @@ python -u main_train.py \
     --channel_num 40 \
     \
     --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.100 \
+    --minority_upper_bound 0.050 \
     \
     --bd_detectors frequency_ensemble \
     --in_n_detectors 1 \
@@ -65,7 +65,7 @@ python -u main_train.py \
     \
     --num_views 64 \
     --siftout_poisoned_images \
-    --note "[input_filter] single freq detector, GaussNoise with lessVariation" \
+    --note "[input_filter, 5%] single freq detector, GaussNoise with lessVariation" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -1274,9 +1274,7 @@ class CLTrainer:
         return model
 
     # sift out poisoned images
-    def siftout_poisoned_images(
-        self, model, trainset_loader, trained_linear, ss_transform
-    ):
+    def siftout_poisoned_images(self, model, poison, trained_linear):
 
         linear = copy.deepcopy(trained_linear)
         linear.eval()
@@ -1291,13 +1289,13 @@ class CLTrainer:
 
         estimated_poisoned_file_indices = find_trigger_channels(
             self.args,
-            trainset_loader,
-            None,
-            None,
+            poison.train_pos_loader,
+            poison.train_probe_loader,
+            poison.train_probe_freq_detector_loader,
             backbone,
             linear,
-            ss_transform,
-        ) # numpy
+            poison.ss_transform,
+        )  # numpy
         return estimated_poisoned_file_indices
 
     # Channel Voting Strategy

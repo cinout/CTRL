@@ -412,7 +412,7 @@ def main(args):
 
     if args.siftout_poisoned_images:
         estimated_poisoned_file_indices = trainer.siftout_poisoned_images(
-            model, poison.train_pos_loader, trained_linear, poison.ss_transform
+            model, poison, trained_linear
         )  # numpy
 
         # TODO: remove these debug content

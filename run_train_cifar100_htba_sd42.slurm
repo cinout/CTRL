@@ -60,7 +60,7 @@ python -u main_train.py \
     --minority_upper_bound 0.025 \
     \
     --bd_detectors frequency_ensemble \
-    --in_n_detectors 1 2 3 \
+    --in_n_detectors 2 3 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
@@ -68,7 +68,7 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 64 \
-    --note "freq*3, GaussNoise, in [1,2,3] (union)" \
+    --note "freq*3, GaussNoise, in [2,3]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

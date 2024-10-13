@@ -56,19 +56,19 @@ python -u main_train.py \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.001 \
-    --minority_upper_bound 0.011 \
+    --minority_lower_bound 0.003 \
+    --minority_upper_bound 0.025 \
     \
     --bd_detectors frequency_ensemble \
-    --in_n_detectors 1 \
-    --frequency_ensemble_size 1 \
+    --in_n_detectors 1 2 3 \
+    --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
     \
     --seed 42 \
     \
     --num_views 64 \
-    --note "single freq detector, GaussNoise with lessVariation" \
+    --note "freq*3, GaussNoise, in [1,2,3] (union)" \
     
 
 ##Log this job's resource usage stats###

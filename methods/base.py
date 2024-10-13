@@ -870,6 +870,7 @@ class CLTrainer:
         poison,
         use_mask_pruning=False,
         trained_linear=None,
+        force_training=False,
     ):
         if use_mask_pruning:
             # use mask pruning
@@ -1077,7 +1078,7 @@ class CLTrainer:
 
             linear = linear.to(device)
 
-            if self.args.pretrained_linear_model == "":
+            if self.args.pretrained_linear_model == "" or force_training:
                 optimizer = torch.optim.SGD(
                     linear.parameters(),
                     lr=0.06,
@@ -1147,7 +1148,9 @@ class CLTrainer:
             return linear  # the returned linear is only used if use_ss_detector=False
 
     # SSL attack and kNN Evaluation
-    def train_freq(self, model, optimizer, train_transform, poison):
+    def train_freq(
+        self, model, optimizer, train_transform, poison, force_training=False
+    ):
 
         cosine_scheduler = optim.lr_scheduler.CosineAnnealingLR(
             optimizer, self.args.epochs
@@ -1176,7 +1179,7 @@ class CLTrainer:
             start = time.time()
 
             # TRAIN
-            if self.args.pretrained_ssl_model == "":
+            if self.args.pretrained_ssl_model == "" or force_training:
                 for i, content in enumerate(
                     train_loader
                 ):  # frequency backdoor has been injected
@@ -1223,7 +1226,7 @@ class CLTrainer:
 
             # EVAL
             if epoch + 1 == self.args.epochs or (
-                self.args.pretrained_ssl_model == ""
+                (self.args.pretrained_ssl_model == "" or force_training)
                 and epoch % self.args.knn_eval_freq == 0
             ):
                 model.eval()
@@ -1254,7 +1257,7 @@ class CLTrainer:
                     )
                 )
 
-        if self.args.pretrained_ssl_model == "":
+        if self.args.pretrained_ssl_model == "" or force_training:
             # Save final model
             if not self.args.distributed or (
                 self.args.distributed

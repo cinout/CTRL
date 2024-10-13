@@ -50,8 +50,8 @@ python -u main_train.py \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --minority_lower_bound 0.001 \
-    --minority_upper_bound 0.011 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.100 \
     \
     --bd_detectors frequency_ensemble \
     --in_n_detectors 1 \

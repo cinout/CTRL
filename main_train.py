@@ -415,19 +415,15 @@ def main(args):
             model, poison, trained_linear
         )  # numpy
 
-        # TODO: remove these debug content
-        print(
-            f"estimated_poisoned_file_indices.shape: {estimated_poisoned_file_indices.shape}"
-        )
-        print(
-            f"estimated_poisoned_file_indices[:20]: {estimated_poisoned_file_indices[:20]}"
-        )
+        # print(
+        #     f"estimated_poisoned_file_indices.shape: {estimated_poisoned_file_indices.shape}"
+        # )
 
         original_trainset_length = len(poison.train_pos_loader.dataset)
         estimated_clean_indices = np.setdiff1d(
             np.array(range(original_trainset_length)), estimated_poisoned_file_indices
         )
-        print(f"estimated_clean_indices.shape: {estimated_clean_indices.shape}")
+        # print(f"estimated_clean_indices.shape: {estimated_clean_indices.shape}")
 
         poison.train_pos_loader = DataLoader(
             Subset(poison.train_pos_loader.dataset, estimated_clean_indices),
@@ -445,10 +441,14 @@ def main(args):
             new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
         )
         # SSL attack and KNN Evaluation
-        new_trainer.train_freq(new_model, optimizer, train_transform, poison)
+        new_trainer.train_freq(
+            new_model, optimizer, train_transform, poison, force_training=True
+        )
 
         # Linear Probe and Evaluation
-        new_trained_linear = new_trainer.linear_probing(new_model, poison)
+        new_trained_linear = new_trainer.linear_probing(
+            new_model, poison, force_training=True
+        )
 
         return  # we can exit now
 

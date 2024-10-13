@@ -5,7 +5,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 import torch
 import numpy as np
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, Subset
 import copy
 from collections import Counter
 import random, math
@@ -31,16 +31,31 @@ from frequency_detector import (
     spatter_rain,
 )
 
-labels = [-1, 0, 1]
-for i in set(labels):
-    print(i)
+a = np.array(range(20))
+print(a)
+
 exit()
 
-bs = 20
-cluster_id = 1
-visual_features = np.random.random(size=(bs, 10))
-aa = visual_features / np.linalg.norm(visual_features, axis=-1, keepdims=True)
-print(aa)
+total_imgs = 100
+x_train_tensor = torch.rand(size=(total_imgs, 3, 16, 16))
+train_index = torch.tensor(list(range(total_imgs)), dtype=torch.long)
+train_loader = DataLoader(
+    (
+        TensorDataset(
+            x_train_tensor,
+            train_index,
+        )
+    ),
+    batch_size=12,
+    sampler=None,
+    shuffle=True,
+    drop_last=False,
+)
+result = Subset(train_loader.dataset, np.array([1, 4, 5]))
+print(type(result))
+print(len(result))
+
+
 exit()
 
 

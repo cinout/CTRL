@@ -9,6 +9,7 @@ from methods.base import CLTrainer
 from utils.util import *
 from utils.frequency import PoisonFre
 from utils.htba import PoisonHTBA
+from torch.utils.data import DataLoader, Subset
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 
@@ -316,6 +317,11 @@ parser.add_argument(
     default=50,
     help="number of clusters",
 )
+parser.add_argument(
+    "--siftout_poisoned_images",
+    action="store_true",
+    help="use input filtering",
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -403,6 +409,48 @@ def main(args):
 
     # Linear Probe and Evaluation
     trained_linear = trainer.linear_probing(model, poison)
+
+    if args.siftout_poisoned_images:
+        estimated_poisoned_file_indices = trainer.siftout_poisoned_images(
+            model, poison.train_pos_loader, trained_linear, poison.ss_transform
+        )  # numpy
+
+        # TODO: remove these debug content
+        print(
+            f"estimated_poisoned_file_indices.shape: {estimated_poisoned_file_indices.shape}"
+        )
+        print(
+            f"estimated_poisoned_file_indices[:20]: {estimated_poisoned_file_indices[:20]}"
+        )
+
+        original_trainset_length = len(poison.train_pos_loader.dataset)
+        estimated_clean_indices = np.setdiff1d(
+            np.array(range(original_trainset_length)), estimated_poisoned_file_indices
+        )
+        print(f"estimated_clean_indices.shape: {estimated_clean_indices.shape}")
+
+        poison.train_pos_loader = DataLoader(
+            Subset(poison.train_pos_loader.dataset, estimated_clean_indices),
+            batch_size=args.batch_size,
+            sampler=None,
+            shuffle=True,
+            drop_last=False,
+        )
+
+        # re-train the model here
+        new_model = set_model(args)
+        new_model = new_model.to(device)
+        new_trainer = CLTrainer(args)
+        optimizer = optim.SGD(
+            new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+        )
+        # SSL attack and KNN Evaluation
+        new_trainer.train_freq(new_model, optimizer, train_transform, poison)
+
+        # Linear Probe and Evaluation
+        new_trained_linear = new_trainer.linear_probing(new_model, poison)
+
+        return  # we can exit now
 
     # Channel Removal Strategy
     if args.detect_trigger_channels:

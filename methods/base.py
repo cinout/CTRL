@@ -168,7 +168,7 @@ def get_ss_statistics(
             shape=(bs, take_channel), dtype=np.int64
         )
 
-        for cluster_id in set(labels):  # TODO: update
+        for cluster_id in set(labels):  # FIXME: update
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:
@@ -254,7 +254,9 @@ def find_trigger_channels(
             bd_detector_scores[detector] = []
 
     all_votes = []  # for all images in the dataset
-    is_poisoned = []  # for all images in the dataset
+    is_poisoned = []  # for all images in the dataset (GT)
+    if args.siftout_poisoned_images:
+        trainset_file_indices = []
 
     # if apply unlearning before finding trigger channles
     if args.unlearn_before_finding_trigger_channels:
@@ -528,10 +530,12 @@ def find_trigger_channels(
                 is_batch_poisoned = torch.ones(size=(images.shape[0],))
                 is_batch_poisoned = is_batch_poisoned.to(device)
             else:
-                (images, is_batch_poisoned, _, _) = content
+                (images, is_batch_poisoned, _, file_index) = content
                 is_batch_poisoned = is_batch_poisoned.to(device)
 
             images = images.to(device)
+            if args.siftout_poisoned_images:
+                trainset_file_indices.append(file_index)
 
             if args.num_views == 1:
                 views = images.clone()
@@ -546,6 +550,7 @@ def find_trigger_channels(
                 vision_features = unlearnt_backbone(views)
             else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
+
             if args.detector_normalize == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
@@ -611,6 +616,12 @@ def find_trigger_channels(
     print(
         f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
     )
+
+    if args.siftout_poisoned_images:
+        trainset_file_indices = torch.cat(trainset_file_indices)
+        trainset_file_indices = np.array(trainset_file_indices.cpu())  # [#dataset]
+        estimated_poisoned_file_indices = trainset_file_indices[minority_indices]
+        return estimated_poisoned_file_indices  # numpy
 
     if args.find_and_ignore_probe_channels:
         # REMOVE channels that appear in probe dataset
@@ -1262,6 +1273,33 @@ class CLTrainer:
 
         return model
 
+    # sift out poisoned images
+    def siftout_poisoned_images(
+        self, model, trainset_loader, trained_linear, ss_transform
+    ):
+
+        linear = copy.deepcopy(trained_linear)
+        linear.eval()
+
+        model.eval()
+        if self.args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = model.backbone
+        backbone.eval()
+
+        estimated_poisoned_file_indices = find_trigger_channels(
+            self.args,
+            trainset_loader,
+            None,
+            None,
+            backbone,
+            linear,
+            ss_transform,
+        ) # numpy
+        return estimated_poisoned_file_indices
+
     # Channel Voting Strategy
     def trigger_channel_removal(self, model, poison, trained_linear):
         ######## Prepare backbone and linear, and set them to eval mode
@@ -1342,7 +1380,7 @@ class CLTrainer:
                 )
 
         else:
-            ######## Find trigger channels
+            ######## Find trigger channels in realistic case (i.e., find channel from poisoned train set)
             contributing_indices = find_trigger_channels(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set

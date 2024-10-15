@@ -69,7 +69,8 @@ python -u main_train.py \
     \
     --num_views 64 \
     --detect_projector_features \
-    --note "detect_projector_features" \
+    --proj_feature_normalize l2 \
+    --note "detect_projector_features [norm_l2]" \
     
 
 ##Log this job's resource usage stats###

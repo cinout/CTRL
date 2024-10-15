@@ -94,8 +94,9 @@ def get_detection_scores_from_projector(
     vision_features = projector(vision_features)
     if args.proj_feature_normalize == "l2":
         vision_features = F.normalize(vision_features, dim=1)
+    _, C = vision_features.shape
     corrs, max_indices_at_channel = get_ss_statistics(
-        vision_features, bs, args.proj_dim, args
+        vision_features.detach().cpu().numpy(), bs, C, args
     )
     get_detection_scores(corrs, max_indices_at_channel, bd_detector_scores, args)
 
@@ -585,10 +586,9 @@ def find_trigger_channels(
             if args.detector_normalize == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
-            vision_features = vision_features.detach().cpu().numpy()
 
             corrs, max_indices_at_channel = get_ss_statistics(
-                vision_features, bs, C, args
+                vision_features.detach().cpu().numpy(), bs, C, args
             )
             if "frequency_ensemble" in args.bd_detectors:
                 get_freq_detection_scores(
@@ -1326,7 +1326,7 @@ class CLTrainer:
         else:
             backbone = model.backbone
             projector = model.proj_head  # FIXME: BYOL may use different name
-            self.args.proj_dim = model.proj_dim
+
         backbone.eval()
         projector.eval()
 
@@ -1356,7 +1356,7 @@ class CLTrainer:
         else:
             backbone = model.backbone
             projector = model.proj_head  # FIXME: BYOL may use different name
-            self.args.proj_dim = model.proj_dim
+
         backbone.eval()
         projector.eval()
 

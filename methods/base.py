@@ -88,6 +88,18 @@ def get_detection_scores(
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
 
+def get_detection_scores_from_projector(
+    vision_features, projector, bs, bd_detector_scores, args
+):
+    vision_features = projector(vision_features)
+    if args.proj_feature_normalize == "l2":
+        vision_features = F.normalize(vision_features, dim=1)
+    corrs, max_indices_at_channel = get_ss_statistics(
+        vision_features, bs, args.proj_dim, args
+    )
+    get_detection_scores(corrs, max_indices_at_channel, bd_detector_scores, args)
+
+
 def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     u, s, v = np.linalg.svd(
         visual_features - np.mean(visual_features, axis=0, keepdims=True),
@@ -242,6 +254,7 @@ def find_trigger_channels(
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
+    projector,
     linear,
     ss_transform,
 ):
@@ -259,6 +272,7 @@ def find_trigger_channels(
         trainset_file_indices = []
 
     # if apply unlearning before finding trigger channles
+    # NOT USED
     if args.unlearn_before_finding_trigger_channels:
         unlearnt_backbone = copy.deepcopy(backbone)
         unlearnt_linear = copy.deepcopy(linear)
@@ -389,7 +403,9 @@ def find_trigger_channels(
         else:
             _, feat_dim = model_dict[args.arch]
 
+    """
     # called if we want to ignore some clean channels voted by train_probe dataset
+    """
     if args.find_and_ignore_probe_channels:
         all_probe_votes = []
 
@@ -418,6 +434,7 @@ def find_trigger_channels(
                     vision_features = unlearnt_backbone(views)
                 else:
                     vision_features = backbone(views)  # [bs*n_views, 512]
+
                 if args.detector_normalize == "l2":
                     vision_features = F.normalize(vision_features, dim=-1)
                 _, C = vision_features.shape
@@ -456,6 +473,7 @@ def find_trigger_channels(
                     vision_features = unlearnt_backbone(views)
                 else:
                     vision_features = backbone(views)  # [bs*n_views, 512]
+
                 if args.detector_normalize == "l2":
                     vision_features = F.normalize(vision_features, dim=-1)
                 _, C = vision_features.shape
@@ -499,6 +517,7 @@ def find_trigger_channels(
                 vision_features = unlearnt_backbone(views)
             else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
+
             if args.detector_normalize == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
@@ -519,7 +538,19 @@ def find_trigger_channels(
             args,
             is_poisoned=is_poisoned,
         )
-        get_detection_scores(corrs, max_indices_at_channel, bd_detector_scores, args)
+        if args.detect_projector_features:
+            get_detection_scores_from_projector(
+                trainset_features,
+                projector,
+                int(trainset_features.shape[0] / args.num_views),
+                bd_detector_scores,
+                args,
+            )
+            pass
+        else:
+            get_detection_scores(
+                corrs, max_indices_at_channel, bd_detector_scores, args
+            )
 
         all_votes.append(max_indices_at_channel)
 
@@ -563,9 +594,14 @@ def find_trigger_channels(
                 get_freq_detection_scores(
                     images, freq_detector_ensemble, bd_detector_scores, args
                 )
-            get_detection_scores(
-                corrs, max_indices_at_channel, bd_detector_scores, args
-            )
+            if args.detect_projector_features:
+                get_detection_scores_from_projector(
+                    vision_features, projector, bs, bd_detector_scores, args
+                )
+            else:
+                get_detection_scores(
+                    corrs, max_indices_at_channel, bd_detector_scores, args
+                )
 
             all_votes.append(max_indices_at_channel)
             is_poisoned.append(is_batch_poisoned)
@@ -1247,7 +1283,7 @@ class CLTrainer:
                     backdoor_loader=test_back_loader,
                 )
                 print(
-                    "[{}-epoch] time:{:.3f} | clean acc: {:.3f} | back acc: {:.3f} | loss:{:.3f} | cl_loss:{:.3f}".format(
+                    "[{}-epoch] time:{:.1f} | clean acc: {:.1f} | back acc: {:.1f} | loss:{:.3f} | cl_loss:{:.3f}".format(
                         epoch + 1,
                         time.time() - start,
                         clean_acc,
@@ -1286,9 +1322,13 @@ class CLTrainer:
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
             backbone.fc = nn.Sequential()
+            # FIXME: projector
         else:
             backbone = model.backbone
+            projector = model.proj_head  # FIXME: BYOL may use different name
+            self.args.proj_dim = model.proj_dim
         backbone.eval()
+        projector.eval()
 
         estimated_poisoned_file_indices = find_trigger_channels(
             self.args,
@@ -1296,6 +1336,7 @@ class CLTrainer:
             poison.train_probe_loader,
             poison.train_probe_freq_detector_loader,
             backbone,
+            projector,
             linear,
             poison.ss_transform,
         )  # numpy
@@ -1311,9 +1352,13 @@ class CLTrainer:
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
             backbone.fc = nn.Sequential()
+            # FIXME: projector
         else:
             backbone = model.backbone
+            projector = model.proj_head  # FIXME: BYOL may use different name
+            self.args.proj_dim = model.proj_dim
         backbone.eval()
+        projector.eval()
 
         if self.args.ideal_case:
             clean_val_contributing_indices = find_trigger_channels(
@@ -1322,6 +1367,7 @@ class CLTrainer:
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
+                projector,
                 linear,
                 poison.ss_transform,
             )
@@ -1331,6 +1377,7 @@ class CLTrainer:
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
+                projector,
                 linear,
                 poison.ss_transform,
             )
@@ -1381,13 +1428,14 @@ class CLTrainer:
                 )
 
         else:
-            ######## Find trigger channels in realistic case (i.e., find channel from poisoned train set)
+            ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
             contributing_indices = find_trigger_channels(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
+                projector,
                 linear,
                 poison.ss_transform,
             )

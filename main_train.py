@@ -322,6 +322,18 @@ parser.add_argument(
     action="store_true",
     help="use input filtering",
 )
+# TODO: add new option and add to slurm
+parser.add_argument(
+    "--detect_projector_features",
+    action="store_true",
+    help="bd detectors use features from projector",
+)
+# TODO: add new option and add to slurm
+parser.add_argument(
+    "--proj_feature_normalize",
+    default="none",
+    choices=["none", "l2"],
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

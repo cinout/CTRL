@@ -58,8 +58,8 @@ python -u main_train.py \
     --minority_lower_bound 0.003 \
     --minority_upper_bound 0.025 \
     \
-    --bd_detectors frequency_ensemble \
-    --in_n_detectors 3 \
+    --bd_detectors entropy ss_score \
+    --in_n_detectors 2 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
@@ -67,7 +67,8 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 64 \
-    --note "freq*3, GaussNoise, in [3], intersection" \
+    --detect_projector_features \
+    --note "detect_projector_features" \
     
 
 ##Log this job's resource usage stats###

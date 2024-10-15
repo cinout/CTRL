@@ -13,12 +13,13 @@ class SimCLRModel(CLModel):
     def __init__(self, args):
         super().__init__(args)
         self.criterion = SupConLoss(args.temp).to(device)
+        self.proj_dim = 128
 
         if self.mlp_layers == 2:
             self.proj_head = nn.Sequential(
                 nn.Linear(self.feat_dim, self.feat_dim),
                 nn.ReLU(inplace=True),
-                nn.Linear(self.feat_dim, 128),
+                nn.Linear(self.feat_dim, self.proj_dim),
             )
         elif self.mlp_layers == 3:
             self.proj_head = nn.Sequential(
@@ -26,7 +27,7 @@ class SimCLRModel(CLModel):
                 nn.ReLU(inplace=True),
                 nn.Linear(self.feat_dim, self.feat_dim),
                 nn.ReLU(inplace=True),
-                nn.Linear(self.feat_dim, 128),
+                nn.Linear(self.feat_dim, self.proj_dim),
             )
 
     @torch.no_grad()

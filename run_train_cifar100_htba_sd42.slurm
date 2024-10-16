@@ -69,8 +69,7 @@ python -u main_train.py \
     \
     --num_views 1 \
     --detect_projector_features \
-    --proj_feature_normalize l2 \
-    --note "detect_projector_features [norm_l2] [LID, KDist, views=1]" \
+    --note "detect_projector_features [LID, KDist, views=1]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

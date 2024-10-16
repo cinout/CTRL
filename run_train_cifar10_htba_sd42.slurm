@@ -66,9 +66,9 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --num_views 1 \
+    --num_views 64 \
     --normalize_backbone_features l2 \
-    --note "backbone features [LID, KDist, views=1] [L2 norm]" \
+    --note "backbone features [LID, KDist, views=64] [L2 norm]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

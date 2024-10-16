@@ -130,7 +130,7 @@ def get_detection_scores(
             vision_features.detach(),
         )
         a, _ = torch.sort(d, dim=1)
-        a = a[:, 16]  # TODO: may need to upscale for n_views=64
+        a = a[:, args.kdist_k]
         a = a.reshape(-1, args.num_views)  #  [bs,n_views]
         a = torch.mean(a, dim=1)
         bd_detector_scores["kdist"].extend(a.cpu().numpy())

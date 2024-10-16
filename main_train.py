@@ -154,7 +154,7 @@ parser.add_argument(
     type=str,
     nargs="+",
     default=["frequency_ensemble"],
-    # choices=["entropy", "ss_score", "frequency_ensemble"],
+    # choices=["entropy", "ss_score", "frequency_ensemble", "lid", "kdist"],
     help="applied detectors",
 )
 parser.add_argument(
@@ -332,6 +332,15 @@ parser.add_argument(
     "--proj_feature_normalize",
     default="none",
     choices=["none", "l2"],
+)
+
+# KDistance
+# TODO: update in slurm
+parser.add_argument(
+    "--kdist_k",
+    type=int,
+    default=32,
+    help="distance the k-th neighbor",
 )
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

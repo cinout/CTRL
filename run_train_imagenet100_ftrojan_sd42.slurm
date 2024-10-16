@@ -58,17 +58,20 @@ python -u main_train.py \
     --minority_lower_bound 0.003 \
     --minority_upper_bound 0.025 \
     \
-    --bd_detectors lid kdist \
-    --in_n_detectors 2 \
+    --bd_detectors kdist \
+    --in_n_detectors 1 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
     \
     --seed 42 \
     \
-    --num_views 64 \
-    --normalize_backbone_features l2 \
-    --note "backbone features [LID, KDist, views=64] [L2 norm]" \
+    --num_views 1 \
+    --detect_projector_features \
+    --proj_feature_normalize l2 \
+    --kdist_k 32 \
+    --note "projector features [KDist, views=1] [L2 norm] [kdist_k=32]" \
+   ## --normalize_backbone_features l2 \
     
 
 ##Log this job's resource usage stats###

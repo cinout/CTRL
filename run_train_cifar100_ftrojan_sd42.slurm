@@ -56,8 +56,8 @@ python -u main_train.py \
     --minority_lower_bound 0.003 \
     --minority_upper_bound 0.025 \
     \
-    --bd_detectors entropy ss_score \
-    --in_n_detectors 2 \
+    --bd_detectors lid \
+    --in_n_detectors 1 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
@@ -67,7 +67,7 @@ python -u main_train.py \
     --num_views 64 \
     --detect_projector_features \
     --proj_feature_normalize l2 \
-    --note "detect_projector_features [norm_l2]" \
+    --note "detect_projector_features [norm_l2] [LID]" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

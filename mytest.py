@@ -30,33 +30,7 @@ from frequency_detector import (
     spatter_mud,
     spatter_rain,
 )
-
-a = np.array(range(20))
-print(a)
-
-exit()
-
-total_imgs = 100
-x_train_tensor = torch.rand(size=(total_imgs, 3, 16, 16))
-train_index = torch.tensor(list(range(total_imgs)), dtype=torch.long)
-train_loader = DataLoader(
-    (
-        TensorDataset(
-            x_train_tensor,
-            train_index,
-        )
-    ),
-    batch_size=12,
-    sampler=None,
-    shuffle=True,
-    drop_last=False,
-)
-result = Subset(train_loader.dataset, np.array([1, 4, 5]))
-print(type(result))
-print(len(result))
-
-
-exit()
+from methods.base import get_pairwise_distance
 
 
 image_size = 64

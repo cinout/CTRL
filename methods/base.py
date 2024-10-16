@@ -66,7 +66,36 @@ def get_freq_detection_scores(images, freq_detector_ensemble, bd_detector_scores
             bd_detector_scores[f"frequency_ensemble_{ensemble_id}"].extend(output)
 
 
+def lid_mle(data, reference, k=20, compute_mode="use_mm_for_euclid_dist_if_necessary"):
+    b = data.shape[0]
+    k = min(k, b - 2)
+
+    data = torch.flatten(data, start_dim=1)
+    reference = torch.flatten(reference, start_dim=1)
+
+    r = torch.cdist(data, reference, p=2, compute_mode=compute_mode)
+    a, idx = torch.sort(r, dim=1)
+    lids = -k / torch.sum(torch.log(a[:, 1:k] / a[:, k].view(-1, 1) + 1.0e-4), dim=1)
+    return lids
+
+
+def get_pairwise_distance(
+    data, reference, compute_mode="use_mm_for_euclid_dist_if_necessary"
+):
+    b = data.shape[0]
+    r = torch.cdist(data, reference, p=2, compute_mode=compute_mode)
+    # offset = misc.get_rank() * b
+    offset = 0
+    mask = torch.zeros((b, reference.shape[0]), device=data.device, dtype=torch.bool)
+    mask = torch.diagonal_scatter(
+        mask, torch.ones(b), offset
+    )  # False, with diagonal value (distance to itself) set to True
+    r = r[~mask].view(b, -1)
+    return r  # [b, b-1]
+
+
 def get_detection_scores(
+    vision_features,
     corrs,
     max_indices_at_channel,
     bd_detector_scores,
@@ -87,6 +116,26 @@ def get_detection_scores(
         ss_scores = np.max(corrs, axis=1)  # [bs]
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
+    # TODO: add these options to argparser and slurm
+    if "lid" in args.bd_detectors:
+        lids = lid_mle(
+            data=vision_features.detach(), reference=vision_features.detach()
+        )
+        lids = lids.reshape(-1, args.num_views)  #  [bs,n_views]
+        lids = torch.mean(lids, dim=1)
+        bd_detector_scores["lid"].extend(lids.cpu().numpy())
+
+    if "kdist" in args.bd_detectors:
+        d = get_pairwise_distance(
+            vision_features.detach(),
+            vision_features.detach(),
+        )
+        a, _ = torch.sort(d, dim=1)
+        a = a[:, 16]
+        a = a.reshape(-1, args.num_views)  #  [bs,n_views]
+        a = torch.mean(a, dim=1)
+        bd_detector_scores["kdist"].extend(a.cpu().numpy())
+
 
 def get_detection_scores_from_projector(
     vision_features, projector, bs, bd_detector_scores, args
@@ -98,7 +147,9 @@ def get_detection_scores_from_projector(
     corrs, max_indices_at_channel = get_ss_statistics(
         vision_features.detach().cpu().numpy(), bs, C, args
     )
-    get_detection_scores(corrs, max_indices_at_channel, bd_detector_scores, args)
+    get_detection_scores(
+        vision_features, corrs, max_indices_at_channel, bd_detector_scores, args
+    )
 
 
 def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
@@ -550,7 +601,11 @@ def find_trigger_channels(
             pass
         else:
             get_detection_scores(
-                corrs, max_indices_at_channel, bd_detector_scores, args
+                trainset_features,
+                corrs,
+                max_indices_at_channel,
+                bd_detector_scores,
+                args,
             )
 
         all_votes.append(max_indices_at_channel)
@@ -600,7 +655,11 @@ def find_trigger_channels(
                 )
             else:
                 get_detection_scores(
-                    corrs, max_indices_at_channel, bd_detector_scores, args
+                    vision_features,
+                    corrs,
+                    max_indices_at_channel,
+                    bd_detector_scores,
+                    args,
                 )
 
             all_votes.append(max_indices_at_channel)

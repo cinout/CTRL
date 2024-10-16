@@ -69,8 +69,8 @@ python -u main_train.py \
     --num_views 1 \
     --detect_projector_features \
     --proj_feature_normalize l2 \
-    --kdist_k 1 \
-    --note "projector features [KDist, views=1] [L2 norm] [kdist_k=1]" \
+    --kdist_k 4 \
+    --note "projector features [KDist, views=1] [L2 norm] [kdist_k=4]" \
     ##--normalize_backbone_features l2 \
     
 

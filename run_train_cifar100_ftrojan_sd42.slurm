@@ -65,11 +65,11 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 1 \
-    --normalize_backbone_features l2 \
+    --detect_projector_features \
+    --proj_feature_normalize l2 \
     --kdist_k 1 \
-    --note "backbone features [KDist, views=1] [L2 norm] [kdist_k=1]" \
-    ##--detect_projector_features \
-    ##    --proj_feature_normalize l2 \
+    --note "projector features [KDist, views=1] [L2 norm] [kdist_k=1]" \
+    ##--normalize_backbone_features l2 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -48,7 +48,7 @@ parser.add_argument(
     choices=["regular", "none", "ref_set", "batch"],
 )
 parser.add_argument(
-    "--detector_normalize",
+    "--normalize_backbone_features",
     default="none",
     choices=["l2", "none"],
 )

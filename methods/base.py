@@ -486,7 +486,7 @@ def find_trigger_channels(
                 else:
                     vision_features = backbone(views)  # [bs*n_views, 512]
 
-                if args.detector_normalize == "l2":
+                if args.normalize_backbone_features == "l2":
                     vision_features = F.normalize(vision_features, dim=-1)
                 _, C = vision_features.shape
                 vision_features = vision_features.detach().cpu().numpy()
@@ -525,7 +525,7 @@ def find_trigger_channels(
                 else:
                     vision_features = backbone(views)  # [bs*n_views, 512]
 
-                if args.detector_normalize == "l2":
+                if args.normalize_backbone_features == "l2":
                     vision_features = F.normalize(vision_features, dim=-1)
                 _, C = vision_features.shape
                 vision_features = vision_features.detach().cpu().numpy()
@@ -569,7 +569,7 @@ def find_trigger_channels(
             else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
 
-            if args.detector_normalize == "l2":
+            if args.normalize_backbone_features == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
             vision_features = vision_features.detach().cpu().numpy()
@@ -637,7 +637,7 @@ def find_trigger_channels(
             else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
 
-            if args.detector_normalize == "l2":
+            if args.normalize_backbone_features == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
 

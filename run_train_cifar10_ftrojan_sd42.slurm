@@ -65,8 +65,7 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 64 \
-    --detect_projector_features \
-    --note "detect_projector_features [LID, KDist, views=64]" \
+    --note "backbone features [LID, KDist, views=64]" \
 
 
 ##Log this job's resource usage stats###

@@ -116,7 +116,6 @@ def get_detection_scores(
         ss_scores = np.max(corrs, axis=1)  # [bs]
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
-    # TODO: add these options to argparser and slurm
     if "lid" in args.bd_detectors:
         lids = lid_mle(
             data=vision_features.detach(), reference=vision_features.detach()
@@ -131,7 +130,7 @@ def get_detection_scores(
             vision_features.detach(),
         )
         a, _ = torch.sort(d, dim=1)
-        a = a[:, 16]
+        a = a[:, 16]  # TODO: may need to upscale for n_views=64
         a = a.reshape(-1, args.num_views)  #  [bs,n_views]
         a = torch.mean(a, dim=1)
         bd_detector_scores["kdist"].extend(a.cpu().numpy())

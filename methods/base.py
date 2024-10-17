@@ -711,7 +711,16 @@ def find_trigger_channels(
             eps = 1e-5
             backbone_scores = np.array(bd_detector_scores[detector_name])
             predictor_scores = np.array(bd_detector_scores[f"{detector_name}_pred"])
-            bd_scores = (predictor_scores - backbone_scores) / (backbone_scores + eps)
+
+            if args.compare_mode == "default":
+                bd_scores = (predictor_scores - backbone_scores) / (
+                    backbone_scores + eps
+                )
+            elif args.compare_mode == "abs":
+                bd_scores = np.abs((predictor_scores - backbone_scores) / (
+                    backbone_scores + eps
+                )) 
+                
 
             if not args.ideal_case:
                 auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)

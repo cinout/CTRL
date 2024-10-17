@@ -59,8 +59,8 @@ python -u main_train.py \
     --minority_lower_bound 0.003 \
     --minority_upper_bound 0.025 \
     \
-    --bd_detectors kdist \
-    --in_n_detectors 1 \
+    --bd_detectors kdist lid entropy ss_score \
+    --in_n_detectors 4 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
@@ -72,7 +72,7 @@ python -u main_train.py \
     --normalize_backbone_features l2 \
     --proj_feature_normalize l2 \
     --kdist_k 12 \
-    --note "compare features [KDist, views=1] [L2 norm] [kdist_k=12]" \
+    --note "compare features [4 detectors, views=1] [L2 norm]" \
         ##--only_detect_projector_features \
 
     

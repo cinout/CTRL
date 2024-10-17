@@ -32,6 +32,15 @@ from frequency_detector import (
 )
 from methods.base import get_pairwise_distance
 
+eps = 1e-5
+arr1 = np.random.rand(10, 1)
+arr2 = np.random.rand(10, 1)
+print(arr1)
+print(arr2)
+ratio = (arr1 - arr2) / arr2
+print(ratio)
+exit()
+
 
 image_size = 64
 img = Image.open(

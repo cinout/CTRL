@@ -324,9 +324,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--detect_projector_features",
+    "--only_detect_projector_features",
     action="store_true",
     help="bd detectors use features from projector",
+)
+parser.add_argument(
+    "--compare_backbone_predictor",
+    action="store_true",
+    help="use the difference of BD detector's scores between backbone and predictor to predict bd samples",
 )
 parser.add_argument(
     "--proj_feature_normalize",
@@ -335,13 +340,13 @@ parser.add_argument(
 )
 
 # KDistance
-# TODO: update in slurm
 parser.add_argument(
     "--kdist_k",
     type=int,
     default=32,
     help="distance the k-th neighbor",
 )
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

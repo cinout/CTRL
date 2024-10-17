@@ -100,6 +100,7 @@ def get_detection_scores(
     max_indices_at_channel,
     bd_detector_scores,
     args,
+    from_predictor=False,
 ):
     if "entropy" in args.bd_detectors:
         for votes in max_indices_at_channel:  # for each original image
@@ -108,13 +109,19 @@ def get_detection_scores(
             p = counts / counts.sum()
             h = -np.sum(p * np.log(p))
             entropy = -1 * np.exp(h)
-            bd_detector_scores["entropy"].append(entropy)
+            if from_predictor and args.compare_backbone_predictor:
+                bd_detector_scores["entropy_pred"].append(entropy)
+            else:
+                bd_detector_scores["entropy"].append(entropy)
 
     if "ss_score" in args.bd_detectors:
         corrs = np.abs(corrs)
         corrs = corrs.reshape(-1, args.num_views)  #  [bs,n_views]
         ss_scores = np.max(corrs, axis=1)  # [bs]
-        bd_detector_scores["ss_score"].extend(ss_scores.tolist())
+        if from_predictor and args.compare_backbone_predictor:
+            bd_detector_scores["ss_score_pred"].extend(ss_scores.tolist())
+        else:
+            bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
     if "lid" in args.bd_detectors:
         lids = lid_mle(
@@ -122,7 +129,11 @@ def get_detection_scores(
         )
         lids = lids.reshape(-1, args.num_views)  #  [bs,n_views]
         lids = torch.mean(lids, dim=1)
-        bd_detector_scores["lid"].extend(lids.cpu().numpy())
+
+        if from_predictor and args.compare_backbone_predictor:
+            bd_detector_scores["lid_pred"].extend(lids.cpu().numpy())
+        else:
+            bd_detector_scores["lid"].extend(lids.cpu().numpy())
 
     if "kdist" in args.bd_detectors:
         d = get_pairwise_distance(
@@ -133,7 +144,11 @@ def get_detection_scores(
         a = a[:, args.kdist_k]
         a = a.reshape(-1, args.num_views)  #  [bs,n_views]
         a = torch.mean(a, dim=1)
-        bd_detector_scores["kdist"].extend(a.cpu().numpy())
+
+        if from_predictor and args.compare_backbone_predictor:
+            bd_detector_scores["kdist_pred"].extend(a.cpu().numpy())
+        else:
+            bd_detector_scores["kdist"].extend(a.cpu().numpy())
 
 
 def get_detection_scores_from_projector(
@@ -147,7 +162,12 @@ def get_detection_scores_from_projector(
         vision_features.detach().cpu().numpy(), bs, C, args
     )
     get_detection_scores(
-        vision_features, corrs, max_indices_at_channel, bd_detector_scores, args
+        vision_features,
+        corrs,
+        max_indices_at_channel,
+        bd_detector_scores,
+        args,
+        from_predictor=True,
     )
 
 
@@ -313,9 +333,16 @@ def find_trigger_channels(
     for detector in args.bd_detectors:
         if detector == "frequency_ensemble":
             for i in range(args.frequency_ensemble_size):
-                bd_detector_scores[f"{detector}_{i}"] = []
+                name = f"{detector}_{i}"
+                bd_detector_scores[name] = []
+
+                if args.compare_backbone_predictor:
+                    bd_detector_scores[f"{name}_pred"] = []
         else:
-            bd_detector_scores[detector] = []
+            name = detector
+            bd_detector_scores[name] = []
+            if args.compare_backbone_predictor:
+                bd_detector_scores[f"{name}_pred"] = []
 
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset (GT)
@@ -589,7 +616,7 @@ def find_trigger_channels(
             args,
             is_poisoned=is_poisoned,
         )
-        if args.detect_projector_features:
+        if args.only_detect_projector_features:
             get_detection_scores_from_projector(
                 trainset_features,
                 projector,
@@ -637,22 +664,24 @@ def find_trigger_channels(
             else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
 
-            if args.normalize_backbone_features == "l2":
-                vision_features = F.normalize(vision_features, dim=-1)
-            _, C = vision_features.shape
-
-            corrs, max_indices_at_channel = get_ss_statistics(
-                vision_features.detach().cpu().numpy(), bs, C, args
-            )
             if "frequency_ensemble" in args.bd_detectors:
                 get_freq_detection_scores(
                     images, freq_detector_ensemble, bd_detector_scores, args
                 )
-            if args.detect_projector_features:
+
+            if args.compare_backbone_predictor or args.only_detect_projector_features:
                 get_detection_scores_from_projector(
                     vision_features, projector, bs, bd_detector_scores, args
                 )
-            else:
+
+            if not args.only_detect_projector_features:
+                if args.normalize_backbone_features == "l2":
+                    vision_features = F.normalize(vision_features, dim=-1)
+                _, C = vision_features.shape
+
+                corrs, max_indices_at_channel = get_ss_statistics(
+                    vision_features.detach().cpu().numpy(), bs, C, args
+                )
                 get_detection_scores(
                     vision_features,
                     corrs,
@@ -664,34 +693,60 @@ def find_trigger_channels(
             all_votes.append(max_indices_at_channel)
             is_poisoned.append(is_batch_poisoned)
 
+    # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
 
     total_images = len(data_loader.dataset)
-    minority_lb = int(total_images * args.minority_lower_bound)
-    minority_ub = int(total_images * args.minority_upper_bound)
+    minority_lb = int(total_images * args.minority_lower_bound)  # index of lower bound
+    minority_ub = int(total_images * args.minority_upper_bound)  # index of upper bound
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
+    # minorities found by all detectors
     minority_indices = []
 
-    for detector, values in bd_detector_scores.items():
-        bd_scores = np.array(values)
+    if args.compare_backbone_predictor:
+        for detector_name in args.bd_detectors:
+            eps = 1e-5
+            backbone_scores = np.array(bd_detector_scores[detector_name])
+            predictor_scores = np.array(bd_detector_scores[f"{detector_name}_pred"])
+            bd_scores = (predictor_scores - backbone_scores) / (backbone_scores + eps)
 
-        if not args.ideal_case:
-            auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-            print(
-                f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
-            )
+            if not args.ideal_case:
+                auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+                print(
+                    f"the AUROC score of comparing backbone and predictor of detector '{detector_name}' is: {np.round(auroc*100,1)}"
+                )
 
-        bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
-        if minority_lb > 0:
-            minority_indices_local = bd_indices[
-                -minority_ub:-minority_lb
-            ]  # numpy array
-        else:
-            minority_indices_local = bd_indices[-minority_ub:]
-        minority_indices.extend(minority_indices_local.tolist())
+            bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+
+            if minority_lb > 0:
+                minority_indices_local = bd_indices[
+                    -minority_ub:-minority_lb
+                ]  # numpy array
+            else:
+                minority_indices_local = bd_indices[-minority_ub:]
+            minority_indices.extend(minority_indices_local.tolist())
+    else:
+        for detector, values in bd_detector_scores.items():
+            bd_scores = np.array(values)
+
+            if not args.ideal_case:
+                auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+                print(
+                    f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
+                )
+
+            bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+
+            if minority_lb > 0:
+                minority_indices_local = bd_indices[
+                    -minority_ub:-minority_lb
+                ]  # numpy array
+            else:
+                minority_indices_local = bd_indices[-minority_ub:]
+            minority_indices.extend(minority_indices_local.tolist())
 
     minority_indices_counter = Counter(minority_indices)
     minority_indices = [

@@ -68,11 +68,13 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 1 \
+    --compare_backbone_predictor \
     --normalize_backbone_features l2 \
+    --proj_feature_normalize l2 \
     --kdist_k 12 \
-    --note "backbone features [KDist, views=1] [L2 norm] [kdist_k=12]" \
-        ##--detect_projector_features \
-    ##--proj_feature_normalize l2 \
+    --note "compare features [KDist, views=1] [L2 norm] [kdist_k=12]" \
+        ##--only_detect_projector_features \
+
     
 
 ##Log this job's resource usage stats###

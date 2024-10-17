@@ -333,7 +333,6 @@ parser.add_argument(
     action="store_true",
     help="use the difference of BD detector's scores between backbone and predictor to predict bd samples",
 )
-# TODO: add to slurm abs
 parser.add_argument(
     "--compare_mode",
     type=str,

@@ -66,13 +66,13 @@ python -u main_train.py \
     \
     --seed 42 \
     \
-    --num_views 1 \
+    --num_views 64 \
     --compare_backbone_predictor \
     --compare_mode abs \
     --normalize_backbone_features l2 \
     --proj_feature_normalize l2 \
     --kdist_k 12 \
-    --note "compare features [4 detectors, views=1] [L2 norm] [compare by abs]" \
+    --note "compare features [4 detectors, views=64] [L2 norm] [compare by abs]" \
         ##--only_detect_projector_features \
 
     

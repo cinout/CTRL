@@ -55,24 +55,25 @@ python -u main_train.py \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.025 \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
     \
-    --bd_detectors kdist lid entropy ss_score \
-    --in_n_detectors 4 \
+    --bd_detectors kdist \
+    --in_n_detectors 1 \
     --frequency_ensemble_size 3 \
     --frequency_detector_epochs 500 \
     --frequency_attack_trigger_ids 2 \
     \
     --seed 42 \
     \
-    --num_views 64 \
-    --compare_backbone_predictor \
-    --compare_mode default \
-    --normalize_backbone_features l2 \
+    --num_views 1 \
+    --only_detect_projector_features \
     --proj_feature_normalize l2 \
-    --kdist_k 12 \
-    --note "compare features [4 detectors, views=64] [L2 norm] [compare by default]" \
+    --kdist_k 8 \
+    --note "[0.001-0.011] [1 KDist=8 detector, views=1] [projector L2 norm]" \
+    ##    --compare_backbone_predictor \
+    ##    --compare_mode default \
+    ##    --normalize_backbone_features l2 \
         ##--only_detect_projector_features \
 
 

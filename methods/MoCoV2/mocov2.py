@@ -58,6 +58,8 @@ class MoCo(nn.Module):
         """
         super(MoCo, self).__init__()
 
+        self.feat_dim = dim
+
         self.K = K
         self.m = m
 

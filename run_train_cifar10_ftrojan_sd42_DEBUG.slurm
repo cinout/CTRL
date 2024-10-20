@@ -47,23 +47,13 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.200 \
-    \
-    --bd_detectors frequency_ensemble \
-    --in_n_detectors 1 \
-    --frequency_ensemble_size 1 \
-    --frequency_detector_epochs 500 \
-    --frequency_attack_trigger_ids 2 \
-    \
     --seed 42 \
-    \
     --num_views 64 \
-    --siftout_poisoned_images \
-    --note "[input_filter, 20%] single freq detector, GaussNoise with lessVariation" \
+    \
+    --use_ssl_cleanse \
+    --trigger_path trigger_estimation_DEBUG \
+    --note "compare features [4 detectors, views=64] [L2 norm] [compare by default]" \
+
 
 
 ##Log this job's resource usage stats###

@@ -10,6 +10,19 @@ from utils.util import *
 from utils.frequency import PoisonFre
 from utils.htba import PoisonHTBA
 from torch.utils.data import DataLoader, Subset
+from sklearn.cluster import KMeans
+from ssl_cleanse import (
+    DatasetEval,
+    DatasetInit,
+    dataloader_cluster,
+    draw,
+    eval_knn,
+    get_data,
+    norm_mse_loss,
+)
+import copy
+import torch.nn as nn
+import torchvision.transforms as T
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 
@@ -354,6 +367,32 @@ parser.add_argument(
     help="distance the k-th neighbor",
 )
 
+# TODO: add to slurm
+parser.add_argument(
+    "--use_ssl_cleanse",
+    action="store_true",
+    help="use the method from ECCV2024 paper: ssl-cleanse",
+)
+parser.add_argument(
+    "--attack_succ_threshold",
+    type=float,
+    default=0.99,
+    help="",
+)
+parser.add_argument(
+    "--lam",
+    type=float,
+    default=1e-1,
+    help="",
+)
+parser.add_argument("--patience", type=int, default=5)
+parser.add_argument("--lam_multiplier_up", type=float, default=1.5)
+parser.add_argument("--ratio", type=float, default=0.05)
+parser.add_argument("--knn_sample_num", type=int, default=1000, required=True)
+parser.add_argument("--num_clusters", type=int, default=12, required=True)
+
+# TODO: add to slurm
+parser.add_argument("--trigger_path", type=str, required=False)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -381,7 +420,7 @@ def main(args):
     model = model.to(device)
 
     """
-    Constrcut Trainer
+    Construct Trainer
     """
     trainer = CLTrainer(args)
 
@@ -436,12 +475,201 @@ def main(args):
     optimizer = optim.SGD(
         model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
     )
+
     # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
 
     # Linear Probe and Evaluation
     trained_linear = trainer.linear_probing(model, poison)
 
+    if args.use_ssl_cleanse:
+        if args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = copy.deepcopy(model.backbone)
+
+        backbone = backbone.eval()
+
+        with torch.no_grad():
+            transform = T.Compose(
+                [
+                    # T.Resize(args.image_size),
+                    # T.ToTensor(),
+                    T.Normalize(args.mean, args.std),
+                ]
+            )
+            dataloader = DataLoader(
+                dataset=DatasetInit(poison.train_probe_loader, transform, args.ratio),
+                batch_size=100,
+                shuffle=True,
+                num_workers=args.num_workers,
+                pin_memory=True,
+                drop_last=True,
+            )
+
+            rep, x, y_true = get_data(
+                device,
+                backbone,
+                dataloader,
+                args.image_size,
+                model.feat_dim,
+            )
+            kmeans = KMeans(
+                n_clusters=args.num_clusters, random_state=0, n_init=30
+            ).fit(rep)
+            y = kmeans.labels_
+            counts_label = {}  # # of images belonging to cluster i
+            for i in range(np.unique(y).shape[0]):
+                mask = y == i
+                counts_label[i] = mask.sum()  # #images belonging to cluster i
+
+            rep_center = torch.empty(
+                (len(np.unique(y)), rep.shape[1])
+            )  # [#labels, rep_dim]
+            y_center = torch.empty(len(np.unique(y)))  # [#labels,]
+            for label in np.unique(y):
+                rep_center[label, :] = rep[y == label].mean(dim=0)
+                y_center[label] = label
+            rep_knn, y_knn = rep, torch.tensor(y)
+
+        reg_best_list = torch.empty(len(np.unique(y)))  # [#labels,]
+        loss_f = norm_mse_loss
+
+        for target in np.unique(y):
+            rep_target = rep[y == target]  # [#images_in_target_cluster, rep_dim]
+            x_other = x[y != target]  # [#other_images]
+            x_other_indices = torch.randperm(x_other.shape[0])[
+                : x.shape[0] - max(counts_label.values())
+            ]
+            x_other_sample = x_other[x_other_indices]
+
+            mask = torch.arctanh(
+                (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
+            ).to(device)
+
+            delta = torch.arctanh(
+                (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
+            ).to(device)
+
+            mask.requires_grad = True
+            delta.requires_grad = True
+            opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
+
+            reg_best = torch.inf
+
+            lam = 0
+            cost_set_counter = 0
+            cost_up_counter = 0
+            cost_down_counter = 0
+
+            dataloader_train = dataloader_cluster(args, rep_target, x_other_sample, 32)
+
+            for ep in range(1000):
+                loss_asr_list, loss_reg_list, loss_list = [], [], []
+                for n_iter, (images, target_reps) in enumerate(dataloader_train):
+                    images = images.to(device)
+                    target_reps = target_reps.to(device)
+                    mask_tanh = torch.tanh(mask) / 2 + 0.5
+                    delta_tanh = torch.tanh(delta) / 2 + 0.5
+                    X_R = draw(images, args.mean, args.std, mask_tanh, delta_tanh)
+                    z = target_reps
+                    zt = backbone(X_R)
+                    loss_asr = loss_f(z, zt)
+                    loss_reg = torch.mean(mask_tanh * delta_tanh)
+                    loss = loss_asr + lam * loss_reg
+                    opt.zero_grad()
+                    loss.backward(retain_graph=True)
+                    opt.step()
+
+                    loss_asr_list.append(loss_asr.item())
+                    loss_reg_list.append(loss_reg.item())
+                    loss_list.append(loss.item())
+
+                avg_loss_asr = torch.tensor(loss_asr_list).mean()
+                avg_loss_reg = torch.tensor(loss_reg_list).mean()
+                avg_loss = torch.tensor(loss_list).mean()
+
+                x_trigger = (
+                    draw(x.to(device), args.mean, args.std, mask_tanh, delta_tanh)
+                    .detach()
+                    .to("cpu")
+                )
+
+                dataloader_eval = DataLoader(
+                    dataset=DatasetEval(x_trigger, args.knn_sample_num),
+                    batch_size=100,
+                    shuffle=True,
+                    num_workers=args.num_workers,
+                    pin_memory=True,
+                    drop_last=True,
+                )
+
+                # dataloader_eval = ds.dataloader_knn(x_trigger, args.knn_sample_num)
+                asr_knn = eval_knn(
+                    device,
+                    backbone,
+                    dataloader_eval,
+                    rep_knn,
+                    y_knn,
+                    target,
+                    model.feat_dim,
+                )
+
+                if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
+                    mask_best = mask_tanh
+                    delta_best = delta_tanh
+                    reg_best = avg_loss_reg
+
+                print(
+                    "step: %3d, lam: %.2E, asr: %.3f, loss: %f, ce: %f, reg: %f, reg_best: %f"
+                    % (ep, lam, asr_knn, avg_loss, avg_loss_asr, avg_loss_reg, reg_best)
+                )
+
+                if lam == 0 and asr_knn >= args.attack_succ_threshold:
+                    cost_set_counter += 1
+                    if cost_set_counter >= args.patience:
+                        lam = args.lam
+                        cost_up_counter = 0
+                        cost_down_counter = 0
+                        # logging.info("initialize cost to %.2E" % lam)
+                else:
+                    cost_set_counter = 0
+
+                if asr_knn >= args.attack_succ_threshold:
+                    cost_up_counter += 1
+                    cost_down_counter = 0
+                else:
+                    cost_up_counter = 0
+                    cost_down_counter += 1
+
+                if lam != 0 and cost_up_counter >= args.patience:
+                    cost_up_counter = 0
+                    # logging.info(
+                    #     "up cost from %.2E to %.2E"
+                    #     % (lam, lam * args.lam_multiplier_up)
+                    # )
+                    lam *= args.lam_multiplier_up
+
+                elif lam != 0 and cost_down_counter >= args.patience:
+                    cost_down_counter = 0
+                    # logging.info(
+                    #     "down cost from %.2E to %.2E"
+                    #     % (lam, lam / args.lam_multiplier_up)
+                    # )
+                    lam /= args.lam_multiplier_up
+
+            reg_best_list[target] = reg_best if reg_best != torch.inf else 1
+
+            os.makedirs(args.trigger_path, exist_ok=True)
+            torch.save(
+                {"mask": mask_best, "delta": delta_best},
+                os.path.join(args.trigger_path, f"{target}.pth"),
+            )
+
+        return
+
+    # Sift out estimated poisoned images, and re-train the SSL model
     if args.siftout_poisoned_images:
         estimated_poisoned_file_indices = trainer.siftout_poisoned_images(
             model, poison, trained_linear

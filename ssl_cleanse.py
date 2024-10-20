@@ -81,14 +81,11 @@ class DatasetInit(data.Dataset):
         train_probe_dataset = train_probe_loader.dataset
         self.original_length = len(train_probe_dataset)
 
-        # self.random_indices = torch.randint(
-        #     0, original_length, (int(original_length * ratio),)
-        # )
-
         self.file_list = train_probe_dataset[:][:2]
 
-        # for rid in random_indices:
-        #     self.file_list.append(test_clean_dataset[rid])
+        print(f"type(self.file_list): {type(self.file_list)}")
+        print(f"self.file_list: {self.file_list}")
+        exit()
 
     def __getitem__(self, idx):
         image, target = self.file_list[idx]

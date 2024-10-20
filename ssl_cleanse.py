@@ -79,16 +79,15 @@ class DatasetInit(data.Dataset):
         # self.file_list = []
 
         train_probe_dataset = train_probe_loader.dataset
-        print(f"type(train_probe_dataset): {type(train_probe_dataset)}")
-        print(f"train_probe_dataset: {train_probe_dataset}")
 
         self.original_length = len(train_probe_dataset)
 
-        print(f"self.original_length: {self.original_length}")
+        self.file_list = train_probe_dataset[:][:2]
+
+        print(f"self.file_list[0].shape: {self.file_list[0].shape}")
+        print(f"self.file_list[1].shape: {self.file_list[1].shape}")
 
         exit()
-
-        self.file_list = train_probe_dataset[:][:2]
 
     def __getitem__(self, idx):
         image, target = self.file_list[idx]

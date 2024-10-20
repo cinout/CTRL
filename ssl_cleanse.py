@@ -82,15 +82,12 @@ class DatasetInit(data.Dataset):
 
         self.original_length = len(train_probe_dataset)
 
-        self.file_list = train_probe_dataset[:][:2]
-
-        print(f"self.file_list[0].shape: {self.file_list[0].shape}")
-        print(f"self.file_list[1].shape: {self.file_list[1].shape}")
-
-        exit()
+        self.file_list = train_probe_dataset[:][
+            :2
+        ]  # tuple, image [500, 3, 32, 32] and label [500]
 
     def __getitem__(self, idx):
-        image, target = self.file_list[idx]
+        image, target = self.file_list[0][idx], self.file_list[1][idx]
         image = self.transform(image)
         return image, target
 

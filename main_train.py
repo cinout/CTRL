@@ -388,11 +388,22 @@ parser.add_argument(
 parser.add_argument("--patience", type=int, default=5)
 parser.add_argument("--lam_multiplier_up", type=float, default=1.5)
 parser.add_argument("--ratio", type=float, default=0.05)
-parser.add_argument("--knn_sample_num", type=int, default=1000, required=True)
-parser.add_argument("--num_clusters", type=int, default=12, required=True)
+parser.add_argument(
+    "--knn_sample_num",
+    type=int,
+    default=1000,
+)
+parser.add_argument(
+    "--num_clusters",
+    type=int,
+    default=12,
+)
 
 # TODO: add to slurm
-parser.add_argument("--trigger_path", type=str, required=False)
+parser.add_argument(
+    "--trigger_path",
+    type=str,
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

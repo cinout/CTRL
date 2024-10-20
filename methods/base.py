@@ -767,7 +767,6 @@ def find_trigger_channels(
         if count in args.in_n_detectors
     ]
 
-    # TODO: remove later
     print(f"all_votes.shape: {all_votes.shape}")
     print(f"len(minority_indices): {len(minority_indices)}")
 

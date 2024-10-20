@@ -68,10 +68,11 @@ python -u main_train.py \
     --seed 42 \
     \
     --num_views 1 \
-    --only_detect_projector_features \
-    --proj_feature_normalize l2 \
+    --normalize_backbone_features l2 \
     --kdist_k 8 \
-    --note "[0.001-0.011] [1 KDist=8 detector, views=1] [projector L2 norm]" \
+    --note "[0.001-0.011] [1 KDist=8 detector, views=1] [encoder L2 norm]" \
+##     --only_detect_projector_features \
+##    --proj_feature_normalize l2 \
     ##    --compare_backbone_predictor \
     ##    --compare_mode default \
     ##    --normalize_backbone_features l2 \

@@ -1,6 +1,7 @@
 import torch.nn.functional as F
 from torch.utils import data
 import torch
+import torchvision
 
 
 def norm_mse_loss(x0, x1):
@@ -39,7 +40,7 @@ def dataloader_cluster(args, rep_target, x_other_sample, batch_size):
 
 
 def draw(base, mean, std, mask, delta):
-    delta_norm = F.normalize(delta, mean, std)
+    delta_norm = torchvision.transforms.functional.normalize(delta, mean, std)
     img = torch.mul(base, 1 - mask) + torch.mul(delta_norm, mask)
     return img
 

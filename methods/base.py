@@ -532,6 +532,7 @@ def find_trigger_channels(
             )
             all_probe_votes.append(max_indices_at_channel)
         else:
+            # batch by batch, for probe dataset
             for i, content in enumerate(train_probe_loader):
                 (images, _, _) = content
 
@@ -637,6 +638,7 @@ def find_trigger_channels(
         all_votes.append(max_indices_at_channel)
 
     else:
+        # batch by batch (default)
         for i, content in tqdm(enumerate(data_loader)):
             if args.ideal_case:
                 images = content[0]
@@ -674,14 +676,16 @@ def find_trigger_channels(
                     vision_features, projector, bs, bd_detector_scores, args
                 )
 
-            if not args.only_detect_projector_features:
-                if args.normalize_backbone_features == "l2":
-                    vision_features = F.normalize(vision_features, dim=-1)
-                _, C = vision_features.shape
+            # if not args.only_detect_projector_features:
+            if args.normalize_backbone_features == "l2":
+                vision_features = F.normalize(vision_features, dim=-1)
+            _, C = vision_features.shape
 
-                corrs, max_indices_at_channel = get_ss_statistics(
-                    vision_features.detach().cpu().numpy(), bs, C, args
-                )
+            corrs, max_indices_at_channel = get_ss_statistics(
+                vision_features.detach().cpu().numpy(), bs, C, args
+            )
+
+            if not args.only_detect_projector_features:
                 get_detection_scores(
                     vision_features,
                     corrs,
@@ -763,6 +767,7 @@ def find_trigger_channels(
         if count in args.in_n_detectors
     ]
 
+    # TODO: remove later
     print(f"all_votes.shape: {all_votes.shape}")
     print(f"len(minority_indices): {len(minority_indices)}")
 

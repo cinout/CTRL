@@ -717,10 +717,9 @@ def find_trigger_channels(
                     backbone_scores + eps
                 )
             elif args.compare_mode == "abs":
-                bd_scores = np.abs((predictor_scores - backbone_scores) / (
-                    backbone_scores + eps
-                )) 
-                
+                bd_scores = np.abs(
+                    (predictor_scores - backbone_scores) / (backbone_scores + eps)
+                )
 
             if not args.ideal_case:
                 auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
@@ -763,6 +762,9 @@ def find_trigger_channels(
         for idx, count in minority_indices_counter.items()
         if count in args.in_n_detectors
     ]
+
+    print(f"all_votes.shape: {all_votes.shape}")
+    print(f"len(minority_indices): {len(minority_indices)}")
 
     all_votes = all_votes[
         minority_indices

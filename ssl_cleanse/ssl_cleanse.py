@@ -21,6 +21,8 @@ from ssl_cleanse.inversion import (
 from ssl_cleanse.mitigation import ds_train, get_scheduler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+# TODO: remove later
+CUDA_LAUNCH_BLOCKING = 1
 
 
 def norm_mse_loss(x0, x1):

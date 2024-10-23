@@ -558,9 +558,7 @@ def main(args):
         print(
             f">>>> With SSL-cleanse model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
         )
-        _ = new_trainer.linear_probing(
-            copy.deepcopy(cleansed_backbone), poison, force_training=True
-        )
+        _ = new_trainer.linear_probing(cleansed_backbone, poison, force_training=True)
 
     # Sift out estimated poisoned images, and re-train the SSL model
     if args.siftout_poisoned_images:

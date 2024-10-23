@@ -1042,17 +1042,15 @@ class CLTrainer:
         if use_mask_pruning:
             # use mask pruning
 
-            # if self.args.method == "mocov2":
-            #     backbone = copy.deepcopy(model.encoder_q)
-            #     backbone.fc = nn.Sequential()
-            # else:
-            #     backbone = copy.deepcopy(model.backbone)
+            new_linear = copy.deepcopy(trained_linear)
+            new_linear.train()
 
-            linear = copy.deepcopy(trained_linear)
+            new_backbone = copy.deepcopy(backbone)
+            new_backbone.train()
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
             optimizer = torch.optim.SGD(
-                list(backbone.parameters()) + list(linear.parameters()),
+                list(new_backbone.parameters()) + list(new_linear.parameters()),
                 lr=self.args.unlearning_lr,
                 momentum=0.9,
                 weight_decay=5e-4,
@@ -1067,8 +1065,8 @@ class CLTrainer:
                 # UNLEARNING
                 train_acc = train_step_unlearning(
                     args=self.args,
-                    model=backbone,
-                    linear=linear,
+                    model=new_backbone,
+                    linear=new_linear,
                     criterion=criterion,
                     optimizer=optimizer,
                     data_loader=poison.train_probe_loader,
@@ -1099,7 +1097,7 @@ class CLTrainer:
                 unlearned_model = model_fun(norm_layer=MaskBatchNorm2d)
 
             refill_unlearned_model(
-                unlearned_model, orig_state_dict=backbone.state_dict()
+                unlearned_model, orig_state_dict=new_backbone.state_dict()
             )
 
             unlearned_model = unlearned_model.to(device)
@@ -1117,7 +1115,7 @@ class CLTrainer:
                 train_step_recovering(
                     args=self.args,
                     unlearned_model=unlearned_model,
-                    linear=linear,
+                    linear=new_linear,
                     criterion=criterion,
                     data_loader=poison.train_probe_loader,
                     mask_opt=mask_optimizer,
@@ -1128,7 +1126,7 @@ class CLTrainer:
                 os.path.join(self.args.saved_path, "mask_values.txt"),
             )
 
-            del unlearned_model, backbone
+            del unlearned_model, new_linear, new_backbone
 
             #### stage 3: model pruning
             print(f">>>>>>>> start model pruning")
@@ -1184,11 +1182,6 @@ class CLTrainer:
         else:
             # NOT USING MASK PRUNING
             backbone.eval()
-            # if self.args.method == "mocov2":
-            #     backbone = copy.deepcopy(model.encoder_q)
-            #     backbone.fc = nn.Sequential()
-            # else:
-            #     backbone = model.backbone
 
             if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
                 _, feat_dim = model_dict_cifar[self.args.arch]
@@ -1441,8 +1434,7 @@ class CLTrainer:
     # sift out poisoned images
     def siftout_poisoned_images(self, model, poison, trained_linear):
 
-        linear = copy.deepcopy(trained_linear)
-        linear.eval()
+        trained_linear.eval()
 
         model.eval()
         if self.args.method == "mocov2":
@@ -1463,7 +1455,7 @@ class CLTrainer:
             poison.train_probe_freq_detector_loader,
             backbone,
             projector,
-            linear,
+            trained_linear,
             poison.ss_transform,
         )  # numpy
         return estimated_poisoned_file_indices
@@ -1471,8 +1463,8 @@ class CLTrainer:
     # Channel Voting Strategy
     def trigger_channel_removal(self, model, poison, trained_linear):
         ######## Prepare backbone and linear
-        linear = copy.deepcopy(trained_linear)
-        linear.eval()
+
+        trained_linear.eval()
 
         model.eval()
         if self.args.method == "mocov2":
@@ -1496,7 +1488,7 @@ class CLTrainer:
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
                 projector,
-                linear,
+                trained_linear,
                 poison.ss_transform,
             )
             poi_val_contributing_indices = find_trigger_channels(
@@ -1506,7 +1498,7 @@ class CLTrainer:
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
                 projector,
-                linear,
+                trained_linear,
                 poison.ss_transform,
             )
             ############# KNN
@@ -1532,7 +1524,7 @@ class CLTrainer:
             clean_acc1 = eval_linear_classifier(
                 poison.test_clean_loader,
                 backbone,
-                linear,
+                trained_linear,
                 self.args,
                 val_mode="clean",
                 use_ss_detector=True,
@@ -1543,7 +1535,7 @@ class CLTrainer:
             poison_acc1 = eval_linear_classifier(
                 poison.test_pos_loader,
                 backbone,
-                linear,
+                trained_linear,
                 self.args,
                 val_mode="poison",
                 use_ss_detector=True,
@@ -1563,7 +1555,7 @@ class CLTrainer:
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
                 projector,
-                linear,
+                trained_linear,
                 poison.ss_transform,
             )
 
@@ -1589,7 +1581,7 @@ class CLTrainer:
             clean_acc1 = eval_linear_classifier(
                 poison.test_clean_loader,
                 backbone,
-                linear,
+                trained_linear,
                 self.args,
                 val_mode="clean",
                 use_ss_detector=True,
@@ -1600,7 +1592,7 @@ class CLTrainer:
             poison_acc1 = eval_linear_classifier(
                 poison.test_pos_loader,
                 backbone,
-                linear,
+                trained_linear,
                 self.args,
                 val_mode="poison",
                 use_ss_detector=True,

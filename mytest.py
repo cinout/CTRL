@@ -1,4 +1,5 @@
 import glob
+import os
 import PIL
 import torchvision.datasets as datasets
 from PIL import Image
@@ -32,26 +33,12 @@ from frequency_detector import (
 )
 from methods.base import get_pairwise_distance
 
-total_trigger = 100
-total_clean = 20
-y = torch.randint(0, total_clean, (total_clean,))
-dim = 16
-rep = torch.rand((total_trigger, dim))
-rep_center = torch.rand((total_clean, dim))
-d_t = torch.cdist(rep, rep_center)
-topk_t = torch.topk(d_t, k=2, dim=1, largest=False)
-labels_t = y[topk_t.indices]
-result = labels_t[1]
-print(result)
-print(result.unique(return_counts=True))
-print(result[1].argmax())
-exit()
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-item = torch.randint(0, 5, (14,))
-print(item)
-what = item[1].unique(return_counts=True)
-print(what)
+triggers = torch.load(
+    os.path.join("trigger_estimation_DEBUG", f"0.pth"), map_location=device
+)
+print(triggers["mask"].detach())
 
 
 exit()

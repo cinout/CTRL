@@ -120,9 +120,11 @@ class FileListDataset(Dataset):
         for target in range(args.num_clusters):
             trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
             trigger = torch.load(
-                trigger_path
+                trigger_path, map_location=device
             )  # I guess it is {"mask": xxx, "delta": xxx}
-            self.triggers.append(trigger)
+            self.triggers.append(
+                {"mask": trigger["mask"].detach(), "delta": trigger["delta"].detach()}
+            )
 
         # self.t_0 = TriggerT(base_transform=aug_with_blur, mean=args.mean, std=args.std)
         # self.t_1 = TriggerT(
@@ -158,18 +160,14 @@ class FileListDataset(Dataset):
         ]
         trigger_index = random.choice(valid_trigger_indices)
         trigger = self.triggers[trigger_index]
-        mask, delta = trigger["mask"].detach(), trigger["delta"].detach()
+        mask, delta = trigger["mask"], trigger["delta"]
 
-        print(f"mask.device: {mask.device}")
-        print(f"delta.device: {delta.device}")
-        print(f"clean_view_3.device: {clean_view_3.device}")
+        # trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
+        #     delta, mask
+        # )  # [1, 3, img_size, img_size]
+        # trigger_view = trigger_view.squeeze(0)  # [3, img_size, img_size]
 
-        trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
-            delta, mask
-        )  # [1, 3, img_size, img_size]
-        trigger_view = trigger_view.squeeze(0)  # [3, img_size, img_size]
-
-        return clean_view_1, clean_view_2, trigger_view
+        return clean_view_1, clean_view_2, clean_view_3, mask, delta
 
     def __len__(self):
         return self.cluster_list.shape[0]

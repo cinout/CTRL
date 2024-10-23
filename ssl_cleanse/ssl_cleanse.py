@@ -293,15 +293,20 @@ def trigger_mitigation(args, model, trainset_data):
     for ep in range(args.mitigate_epoches):
         # iters = len(dataloader)
 
-        for clean_view_1, clean_view_2, poison_view in dataloader:
+        for clean_view_1, clean_view_2, clean_view_3, mask, delta in dataloader:
             clean_view_1 = clean_view_1.to(device)
             clean_view_2 = clean_view_2.to(device)
-            poison_view = poison_view.to(device)
+            clean_view_3 = clean_view_3.to(device)
+            mask = mask.to(device)
+            delta = delta.to(device)
 
             # TODO: remove later
             print(f"clean_view_1.shape: {clean_view_1.shape}")
             print(f"clean_view_2.shape: {clean_view_2.shape}")
-            print(f"poison_view.shape: {poison_view.shape}")
+            print(f"clean_view_3.shape: {clean_view_3.shape}")
+            print(f"mask.shape: {mask.shape}")
+            print(f"delta.shape: {delta.shape}")
+            exit()
 
             if lr_warmup < 500:
                 lr_scale = (lr_warmup + 1) / 500

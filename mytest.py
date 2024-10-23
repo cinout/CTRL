@@ -32,16 +32,28 @@ from frequency_detector import (
 )
 from methods.base import get_pairwise_distance
 
+total_trigger = 100
+total_clean = 20
+y = torch.randint(0, total_clean, (total_clean,))
+dim = 16
+rep = torch.rand((total_trigger, dim))
+rep_center = torch.rand((total_clean, dim))
+d_t = torch.cdist(rep, rep_center)
+topk_t = torch.topk(d_t, k=2, dim=1, largest=False)
+labels_t = y[topk_t.indices]
+result = labels_t[1]
+print(result)
+print(result.unique(return_counts=True))
+print(result[1].argmax())
+exit()
 
-def haha(mat):
-    mat = mat * 2
-    print(mat)
+
+item = torch.randint(0, 5, (14,))
+print(item)
+what = item[1].unique(return_counts=True)
+print(what)
 
 
-mat = torch.randint(0, 10, (4, 2))
-print(mat)
-haha(mat)
-print(mat)
 exit()
 
 

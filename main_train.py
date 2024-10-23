@@ -11,14 +11,7 @@ from utils.frequency import PoisonFre
 from utils.htba import PoisonHTBA
 from torch.utils.data import DataLoader, Subset
 from sklearn.cluster import KMeans
-from ssl_cleanse import (
-    DatasetEval,
-    DatasetInit,
-    dataloader_cluster,
-    draw,
-    eval_knn,
-    get_data,
-    norm_mse_loss,
+from ssl_cleanse.ssl_cleanse import (
     trigger_inversion,
     trigger_mitigation,
 )
@@ -388,11 +381,11 @@ parser.add_argument(
 parser.add_argument("--patience", type=int, default=5)
 parser.add_argument("--lam_multiplier_up", type=float, default=1.5)
 parser.add_argument("--ratio", type=float, default=0.05)
-parser.add_argument(
-    "--knn_sample_num",
-    type=int,
-    default=1000,
-)
+# parser.add_argument(
+#     "--knn_sample_num",
+#     type=int,
+#     default=1000,
+# )
 parser.add_argument(
     "--num_clusters",
     type=int,
@@ -421,13 +414,28 @@ parser.add_argument(
     help="multiplicative factor of learning rate decay",
 )
 parser.add_argument("--eval_every", type=int, default=20, help="how often to evaluate")
-parser.add_argument("--alpha_1", type=float, default=1.0)
-parser.add_argument("--alpha_2", type=float, default=0)
-parser.add_argument("--alpha_3", type=float, default=0)
-parser.add_argument("--alpha_4", type=float, default=1.0)
-parser.add_argument("--n_0", type=int, default=2)
-parser.add_argument("--n_1", type=int, default=1)
-parser.add_argument("--n_2", type=int, default=1)
+# parser.add_argument("--alpha_1", type=float, default=1.0)
+# parser.add_argument("--alpha_2", type=float, default=0)
+# parser.add_argument("--alpha_3", type=float, default=0)
+# parser.add_argument("--alpha_4", type=float, default=1.0)
+# parser.add_argument("--n_0", type=int, default=2)
+# parser.add_argument("--n_1", type=int, default=1)
+# parser.add_argument("--n_2", type=int, default=1)
+parser.add_argument("--cj0", default=0.4, help="color jitter brightness")
+parser.add_argument("--cj1", default=0.4, help="color jitter contrast")
+parser.add_argument("--cj2", default=0.4, help="color jitter saturation")
+parser.add_argument("--cj3", default=0.1, help="color jitter hue")
+parser.add_argument("--cj_p", default=0.8, help="color jitter probability")
+parser.add_argument("--gs_p", default=0.1, help="grayscale probability")
+parser.add_argument("--crop_s0", default=0.2, help="crop size from")
+parser.add_argument("--crop_s1", default=1.0, help="crop size to")
+parser.add_argument("--crop_r0", default=0.75, help="crop ratio from")
+parser.add_argument("--crop_r1", default=(4 / 3), help="crop ratio to")
+parser.add_argument("--hf_p", default=0.5, help="horizontal flip probability")
+parser.add_argument("--trigger_width", type=int, default=6)
+parser.add_argument("--trigger_location", type=float, default=0.9)
+parser.add_argument("--one_image_path", type=str, required=False, default=None)
+parser.add_argument("--one_image_paths", type=str, nargs="*", default=None)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -516,15 +524,17 @@ def main(args):
 
     # Linear Probe and Evaluation
     trained_linear = trainer.linear_probing(model, poison)
+    # TODO: model backbone require_grad to be False
 
     if args.use_ssl_cleanse:
-        if not os.path.exists(
-            os.path.join(args.trigger_path, "0.pth")
-        ):  # FIXME: this condition criterion is hack code
-            trigger_inversion(args, model, poison)
+        trainset_data = trigger_inversion(
+            args, model, poison
+        )  # trainset_data is a tuple of (x_untransformed, y)
 
-        # TODO:
-        trigger_mitigation()
+        cleansed_backbone = trigger_mitigation(
+            args, model, trainset_data
+        )  # TODO: does it need to be set to eval mode at some point?
+        # TODO: what is the next step? Re-evaluate with the cleansed encoder?
         return
 
     # Sift out estimated poisoned images, and re-train the SSL model

@@ -11,20 +11,9 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     --pretrained_frequency_model "" \
     \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
-    \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.050 \
-    \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
-    --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
-    \
     --seed 42 \
+    --num_views 64 \
     \
-    --note "" \
+    --use_ssl_cleanse \
+    --trigger_path trigger_estimation_DEBUG \
+    --note "dehug" \

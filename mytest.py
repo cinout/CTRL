@@ -35,12 +35,25 @@ from methods.base import get_pairwise_distance
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-triggers = torch.load(
-    os.path.join("trigger_estimation_DEBUG", f"0.pth"), map_location=device
-)
-print(triggers["mask"].detach())
 
+trigger_masks = []
+trigger_deltas = []
+for target in range(12):
+    trigger_path = os.path.join("trigger_estimation_DEBUG", f"{target}.pth")
+    trigger = torch.load(trigger_path, map_location=device)
 
+    trigger_masks.append(trigger["mask"].detach())
+    trigger_deltas.append(trigger["delta"].detach())
+trigger_masks = torch.cat(trigger_masks, dim=0)
+trigger_deltas = torch.cat(trigger_deltas, dim=0)
+
+trigger_index = torch.randint(0, 12, size=(6,))
+
+mask = trigger_masks[trigger_index]
+delta = trigger_deltas[trigger_index]
+
+print(f"mask.shape: {mask.shape}")
+print(f"delta.shape: {delta.shape}")
 exit()
 
 

@@ -290,32 +290,24 @@ def trigger_mitigation(args, model, trainset_data):
         drop_last=True,
     )
 
-    learned_triggers = []
+    trigger_masks = []
+    trigger_deltas = []
     for target in range(args.num_clusters):
         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
         trigger = torch.load(trigger_path, map_location=device)
-        learned_triggers.append(
-            {"mask": trigger["mask"].detach(), "delta": trigger["delta"].detach()}
-        )
+
+        trigger_masks.append(trigger["mask"].detach())
+        trigger_deltas.append(trigger["delta"].detach())
+    trigger_masks = torch.cat(trigger_masks, dim=0)
+    trigger_deltas = torch.cat(trigger_deltas, dim=0)
 
     for ep in range(args.mitigate_epoches):
-        # iters = len(dataloader)
 
         for clean_view_1, clean_view_2, clean_view_3, trigger_index in dataloader:
-            clean_view_1 = clean_view_1.to(device)
-            clean_view_2 = clean_view_2.to(device)
-            clean_view_3 = clean_view_3.to(device)
-            trigger_index = trigger_index.to(device)
-            # mask = mask.to(device)
-            # delta = delta.to(device)
-
-            # TODO: remove later
-            print(f"clean_view_1.shape: {clean_view_1.shape}")
-            print(f"clean_view_2.shape: {clean_view_2.shape}")
-            print(f"clean_view_3.shape: {clean_view_3.shape}")
-            print(f"trigger_index.shape: {trigger_index.shape}")
-            # print(f"delta.shape: {delta.shape}")
-            exit()
+            clean_view_1 = clean_view_1.to(device)  # [bs, 3, img_size, img_size]
+            clean_view_2 = clean_view_2.to(device)  # [bs, 3, img_size, img_size]
+            clean_view_3 = clean_view_3.to(device)  # [bs, 3, img_size, img_size]
+            trigger_index = trigger_index.to(device)  # [bs]
 
             if lr_warmup < 500:
                 lr_scale = (lr_warmup + 1) / 500
@@ -323,6 +315,13 @@ def trigger_mitigation(args, model, trainset_data):
                     pg["lr"] = 3e-3 * lr_scale
                 lr_warmup += 1
             optimizer.zero_grad()
+
+            mask = trigger_masks[trigger_index]  # [bs, 1, img_size, img_size]
+            delta = trigger_deltas[trigger_index]  # [bs, 3, img_size, img_size]
+
+            poison_view = torch.mul(clean_view_3, 1 - mask) + torch.mul(
+                delta, mask
+            )  # [bs, 3, img_size, img_size]
 
             clean_view_1_feature = backbone(clean_view_1)
             clean_view_2_feature = backbone_unlearn_trigger(clean_view_2)

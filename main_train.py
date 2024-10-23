@@ -626,6 +626,9 @@ if __name__ == "__main__":
     args.saved_path = os.path.join(
         f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_linear_{args.linear_probe_normalize}_sd{args.seed}_[RAW]"
     )
+
+    args.trigger_path = f"{args.timestamp}_{args.trigger_path}"
+
     if not os.path.exists(args.saved_path):
         os.makedirs(args.saved_path)
 

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -42,15 +42,29 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240906_183247_61_43_cifar10_ftrojan_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_154021_3_40_cifar10_ftrojan_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "" \
+    --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 64 \
+    --num_views 1 \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.8 \
+     \
+    --detect_trigger_channels \
+    --channel_num 40 \
+    \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
+    \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
+    \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
     --trigger_path trigger_estimation_simclr_cifar10_ftrojan \
     \
     --note "[ECCV cleanse] trigger_estimation_simclr_cifar10_ftrojan" \

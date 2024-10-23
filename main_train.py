@@ -554,8 +554,6 @@ def main(args):
             copy.deepcopy(cleansed_backbone), poison, force_training=True
         )
 
-        return
-
     # Sift out estimated poisoned images, and re-train the SSL model
     if args.siftout_poisoned_images:
         estimated_poisoned_file_indices = trainer.siftout_poisoned_images(
@@ -599,8 +597,6 @@ def main(args):
         else:
             backbone = new_model.backbone
         _ = new_trainer.linear_probing(backbone, poison, force_training=True)
-
-        return  # we can exit now
 
     # Channel Removal Strategy
     if args.detect_trigger_channels:

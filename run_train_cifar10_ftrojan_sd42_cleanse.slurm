@@ -2,10 +2,10 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
 ###SBATCH --partition=deeplearn
 ###SBATCH --qos=gpgpudeeplearn
@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-12:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -50,10 +50,9 @@ python -u main_train.py \
     --num_views 64 \
     \
     --use_ssl_cleanse \
-    --trigger_path trigger_estimation_DEBUG \
-    --mitigate_epoches 5 \
-    --note "compare features [4 detectors, views=64] [L2 norm] [compare by default]" \
-
+    --trigger_path trigger_estimation_simclr_cifar10_ftrojan \
+    \
+    --note "[ECCV cleanse] trigger_estimation_simclr_cifar10_ftrojan" \
 
 
 ##Log this job's resource usage stats###

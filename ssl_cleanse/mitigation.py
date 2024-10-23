@@ -159,6 +159,15 @@ class FileListDataset(Dataset):
         trigger_index = random.choice(valid_trigger_indices)
         trigger = self.triggers[trigger_index]
         mask, delta = trigger["mask"].detach(), trigger["delta"].detach()
+
+        print(f"mask.shape: {mask.shape}")
+        print(f"delta.shape: {delta.shape}")
+        print(f"clean_view_3.shape: {clean_view_3.shape}")
+
+        print(f"type(mask): {type(mask)}")
+        print(f"type(delta): {type(delta)}")
+        print(f"type(clean_view_3): {type(clean_view_3)}")
+
         trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
             delta, mask
         )  # [1, 3, img_size, img_size]

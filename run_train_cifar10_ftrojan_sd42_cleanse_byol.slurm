@@ -11,9 +11,9 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,37 +35,40 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar100 \
+    --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240906_183247_52_10_cifar100_ftrojan_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_153220_96_33_cifar100_ftrojan_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "" \
+    --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
-    --pretrained_frequency_model "" \
     \
+    --seed 42 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
+     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.005 \
-    --minority_upper_bound 0.025 \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
     \
-    --bd_detectors ss_score entropy \
-    --in_n_detectors 2 \
-    --frequency_ensemble_size 3 \
-    --frequency_detector_epochs 500 \
-    --frequency_attack_trigger_ids 2 \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
+    --trigger_path trigger_estimation_byol_cifar10_ftrojan \
     \
-    --seed 42 \
-    \
-    --num_views 1 \
-    --note "debug" \
+    --note "[ECCV cleanse] trigger_estimation_byol_cifar10_ftrojan" \
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

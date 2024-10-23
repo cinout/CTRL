@@ -4,23 +4,23 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_h"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-05:30:00
+#SBATCH --time=1-04:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=110G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -35,8 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
-    --trigger_type htba \
+    --method byol \
     \
     --image_size 64 \
     \
@@ -45,27 +44,33 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20240922_215750_63_52_imagenet100_htba_linear_regular_sd30/last.pth.tar" \
+    --pretrained_ssl_model "" \
     --pretrained_linear_model "" \
-    --pretrained_frequency_model "" \
+    --linear_probe_normalize ref_set \
     \
+    --seed 42 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
+     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.050 \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
     \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
-    --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
+    --trigger_path trigger_estimation_byol_imagenet100_ftrojan \
     \
-    --seed 30 \
-    \
-    --note "seed 30" \
+    --note "[ECCV cleanse] trigger_estimation_byol_imagenet100_ftrojan" \
+
     
 
 ##Log this job's resource usage stats###

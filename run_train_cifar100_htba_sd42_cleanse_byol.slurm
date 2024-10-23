@@ -4,16 +4,16 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c10_h"
+#SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -30,38 +30,48 @@
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 
+
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240920_122144_36_100_cifar10_htba_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_155056_19_48_cifar10_htba_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "" \
+    --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
-    --pretrained_frequency_model "" \
-    \
-    --detect_trigger_channels \
-    --channel_num 80  \
-    \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
-    \
-    --bd_detectors entropy \
-    --in_n_detectors 1 \
     \
     --seed 42 \
+    --num_views 1 \
     \
-    --ideal_case \
-    --note "[ideal, c=80]" \
+    --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
+     \
+    --detect_trigger_channels \
+    --channel_num 40 \
+    \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
+    \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
+    \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
+    --trigger_path trigger_estimation_byol_cifar100_htba \
+    \
+    --note "[ECCV cleanse] trigger_estimation_byol_cifar100_htba" \
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -4,16 +4,16 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
 #SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,7 +36,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
@@ -44,27 +44,33 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240922_231028_95_100_cifar10_htba_linear_regular_sd40/last.pth.tar" \
+    --pretrained_ssl_model "" \
     --pretrained_linear_model "" \
-    --pretrained_frequency_model "" \
+    --linear_probe_normalize ref_set \
     \
+    --seed 42 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
+     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \
     \
-    --minority_lower_bound 0.003 \
-    --minority_upper_bound 0.050 \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
     \
-    --bd_detectors frequency_ensemble \
-    --frequency_ensemble_size 3 \
-    --in_n_detectors 3 \
-    --frequency_detector_epochs 500 \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
+    --trigger_path trigger_estimation_byol_cifar10_htba \
     \
-    --seed 40 \
-    \
-    --note "seed 40" \
+    --note "[ECCV cleanse] trigger_estimation_byol_cifar10_htba" \
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

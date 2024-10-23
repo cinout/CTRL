@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_f"
+#SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-20:00:00
 
@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=180G
+#SBATCH --mem=80G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -35,38 +35,40 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     \
-    --image_size 64 \
+    --magnitude_train 50.0 \
+    --magnitude_val 100.0 \
+    --dataset cifar100 \
+    --target_class 0 \
     \
-    --magnitude_train 300.0 \
-    --magnitude_val 300.0 \
-    --dataset imagenet100 \
-    --target_class 26 \
-    \
-    --pretrained_ssl_model "./Experiments/20240906_183318_46_6_imagenet100_ftrojan_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_155056_66_73_imagenet100_ftrojan_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "" \
+    --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
-    --pretrained_frequency_model "" \
     \
+    --seed 42 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
+     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.200 \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
-    --bd_detectors frequency_ensemble \
+    --minority_lower_bound 0.001 \
+    --minority_upper_bound 0.011 \
+    \
+    --bd_detectors kdist \
+    --kdist_k 8 \
+    --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --frequency_ensemble_size 1 \
-    --frequency_detector_epochs 500 \
-    --frequency_attack_trigger_ids 2 \
+    --trigger_path trigger_estimation_byol_cifar100_ftrojan \
     \
-    --seed 42 \
-    \
-    --num_views 64 \
-    --siftout_poisoned_images \
-    --note "[input_filter, 20%] single freq detector, GaussNoise with lessVariation" \
-    
+    --note "[ECCV cleanse] trigger_estimation_byol_cifar100_ftrojan" \
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

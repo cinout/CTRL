@@ -9,6 +9,7 @@ import torchvision.transforms.functional as F
 import torch
 from torch.utils.data import Dataset
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # class AddTrigger:
 #     def __init__(self, trigger_path, trigger_width, location_ratio):

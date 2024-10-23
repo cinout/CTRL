@@ -116,6 +116,7 @@ class FileListDataset(Dataset):
         self.basic_transform = T.Compose(
             [aug_transform(args), T.Normalize(mean=args.mean, std=args.std)]
         )
+        self.num_clusters = args.num_clusters
 
         # self.triggers = []
         # for target in range(args.num_clusters):
@@ -157,7 +158,7 @@ class FileListDataset(Dataset):
 
         cluster_id = self.cluster_list[idx]
         valid_trigger_indices = [
-            index for index in range(len(self.triggers)) if index != cluster_id
+            index for index in range(self.num_clusters) if index != cluster_id
         ]
         trigger_index = random.choice(valid_trigger_indices)
 

@@ -309,11 +309,11 @@ parser.add_argument(
     action="store_true",
     help="when trigger channels are found from val set directly",
 )
-parser.add_argument(
-    "--full_dataset_svd",
-    action="store_true",
-    help="apply spectral signature on whole dataset",
-)
+# parser.add_argument(
+#     "--full_dataset_svd",
+#     action="store_true",
+#     help="apply spectral signature on whole dataset",
+# )
 parser.add_argument(
     "--knn_before_svd",
     action="store_true",
@@ -523,18 +523,37 @@ def main(args):
     trainer.train_freq(model, optimizer, train_transform, poison)
 
     # Linear Probe and Evaluation
-    trained_linear = trainer.linear_probing(model, poison)
-    # TODO: model backbone require_grad to be False
+
+    if args.method == "mocov2":
+        backbone = copy.deepcopy(model.encoder_q)
+        backbone.fc = nn.Sequential()
+    else:
+        backbone = model.backbone
+    trained_linear = trainer.linear_probing(backbone, poison)
 
     if args.use_ssl_cleanse:
         trainset_data = trigger_inversion(
             args, model, poison
         )  # trainset_data is a tuple of (x_untransformed, y)
 
-        cleansed_backbone = trigger_mitigation(
-            args, model, trainset_data
-        )  # TODO: does it need to be set to eval mode at some point?
-        # TODO: what is the next step? Re-evaluate with the cleansed encoder?
+        cleansed_backbone = trigger_mitigation(args, model, trainset_data)
+
+        new_trainer = CLTrainer(args)
+        clean_acc, back_acc = new_trainer.knn_monitor_fre(
+            cleansed_backbone,
+            poison.memory_loader,
+            poison.test_clean_loader,
+            args,
+            classes=args.num_classes,
+            backdoor_loader=poison.test_pos_loader,
+        )
+        print(
+            f">>>> With cleansed model using SSL-cleanse, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
+        )
+        _ = new_trainer.linear_probing(
+            copy.deepcopy(cleansed_backbone), poison, force_training=True
+        )
+
         return
 
     # Sift out estimated poisoned images, and re-train the SSL model
@@ -574,9 +593,12 @@ def main(args):
         )
 
         # Linear Probe and Evaluation
-        new_trained_linear = new_trainer.linear_probing(
-            new_model, poison, force_training=True
-        )
+        if args.method == "mocov2":
+            backbone = copy.deepcopy(new_model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = new_model.backbone
+        _ = new_trainer.linear_probing(backbone, poison, force_training=True)
 
         return  # we can exit now
 
@@ -586,8 +608,13 @@ def main(args):
 
     # Mask Pruning Strategy
     if args.use_mask_pruning:
+        if args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = new_model.backbone
         trainer.linear_probing(
-            model, poison, use_mask_pruning=True, trained_linear=trained_linear
+            backbone, poison, use_mask_pruning=True, trained_linear=trained_linear
         )
 
 

@@ -52,6 +52,7 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --trigger_path trigger_estimation_DEBUG \
+    --mitigate_epoches 5 \
     --note "compare features [4 detectors, views=64] [L2 norm] [compare by default]" \
 
 

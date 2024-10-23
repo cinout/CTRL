@@ -3,6 +3,10 @@ import torch.nn.functional as F
 import torch
 import numpy as np
 
+"""
+THIS FILE IS NOT USED
+"""
+
 # code copied from https://colab.research.google.com/github/facebookresearch/moco/blob/colab-notebook/colab/moco_cifar10_demo.ipynb#scrollTo=RI1Y8bSImD7N
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -337,5 +337,6 @@ def trigger_mitigation(args, model, trainset_data):
             optimizer.step()
 
         scheduler.step()
+        print(f"epoch {ep}, loss: {loss_sum.item()}")
 
     return backbone_unlearn_trigger

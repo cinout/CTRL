@@ -21,8 +21,6 @@ from ssl_cleanse.inversion import (
 from ssl_cleanse.mitigation import ds_train, get_scheduler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-# TODO: remove later
-CUDA_LAUNCH_BLOCKING = 1
 
 
 def norm_mse_loss(x0, x1):
@@ -292,22 +290,31 @@ def trigger_mitigation(args, model, trainset_data):
         drop_last=True,
     )
 
+    learned_triggers = []
+    for target in range(args.num_clusters):
+        trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
+        trigger = torch.load(trigger_path, map_location=device)
+        learned_triggers.append(
+            {"mask": trigger["mask"].detach(), "delta": trigger["delta"].detach()}
+        )
+
     for ep in range(args.mitigate_epoches):
         # iters = len(dataloader)
 
-        for clean_view_1, clean_view_2, clean_view_3, mask, delta in dataloader:
+        for clean_view_1, clean_view_2, clean_view_3, trigger_index in dataloader:
             clean_view_1 = clean_view_1.to(device)
             clean_view_2 = clean_view_2.to(device)
             clean_view_3 = clean_view_3.to(device)
-            mask = mask.to(device)
-            delta = delta.to(device)
+            trigger_index = trigger_index.to(device)
+            # mask = mask.to(device)
+            # delta = delta.to(device)
 
             # TODO: remove later
             print(f"clean_view_1.shape: {clean_view_1.shape}")
             print(f"clean_view_2.shape: {clean_view_2.shape}")
             print(f"clean_view_3.shape: {clean_view_3.shape}")
-            print(f"mask.shape: {mask.shape}")
-            print(f"delta.shape: {delta.shape}")
+            print(f"trigger_index.shape: {trigger_index.shape}")
+            # print(f"delta.shape: {delta.shape}")
             exit()
 
             if lr_warmup < 500:

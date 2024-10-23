@@ -9,7 +9,6 @@ import torchvision.transforms.functional as F
 import torch
 from torch.utils.data import Dataset
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # class AddTrigger:
 #     def __init__(self, trigger_path, trigger_width, location_ratio):
@@ -117,15 +116,16 @@ class FileListDataset(Dataset):
         self.basic_transform = T.Compose(
             [aug_transform(args), T.Normalize(mean=args.mean, std=args.std)]
         )
-        self.triggers = []
-        for target in range(args.num_clusters):
-            trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
-            trigger = torch.load(
-                trigger_path, map_location=device
-            )  # I guess it is {"mask": xxx, "delta": xxx}
-            self.triggers.append(
-                {"mask": trigger["mask"].detach(), "delta": trigger["delta"].detach()}
-            )
+
+        # self.triggers = []
+        # for target in range(args.num_clusters):
+        #     trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
+        #     trigger = torch.load(
+        #         trigger_path, map_location=device
+        #     )  # I guess it is {"mask": xxx, "delta": xxx}
+        #     self.triggers.append(
+        #         {"mask": trigger["mask"].detach(), "delta": trigger["delta"].detach()}
+        #     )
 
         # self.t_0 = TriggerT(base_transform=aug_with_blur, mean=args.mean, std=args.std)
         # self.t_1 = TriggerT(
@@ -160,15 +160,16 @@ class FileListDataset(Dataset):
             index for index in range(len(self.triggers)) if index != cluster_id
         ]
         trigger_index = random.choice(valid_trigger_indices)
-        trigger = self.triggers[trigger_index]
-        mask, delta = trigger["mask"], trigger["delta"]
+
+        # trigger = self.triggers[trigger_index]
+        # mask, delta = trigger["mask"], trigger["delta"]
 
         # trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
         #     delta, mask
         # )  # [1, 3, img_size, img_size]
         # trigger_view = trigger_view.squeeze(0)  # [3, img_size, img_size]
 
-        return clean_view_1, clean_view_2, clean_view_3, mask, delta
+        return clean_view_1, clean_view_2, clean_view_3, trigger_index
 
     def __len__(self):
         return self.cluster_list.shape[0]

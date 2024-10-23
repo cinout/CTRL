@@ -154,7 +154,8 @@ def get_detection_scores(
 def get_detection_scores_from_projector(
     vision_features, projector, bs, bd_detector_scores, args
 ):
-    vision_features = projector(vision_features)
+    with torch.no_grad():
+        vision_features = projector(vision_features)
     if args.proj_feature_normalize == "l2":
         vision_features = F.normalize(vision_features, dim=1)
     _, C = vision_features.shape
@@ -548,10 +549,11 @@ def find_trigger_channels(
 
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-            if args.unlearn_before_finding_trigger_channels:
-                vision_features = unlearnt_backbone(views)
-            else:
-                vision_features = backbone(views)  # [bs*n_views, 512]
+            with torch.no_grad():
+                if args.unlearn_before_finding_trigger_channels:
+                    vision_features = unlearnt_backbone(views)
+                else:
+                    vision_features = backbone(views)  # [bs*n_views, 512]
 
             if args.normalize_backbone_features == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
@@ -661,10 +663,11 @@ def find_trigger_channels(
 
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        if args.unlearn_before_finding_trigger_channels:
-            vision_features = unlearnt_backbone(views)
-        else:
-            vision_features = backbone(views)  # [bs*n_views, 512]
+        with torch.no_grad():
+            if args.unlearn_before_finding_trigger_channels:
+                vision_features = unlearnt_backbone(views)
+            else:
+                vision_features = backbone(views)  # [bs*n_views, 512]
 
         if "frequency_ensemble" in args.bd_detectors:
             get_freq_detection_scores(
@@ -1038,7 +1041,6 @@ class CLTrainer:
     ):
         if use_mask_pruning:
             # use mask pruning
-            backbone.eval()
 
             # if self.args.method == "mocov2":
             #     backbone = copy.deepcopy(model.encoder_q)
@@ -1130,12 +1132,8 @@ class CLTrainer:
 
             #### stage 3: model pruning
             print(f">>>>>>>> start model pruning")
-            # read poisoned model again!
-            if self.args.method == "mocov2":
-                backbone = copy.deepcopy(model.encoder_q)
-                backbone.fc = nn.Sequential()
-            else:
-                backbone = copy.deepcopy(model.backbone)
+
+            backbone = copy.deepcopy(backbone)
             linear = copy.deepcopy(trained_linear)
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -1307,7 +1305,7 @@ class CLTrainer:
             )
 
             print(
-                f"with the DEFAULT linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
+                f"for linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
             )
 
             return linear  # the returned linear is only used if use_ss_detector=False
@@ -1400,7 +1398,7 @@ class CLTrainer:
                     backbone = copy.deepcopy(model.encoder_q)
                     backbone.fc = nn.Sequential()
                 else:
-                    backbone = model.backbone
+                    backbone = copy.deepcopy(model.backbone)
 
                 clean_acc, back_acc = self.knn_monitor_fre(
                     backbone,
@@ -1472,7 +1470,7 @@ class CLTrainer:
 
     # Channel Voting Strategy
     def trigger_channel_removal(self, model, poison, trained_linear):
-        ######## Prepare backbone and linear, and set them to eval mode
+        ######## Prepare backbone and linear
         linear = copy.deepcopy(trained_linear)
         linear.eval()
 
@@ -1481,10 +1479,12 @@ class CLTrainer:
             backbone = copy.deepcopy(model.encoder_q)
             backbone.fc = nn.Sequential()
             # FIXME: projector
+            projector = None
         else:
-            backbone = model.backbone
-            projector = model.proj_head  # FIXME: BYOL may use different name
-
+            backbone = copy.deepcopy(model.backbone)
+            projector = copy.deepcopy(
+                model.proj_head
+            )  # FIXME: BYOL may use different name
         backbone.eval()
         projector.eval()
 

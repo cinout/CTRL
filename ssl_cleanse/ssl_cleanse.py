@@ -29,16 +29,9 @@ def norm_mse_loss(x0, x1):
     return 2 - 2 * (x0 * x1).sum(dim=-1).mean()
 
 
-def trigger_inversion(args, model, poison):
-    if args.method == "mocov2":
-        backbone = copy.deepcopy(model.encoder_q)
-        backbone.fc = nn.Sequential()
-    else:
-        backbone = copy.deepcopy(model.backbone)
+def trigger_inversion(args, backbone, poison, feat_dim):
 
     backbone = backbone.eval()
-    for param in backbone.parameters():
-        param.requires_grad = False
 
     with torch.no_grad():
         """
@@ -64,7 +57,7 @@ def trigger_inversion(args, model, poison):
         # x_untransformed: same shape as above, but no transformed
         # _ is gt label
         rep, x, x_untransformed, _ = get_data(
-            device, backbone, dataloader, args.image_size, model.feat_dim, transform
+            device, backbone, dataloader, args.image_size, feat_dim, transform
         )
 
         """
@@ -79,17 +72,6 @@ def trigger_inversion(args, model, poison):
         for i in range(np.unique(y).shape[0]):
             mask = y == i
             counts_label[i] = mask.sum()  # #images belonging to cluster i
-
-        # rep_center = torch.empty(
-        #     (len(np.unique(y)), rep.shape[1])
-        # )  # [#clusters, feat_dim], averaged over all images in the cluster
-
-        # for label in np.unique(y):
-        #     rep_center[label, :] = rep[y == label].mean(dim=0)
-
-        # rep_knn, y_knn = rep, torch.tensor(y)
-
-    # reg_best_list = torch.empty(len(np.unique(y)))  # [#clusters,]
 
     # estimate trigger for each cluster
     for target in np.unique(y):  # for each cluster
@@ -120,6 +102,8 @@ def trigger_inversion(args, model, poison):
             ).to(device)
             mask.requires_grad = True
             delta.requires_grad = True
+            mask_best = torch.tanh(mask) / 2 + 0.5
+            delta_best = torch.tanh(delta) / 2 + 0.5
             opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
 
             reg_best = (
@@ -150,7 +134,10 @@ def trigger_inversion(args, model, poison):
                         images, args.mean, args.std, mask_tanh, delta_tanh
                     )  # draw trigger mask onto the image
 
-                    loss_asr = norm_mse_loss(target_reps, backbone(X_R))
+                    with torch.no_grad():
+                        z = backbone(X_R)
+
+                    loss_asr = norm_mse_loss(target_reps, z)
                     loss_reg = torch.mean(mask_tanh * delta_tanh)
                     loss = loss_asr + lam * loss_reg
                     opt.zero_grad()
@@ -192,7 +179,7 @@ def trigger_inversion(args, model, poison):
                     rep,  # ALL clean images' latent representation
                     torch.tensor(y),  # ALL predicted cluster ids
                     target,  # current cluster id
-                    model.feat_dim,
+                    feat_dim,
                 )
 
                 if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
@@ -246,15 +233,10 @@ def trigger_inversion(args, model, poison):
     return (x_untransformed, y)
 
 
-def trigger_mitigation(args, model, trainset_data):
+def trigger_mitigation(args, backbone, trainset_data):
     """
     setup frozen triggered encoder and learnable encoder
     """
-    if args.method == "mocov2":
-        backbone = copy.deepcopy(model.encoder_q)
-        backbone.fc = nn.Sequential()
-    else:
-        backbone = copy.deepcopy(model.backbone)
 
     backbone_unlearn_trigger = copy.deepcopy(backbone)
     backbone_unlearn_trigger = backbone_unlearn_trigger.train()
@@ -262,8 +244,6 @@ def trigger_mitigation(args, model, trainset_data):
         param.requires_grad = True
 
     backbone = backbone.eval()
-    for param in backbone.parameters():
-        param.requires_grad = False
 
     """
     set up optimizer and scheduler
@@ -274,7 +254,6 @@ def trigger_mitigation(args, model, trainset_data):
         weight_decay=1e-6,
     )
     scheduler = get_scheduler(args, optimizer)
-    eval_every = args.eval_every
     lr_warmup = 0
     torch.backends.cudnn.benchmark = True
 
@@ -323,7 +302,9 @@ def trigger_mitigation(args, model, trainset_data):
                 delta, mask
             )  # [bs, 3, img_size, img_size]
 
-            clean_view_1_feature = backbone(clean_view_1)
+            with torch.no_grad():
+                clean_view_1_feature = backbone(clean_view_1)
+
             clean_view_2_feature = backbone_unlearn_trigger(clean_view_2)
             poison_view_feature = backbone_unlearn_trigger(poison_view)
 

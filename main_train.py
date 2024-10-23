@@ -523,20 +523,28 @@ def main(args):
     trainer.train_freq(model, optimizer, train_transform, poison)
 
     # Linear Probe and Evaluation
-
     if args.method == "mocov2":
         backbone = copy.deepcopy(model.encoder_q)
         backbone.fc = nn.Sequential()
     else:
-        backbone = model.backbone
+        backbone = copy.deepcopy(model.backbone)
     trained_linear = trainer.linear_probing(backbone, poison)
 
+    """
+    IDEA 1: use SSL CLeanse (ECCV 2024 paper)
+    """
     if args.use_ssl_cleanse:
+        if args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = copy.deepcopy(model.backbone)
+
         trainset_data = trigger_inversion(
-            args, model, poison
+            args, backbone, poison, model.feat_dim
         )  # trainset_data is a tuple of (x_untransformed, y)
 
-        cleansed_backbone = trigger_mitigation(args, model, trainset_data)
+        cleansed_backbone = trigger_mitigation(args, backbone, trainset_data)
 
         new_trainer = CLTrainer(args)
         clean_acc, back_acc = new_trainer.knn_monitor_fre(
@@ -548,7 +556,7 @@ def main(args):
             backdoor_loader=poison.test_pos_loader,
         )
         print(
-            f">>>> With cleansed model using SSL-cleanse, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
+            f">>>> With SSL-cleanse model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
         )
         _ = new_trainer.linear_probing(
             copy.deepcopy(cleansed_backbone), poison, force_training=True
@@ -595,7 +603,7 @@ def main(args):
             backbone = copy.deepcopy(new_model.encoder_q)
             backbone.fc = nn.Sequential()
         else:
-            backbone = new_model.backbone
+            backbone = copy.deepcopy(new_model.backbone)
         _ = new_trainer.linear_probing(backbone, poison, force_training=True)
 
     # Channel Removal Strategy
@@ -608,7 +616,7 @@ def main(args):
             backbone = copy.deepcopy(model.encoder_q)
             backbone.fc = nn.Sequential()
         else:
-            backbone = new_model.backbone
+            backbone = copy.deepcopy(new_model.backbone)
         trainer.linear_probing(
             backbone, poison, use_mask_pruning=True, trained_linear=trained_linear
         )

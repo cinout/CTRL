@@ -15,5 +15,6 @@ python -u main_train.py \
     --num_views 64 \
     \
     --use_ssl_cleanse \
+    --attack_succ_threshold 0.8 \
     --trigger_path trigger_estimation_DEBUG \
     --note "dehug" \

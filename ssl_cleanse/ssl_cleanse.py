@@ -298,6 +298,11 @@ def trigger_mitigation(args, model, trainset_data):
             clean_view_2 = clean_view_2.to(device)
             poison_view = poison_view.to(device)
 
+            # TODO: remove later
+            print(f"clean_view_1.shape: {clean_view_1.shape}")
+            print(f"clean_view_2.shape: {clean_view_2.shape}")
+            print(f"poison_view.shape: {poison_view.shape}")
+
             if lr_warmup < 500:
                 lr_scale = (lr_warmup + 1) / 500
                 for pg in optimizer.param_groups:

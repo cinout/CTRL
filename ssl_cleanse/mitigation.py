@@ -136,58 +136,35 @@ class FileListDataset(Dataset):
 
         self.image_list = trainset_data[
             0
-        ]  # [#total, 3, image_size, image_size], values in [0,1]
+        ]  # [#total=1% trainset, 3, image_size, image_size], values in [0,1]
 
-        self.cluster_list = trainset_data[1]  # [#total]
-
-        # TODO: remove laters
-        print(f"self.image_list.shape: {self.image_list.shape}")
-        print(f"self.cluster_list.shape: {self.cluster_list.shape}")
+        self.cluster_list = trainset_data[1]  # [#total=1% trainset]
 
     def __getitem__(self, idx):
 
-        batch_images = self.image_list[idx]
-        batch_clusters = self.cluster_list[idx]
+        image = self.image_list[idx]
+        image = torch.permute(image, (1, 2, 0))
+        image = image * 255.0
+        image = torch.clamp(image, 0, 255)
+        image = np.array(image.cpu(), dtype=np.uint8)
+        image = PIL.Image.fromarray(image)  # PIL format
+        clean_view_1 = self.basic_transform(image)  # tensor, [3, img_size, img_size]
+        clean_view_2 = self.basic_transform(image)  # tensor, [3, img_size, img_size]
+        clean_view_3 = self.basic_transform(image)  # tensor
 
-        # TODO: remove laters
-        print(f"idx: {idx}")
-        print(f"batch_images.shape: {batch_images.shape}")
-        print(f"batch_clusters.shape: {batch_clusters.shape}")
+        cluster_id = self.cluster_list[idx]
+        valid_trigger_indices = [
+            index for index in range(len(self.triggers)) if index != cluster_id
+        ]
+        trigger_index = random.choice(valid_trigger_indices)
+        trigger = self.triggers[trigger_index]
+        mask, delta = trigger["mask"].detach(), trigger["delta"].detach()
+        trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
+            delta, mask
+        )  # [1, 3, img_size, img_size]
+        trigger_view = trigger_view.squeeze(0)  # [3, img_size, img_size]
 
-        batch_images = torch.permute(batch_images, (0, 2, 3, 1))
-        batch_images = batch_images * 255.0
-        batch_images = torch.clamp(batch_images, 0, 255)
-        batch_images = np.array(batch_images.cpu(), dtype=np.uint8)
-
-        clean_view_1s = []
-        clean_view_2s = []
-        poison_view = []
-        for i, img in enumerate(batch_images):
-            img = PIL.Image.fromarray(img)  # PIL format
-            clean_view_1 = self.basic_transform(img)  # tensor, [3, img_size, img_size]
-            clean_view_2 = self.basic_transform(img)  # tensor, [3, img_size, img_size]
-            clean_view_3 = self.basic_transform(img)  # tensor
-
-            cluster_id = batch_clusters[i]
-            valid_trigger_indices = [
-                index for index in range(len(self.triggers)) if index != cluster_id
-            ]
-            trigger_index = random.choice(valid_trigger_indices)
-            trigger = self.triggers[trigger_index]
-            mask, delta = trigger["mask"].detach(), trigger["delta"].detach()
-            trigger_view = torch.mul(clean_view_3.unsqueeze(0), 1 - mask) + torch.mul(
-                delta, mask
-            )  # [1, 3, img_size, img_size]
-
-            clean_view_1s.append(clean_view_1)
-            clean_view_2s.append(clean_view_2)
-            poison_view.append(trigger_view)
-
-        clean_view_1s = torch.stack(clean_view_1s, dim=0)
-        clean_view_2s = torch.stack(clean_view_2s, dim=0)
-        poison_view = torch.cat(poison_view, dim=0)
-
-        return clean_view_1s, clean_view_2s, poison_view
+        return clean_view_1, clean_view_2, trigger_view
 
     def __len__(self):
         return self.cluster_list.shape[0]

@@ -140,10 +140,19 @@ class FileListDataset(Dataset):
 
         self.cluster_list = trainset_data[1]  # [#total]
 
+        # TODO: remove laters
+        print(f"self.image_list.shape: {self.image_list.shape}")
+        print(f"self.cluster_list.shape: {self.cluster_list.shape}")
+
     def __getitem__(self, idx):
 
         batch_images = self.image_list[idx]
         batch_clusters = self.cluster_list[idx]
+
+        # TODO: remove laters
+        print(f"idx: {idx}")
+        print(f"batch_images.shape: {batch_images.shape}")
+        print(f"batch_clusters.shape: {batch_clusters.shape}")
 
         batch_images = torch.permute(batch_images, (0, 2, 3, 1))
         batch_images = batch_images * 255.0

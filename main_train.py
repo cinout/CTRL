@@ -580,7 +580,7 @@ def main(args):
             batch_size=args.batch_size,
             sampler=None,
             shuffle=True,
-            drop_last=False,
+            drop_last=True if args.method == "mocov2" else False,
         )
         print(f"filtered_dataset.shape: {len(poison.train_pos_loader.dataset)}")
 

@@ -69,7 +69,7 @@ python -u main_train.py \
     --in_n_detectors 1 \
     --trigger_path trigger_estimation_mocov2_cifar10_ftrojan \
     \
-    --note "[ECCV cleanse] trigger_estimation_mocov2_cifar10_ftrojan" \
+    --note "dynamic lam" \
 
 
 ##Log this job's resource usage stats###

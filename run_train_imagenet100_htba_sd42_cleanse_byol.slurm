@@ -72,7 +72,7 @@ python -u main_train.py \
     --in_n_detectors 1 \
     --trigger_path trigger_estimation_byol_imagenet100_htba \
     \
-    --note "[ECCV cleanse] trigger_estimation_byol_imagenet100_htba" \
+    --note "dynamic lam" \
 
     
 

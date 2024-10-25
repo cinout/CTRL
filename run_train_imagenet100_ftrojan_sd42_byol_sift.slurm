@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     \
     --image_size 64 \
     \
@@ -44,23 +44,14 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_122920_85_42_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_122920_85_42_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
     --num_views 1 \
     \
-    --use_ssl_cleanse \
-    --attack_succ_threshold 0.7 \
-    --use_dynamic_lam \
-    --lam 0.1 \
-    \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --siftout_poisoned_images \
     \
     --minority_lower_bound 0.001 \
     --minority_upper_bound 0.011 \
@@ -69,9 +60,8 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_simclr_imagenet100_ftrojan \
     \
-    --note "dynamic lam" \
+    --note "kdist input-filtering 0.1-1.1p" \
 
     
 

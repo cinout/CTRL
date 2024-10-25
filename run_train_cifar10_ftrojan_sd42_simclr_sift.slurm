@@ -11,9 +11,9 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_h"
+#SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-08:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -29,7 +29,6 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -37,45 +36,30 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20240920_122144_36_100_cifar10_htba_linear_regular_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20240924_155056_19_48_cifar10_htba_linear_refset_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
-    --pretrained_frequency_model "" \
     \
-    --detect_trigger_channels \
-    --channel_num 40 \
+    --seed 42 \
+    --num_views 1 \
     \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --siftout_poisoned_images \
     \
     --minority_lower_bound 0.001 \
     --minority_upper_bound 0.011 \
     \
     --bd_detectors kdist \
-    --in_n_detectors 1 \
-    --frequency_ensemble_size 3 \
-    --frequency_detector_epochs 500 \
-    --frequency_attack_trigger_ids 2 \
-    \
-    --seed 42 \
-    \
-    --num_views 1 \
-    --normalize_backbone_features l2 \
     --kdist_k 8 \
-    --note "[0.001-0.011] [1 KDist=8 detector, views=1] [encoder L2 norm]" \
-##     --only_detect_projector_features \
-##    --proj_feature_normalize l2 \
-    ##    --compare_backbone_predictor \
-    ##    --compare_mode default \
-    ##    --normalize_backbone_features l2 \
-        ##--only_detect_projector_features \
+    --normalize_backbone_features l2 \
+    --in_n_detectors 1 \
+    \
+    --note "kdist input-filtering 0.1-1.1p" \
 
 
 ##Log this job's resource usage stats###

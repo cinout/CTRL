@@ -11,16 +11,16 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-16:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=80G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -35,30 +35,23 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method mocov2 \
+    --method simclr \
     \
-    --magnitude_train 50.0 \
-    --magnitude_val 100.0 \
-    --dataset cifar100 \
-    --target_class 0 \
+    --image_size 64 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_134921_53_96_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_134921_53_96_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
+    --dataset imagenet100 \
+    --target_class 26 \
+    \
+    --pretrained_ssl_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
     --num_views 1 \
     \
-    --use_ssl_cleanse \
-    --attack_succ_threshold 0.7 \
-    --use_dynamic_lam \
-    --lam 0.1 \
-    \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --siftout_poisoned_images \
     \
     --minority_lower_bound 0.001 \
     --minority_upper_bound 0.011 \
@@ -67,10 +60,10 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_mocov2_cifar100_ftrojan \
     \
-    --note "dynamic lam" \
+    --note "kdist input-filtering 0.1-1.1p" \
 
+    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

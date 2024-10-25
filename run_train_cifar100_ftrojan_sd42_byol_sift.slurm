@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_f"
+#SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-08:00:00
 
@@ -39,26 +39,17 @@ python -u main_train.py \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
     --num_views 1 \
     \
-    --use_ssl_cleanse \
-    --attack_succ_threshold 0.7 \
-    --use_dynamic_lam \
-    --lam 0.1 \
-    \
-    --detect_trigger_channels \
-    --channel_num 40 \
-    \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --siftout_poisoned_images \
     \
     --minority_lower_bound 0.001 \
     --minority_upper_bound 0.011 \
@@ -67,9 +58,8 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_byol_cifar10_ftrojan \
     \
-    --note "dynamic lam" \
+    --note "kdist input-filtering 0.1-1.1p" \
 
 
 ##Log this job's resource usage stats###

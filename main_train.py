@@ -358,7 +358,7 @@ parser.add_argument(
 parser.add_argument(
     "--kdist_k",
     type=int,
-    default=32,
+    default=8,
     help="distance the k-th neighbor",
 )
 parser.add_argument(

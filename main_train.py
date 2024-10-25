@@ -214,6 +214,7 @@ parser.add_argument(
     "--channel_num",
     nargs="+",
     type=int,
+    default=[2],
     help="a new hp, determine k channels of EACH SAMPLE",
 )
 parser.add_argument(

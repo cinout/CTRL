@@ -375,7 +375,7 @@ parser.add_argument(
 parser.add_argument(
     "--lam",
     type=float,
-    default=1e-1,
+    default=0.01,
     help="",
 )
 parser.add_argument("--patience", type=int, default=5)

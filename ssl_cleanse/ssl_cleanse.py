@@ -32,6 +32,8 @@ def norm_mse_loss(x0, x1):
 def trigger_inversion(args, backbone, poison, feat_dim):
 
     backbone = backbone.eval()
+    for param in backbone.parameters():
+        param.requires_grad = False
 
     with torch.no_grad():
         """
@@ -102,17 +104,16 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             ).to(device)
             mask.requires_grad = True
             delta.requires_grad = True
-            mask_best = torch.tanh(mask) / 2 + 0.5
-            delta_best = torch.tanh(delta) / 2 + 0.5
+
             opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
 
-            reg_best = (
-                torch.inf
-            )  # records the current best (smallest) regression loss (constraining the size and magnitude of triggers)
-            lam = 0  # coefficient for two losses
-            cost_set_counter = 0
-            cost_up_counter = 0
-            cost_down_counter = 0
+            # reg_best = (
+            #     torch.inf
+            # )  # records the current best (smallest) regression loss (constraining the size and magnitude of triggers)
+            # lam = 0  # coefficient for two losses
+            # cost_set_counter = 0
+            # cost_up_counter = 0
+            # cost_down_counter = 0
 
             dataloader_train = dataloader_cluster(args, rep_target, x_other_sample)
 
@@ -134,22 +135,20 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         images, args.mean, args.std, mask_tanh, delta_tanh
                     )  # draw trigger mask onto the image
 
-                    with torch.no_grad():
-                        z = backbone(X_R)
-
-                    loss_asr = norm_mse_loss(target_reps, z)
+                    loss_asr = norm_mse_loss(target_reps, backbone(X_R))
                     loss_reg = torch.mean(mask_tanh * delta_tanh)
-                    loss = loss_asr + lam * loss_reg
+                    loss = loss_asr + args.lam * loss_reg
+                    # loss = loss_asr + lam * loss_reg
                     opt.zero_grad()
                     loss.backward(retain_graph=True)
                     opt.step()
 
-                    loss_asr_list.append(loss_asr.item())
-                    loss_reg_list.append(loss_reg.item())
+                    # loss_asr_list.append(loss_asr.item())
+                    # loss_reg_list.append(loss_reg.item())
                     loss_list.append(loss.item())
 
-                avg_loss_asr = torch.tensor(loss_asr_list).mean()
-                avg_loss_reg = torch.tensor(loss_reg_list).mean()
+                # avg_loss_asr = torch.tensor(loss_asr_list).mean()
+                # avg_loss_reg = torch.tensor(loss_reg_list).mean()
                 avg_loss = torch.tensor(loss_list).mean()
 
                 """
@@ -182,47 +181,47 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     feat_dim,
                 )
 
-                if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
-                    # update the optimal mask and delta
-                    mask_best = mask_tanh
-                    delta_best = delta_tanh
-                    reg_best = avg_loss_reg
+                # if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
+                #     # update the optimal mask and delta
+                mask_best = mask_tanh
+                delta_best = delta_tanh
+                # reg_best = avg_loss_reg
 
-                print(
-                    "step: %3d, lam: %.2E, asr: %.3f, loss: %f, ce: %f, reg: %f, reg_best: %f"
-                    % (ep, lam, asr_knn, avg_loss, avg_loss_asr, avg_loss_reg, reg_best)
-                )
+                print(f"ep: {ep}, asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}")
 
-                """
-                adjusting lambda
-                """
-                if lam == 0 and asr_knn >= args.attack_succ_threshold:
-                    cost_set_counter += 1
-                    if cost_set_counter >= args.patience:  # >=5 patience is 5
-                        lam = args.lam  # reset lambda to initial value
-                        cost_up_counter = 0
-                        cost_down_counter = 0
-                else:
-                    cost_set_counter = 0
+                # print(
+                #     "step: %3d, lam: %.2E, asr: %.3f, loss: %f, ce: %f, reg: %f, reg_best: %f"
+                #     % (ep, lam, asr_knn, avg_loss, avg_loss_asr, avg_loss_reg, reg_best)
+                # )
 
-                if asr_knn >= args.attack_succ_threshold:
-                    cost_up_counter += 1
-                    cost_down_counter = 0
-                else:
-                    cost_up_counter = 0
-                    cost_down_counter += 1
+                # """
+                # adjusting lambda
+                # """
+                # if lam == 0 and asr_knn >= args.attack_succ_threshold:
+                #     cost_set_counter += 1
+                #     if cost_set_counter >= args.patience:  # >=5 patience is 5
+                #         lam = args.lam  # reset lambda to initial value
+                #         cost_up_counter = 0
+                #         cost_down_counter = 0
+                # else:
+                #     cost_set_counter = 0
 
-                if lam != 0 and cost_up_counter >= args.patience:
-                    # boost up lambda
-                    cost_up_counter = 0
-                    lam *= args.lam_multiplier_up
+                # if asr_knn >= args.attack_succ_threshold:
+                #     cost_up_counter += 1
+                #     cost_down_counter = 0
+                # else:
+                #     cost_up_counter = 0
+                #     cost_down_counter += 1
 
-                elif lam != 0 and cost_down_counter >= args.patience:
-                    # bring down lambda
-                    cost_down_counter = 0
-                    lam /= args.lam_multiplier_up
+                # if lam != 0 and cost_up_counter >= args.patience:
+                #     # boost up lambda
+                #     cost_up_counter = 0
+                #     lam *= args.lam_multiplier_up
 
-            # reg_best_list[target] = reg_best if reg_best != torch.inf else 1
+                # elif lam != 0 and cost_down_counter >= args.patience:
+                #     # bring down lambda
+                #     cost_down_counter = 0
+                #     lam /= args.lam_multiplier_up
 
             os.makedirs(args.trigger_path, exist_ok=True)
             torch.save(

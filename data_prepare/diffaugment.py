@@ -105,9 +105,9 @@ class PoisonAgent:
                 ),
                 transforms.RandomPerspective(p=0.5),
             ]
-            self.ss_transform = NCropsTransform(
-                transforms.Compose(ss_views_aug), self.args.num_views
-            )
+        self.ss_transform = NCropsTransform(
+            transforms.Compose(ss_views_aug), self.args.num_views
+        )
 
         print(
             f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"

@@ -1339,10 +1339,14 @@ class CLTrainer:
                 for i, content in enumerate(
                     train_loader
                 ):  # frequency backdoor has been injected
-                    if self.args.detect_trigger_channels:
-                        (images, is_poisoned, __, _) = content
-                    else:
-                        (images, __, _) = content
+
+                    # if self.args.detect_trigger_channels:
+                    #     (images, is_poisoned, __, _) = content
+                    # else:
+                    #     (images, __, _) = content
+
+                    images = content[0]
+
                     model.train()
                     images = images.to(device)
 
@@ -1437,7 +1441,7 @@ class CLTrainer:
         trained_linear.eval()
 
         model.eval()
-        
+
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
             projector = copy.deepcopy(backbone.fc)

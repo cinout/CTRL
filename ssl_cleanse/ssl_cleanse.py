@@ -55,8 +55,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             ]
         )
         # rep: [#total_images, feat_dim]
-        # x: [#total_images, 3, image_size, image_size], transformed by above
-        # x_untransformed: same shape as above, but no transformed
+        # x: [#total_images, 3, image_size, image_size], tensored (value range in 0-1), and transformed by above
+        # x_untransformed: same shape as above, tensored (value range in 0-1), but no transformed
         # _ is gt label
         rep, x, x_untransformed, _ = get_data(
             device, backbone, dataloader, args.image_size, feat_dim, transform
@@ -303,8 +303,13 @@ def trigger_mitigation(args, backbone, trainset_data):
             mask = trigger_masks[trigger_index]  # [bs, 1, img_size, img_size]
             delta = trigger_deltas[trigger_index]  # [bs, 3, img_size, img_size]
 
-            poison_view = torch.mul(clean_view_3, 1 - mask) + torch.mul(
-                delta, mask
+            # delta_norm = T.functional.normalize(delta, args.mean, args.std)
+            # poison_view = torch.mul(clean_view_3, 1 - mask) + torch.mul(
+            #     delta_norm, mask
+            # )
+
+            poison_view = draw(
+                clean_view_3, args.mean, args.std, mask, delta
             )  # [bs, 3, img_size, img_size]
 
             with torch.no_grad():

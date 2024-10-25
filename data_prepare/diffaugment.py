@@ -96,15 +96,15 @@ class PoisonAgent:
         self.magnitude_train = magnitude_train
         self.magnitude_val = magnitude_val
 
-        if self.args.detect_trigger_channels:
-            ss_views_aug = [
-                transforms.RandomResizedCrop(
-                    self.args.image_size,
-                    scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
-                    ratio=(0.2, 5),
-                ),
-                transforms.RandomPerspective(p=0.5),
-            ]
+        # if self.args.detect_trigger_channels:
+        ss_views_aug = [
+            transforms.RandomResizedCrop(
+                self.args.image_size,
+                scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
+                ratio=(0.2, 5),
+            ),
+            transforms.RandomPerspective(p=0.5),
+        ]
         self.ss_transform = NCropsTransform(
             transforms.Compose(ss_views_aug), self.args.num_views
         )

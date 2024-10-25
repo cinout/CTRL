@@ -378,6 +378,11 @@ parser.add_argument(
     default=0.01,
     help="",
 )
+parser.add_argument(
+    "--use_dynamic_lam",
+    action="store_true",
+    help="use dynamic lam",
+)
 parser.add_argument("--patience", type=int, default=5)
 parser.add_argument("--lam_multiplier_up", type=float, default=1.5)
 parser.add_argument("--ratio", type=float, default=0.05)

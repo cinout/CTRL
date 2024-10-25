@@ -53,8 +53,10 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
-    --attack_succ_threshold 0.8 \
-     \
+    --attack_succ_threshold 0.7 \
+    --use_dynamic_lam \
+    --lam 0.1 \
+    \
     --detect_trigger_channels \
     --channel_num 40 \
     \

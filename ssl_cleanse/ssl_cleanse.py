@@ -102,6 +102,10 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             delta = torch.arctanh(
                 (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
             ).to(device)
+            if args.use_dynamic_lam:
+                mask_best = torch.tanh(mask) / 2 + 0.5
+                delta_best = torch.tanh(delta) / 2 + 0.5
+
             mask.requires_grad = True
             delta.requires_grad = True
 

@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_f"
+#SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-20:00:00
 
@@ -39,11 +39,11 @@ python -u main_train.py \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20241024_103652_10_60_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_103652_10_60_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -65,9 +65,9 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_simclr_cifar10_ftrojan \
+    --trigger_path trigger_estimation_simclr_cifar100_ftrojan \
     \
-    --note "[ECCV cleanse] trigger_estimation_simclr_cifar10_ftrojan" \
+    --note "[ECCV cleanse] trigger_estimation_simclr_cifar100_ftrojan" \
 
 
 ##Log this job's resource usage stats###

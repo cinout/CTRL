@@ -44,8 +44,8 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments//last.pth.tar" \
+    --pretrained_linear_model "./Experiments//linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

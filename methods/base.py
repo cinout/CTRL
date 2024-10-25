@@ -1437,13 +1437,17 @@ class CLTrainer:
         trained_linear.eval()
 
         model.eval()
+        
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
+            projector = copy.deepcopy(backbone.fc)
             backbone.fc = nn.Sequential()
-            # FIXME: projector
-        else:
-            backbone = model.backbone
-            projector = model.proj_head  # FIXME: BYOL may use different name
+        elif self.args.method == "simclr":
+            backbone = copy.deepcopy(model.backbone)
+            projector = copy.deepcopy(model.proj_head)
+        if self.args.method == "byol":
+            backbone = copy.deepcopy(model.backbone)
+            projector = copy.deepcopy(model.predictor)
 
         backbone.eval()
         projector.eval()
@@ -1467,16 +1471,18 @@ class CLTrainer:
         trained_linear.eval()
 
         model.eval()
+
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
+            projector = copy.deepcopy(backbone.fc)
             backbone.fc = nn.Sequential()
-            # FIXME: projector
-            projector = None
-        else:
+        elif self.args.method == "simclr":
             backbone = copy.deepcopy(model.backbone)
-            projector = copy.deepcopy(
-                model.proj_head
-            )  # FIXME: BYOL may use different name
+            projector = copy.deepcopy(model.proj_head)
+        if self.args.method == "byol":
+            backbone = copy.deepcopy(model.backbone)
+            projector = copy.deepcopy(model.predictor)
+
         backbone.eval()
         projector.eval()
 

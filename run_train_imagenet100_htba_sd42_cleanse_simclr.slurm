@@ -4,14 +4,14 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="img_f"
+#SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
 #SBATCH --time=1-04:00:00
 
@@ -36,6 +36,7 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
+    --trigger_type htba \
     \
     --image_size 64 \
     \
@@ -44,8 +45,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments//last.pth.tar" \
+    --pretrained_linear_model "./Experiments//linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -67,9 +68,9 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_simclr_imagenet100_ftrojan \
+    --trigger_path trigger_estimation_simclr_imagenet100_htba \
     \
-    --note "[ECCV cleanse] trigger_estimation_simclr_imagenet100_ftrojan" \
+    --note "[ECCV cleanse] trigger_estimation_simclr_imagenet100_htba" \
 
     
 

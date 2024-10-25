@@ -4,23 +4,23 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_h"
+#SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=1-04:00:00
+#SBATCH --time=0-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=180G
+#SBATCH --mem=80G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -36,17 +36,14 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
-    --trigger_type htba \
     \
-    --image_size 64 \
+    --magnitude_train 50.0 \
+    --magnitude_val 100.0 \
+    --dataset cifar10 \
+    --target_class 0 \
     \
-    --magnitude_train 300.0 \
-    --magnitude_val 300.0 \
-    --dataset imagenet100 \
-    --target_class 26 \
-    \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -68,11 +65,10 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_simclr_imagenet100_htba \
+    --trigger_path trigger_estimation_simclr_cifar10_ftrojan \
     \
-    --note "[ECCV cleanse] trigger_estimation_simclr_imagenet100_htba" \
+    --note "[ECCV cleanse] trigger_estimation_simclr_cifar10_ftrojan" \
 
-    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

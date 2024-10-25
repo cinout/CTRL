@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
 #SBATCH --time=0-20:00:00
 
@@ -29,6 +29,7 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -36,14 +37,15 @@ conda activate anogpt
 
 python -u main_train.py \
     --method simclr \
+    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar100 \
+    --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments//last.pth.tar" \
+    --pretrained_linear_model "./Experiments//linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -65,9 +67,9 @@ python -u main_train.py \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
-    --trigger_path trigger_estimation_simclr_cifar100_ftrojan \
+    --trigger_path trigger_estimation_simclr_cifar10_htba \
     \
-    --note "[ECCV cleanse] trigger_estimation_simclr_cifar100_ftrojan" \
+    --note "[ECCV cleanse] trigger_estimation_simclr_cifar10_htba" \
 
 
 ##Log this job's resource usage stats###

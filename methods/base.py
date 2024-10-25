@@ -352,37 +352,37 @@ def find_trigger_channels(
 
     # if apply unlearning before finding trigger channles
     # NOT USED
-    if args.unlearn_before_finding_trigger_channels:
-        unlearnt_backbone = copy.deepcopy(backbone)
-        unlearnt_linear = copy.deepcopy(linear)
-        criterion = torch.nn.CrossEntropyLoss().to(device)
-        optimizer = torch.optim.SGD(
-            list(unlearnt_backbone.parameters()) + list(unlearnt_linear.parameters()),
-            lr=args.unlearning_lr,
-            momentum=0.9,
-            weight_decay=5e-4,
-        )
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, milestones=args.schedule, gamma=0.1
-        )
-        for epoch in range(0, args.unlearning_epochs + 1):
-            train_acc = train_step_unlearning(
-                args=args,
-                model=unlearnt_backbone,
-                linear=unlearnt_linear,
-                criterion=criterion,
-                optimizer=optimizer,
-                data_loader=train_probe_loader,
-            )
+    # if args.unlearn_before_finding_trigger_channels:
+    #     unlearnt_backbone = copy.deepcopy(backbone)
+    #     unlearnt_linear = copy.deepcopy(linear)
+    #     criterion = torch.nn.CrossEntropyLoss().to(device)
+    #     optimizer = torch.optim.SGD(
+    #         list(unlearnt_backbone.parameters()) + list(unlearnt_linear.parameters()),
+    #         lr=args.unlearning_lr,
+    #         momentum=0.9,
+    #         weight_decay=5e-4,
+    #     )
+    #     scheduler = torch.optim.lr_scheduler.MultiStepLR(
+    #         optimizer, milestones=args.schedule, gamma=0.1
+    #     )
+    #     for epoch in range(0, args.unlearning_epochs + 1):
+    #         train_acc = train_step_unlearning(
+    #             args=args,
+    #             model=unlearnt_backbone,
+    #             linear=unlearnt_linear,
+    #             criterion=criterion,
+    #             optimizer=optimizer,
+    #             data_loader=train_probe_loader,
+    #         )
 
-            scheduler.step()
-            print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
+    #         scheduler.step()
+    #         print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
 
-            if train_acc <= args.clean_threshold:
-                print(f">>>>>>>> arrive at early break of unlearning at epoch {epoch}")
-                break
-        unlearnt_backbone.eval()
-        unlearnt_linear.eval()
+    #         if train_acc <= args.clean_threshold:
+    #             print(f">>>>>>>> arrive at early break of unlearning at epoch {epoch}")
+    #             break
+    #     unlearnt_backbone.eval()
+    #     unlearnt_linear.eval()
 
     # to train frequency detectors
     if "frequency_ensemble" in args.bd_detectors:
@@ -550,10 +550,10 @@ def find_trigger_channels(
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
             with torch.no_grad():
-                if args.unlearn_before_finding_trigger_channels:
-                    vision_features = unlearnt_backbone(views)
-                else:
-                    vision_features = backbone(views)  # [bs*n_views, 512]
+                # if args.unlearn_before_finding_trigger_channels:
+                #     vision_features = unlearnt_backbone(views)
+                # else:
+                vision_features = backbone(views)  # [bs*n_views, 512]
 
             if args.normalize_backbone_features == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
@@ -664,10 +664,10 @@ def find_trigger_channels(
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
         with torch.no_grad():
-            if args.unlearn_before_finding_trigger_channels:
-                vision_features = unlearnt_backbone(views)
-            else:
-                vision_features = backbone(views)  # [bs*n_views, 512]
+            # if args.unlearn_before_finding_trigger_channels:
+            #     vision_features = unlearnt_backbone(views)
+            # else:
+            vision_features = backbone(views)  # [bs*n_views, 512]
 
         if "frequency_ensemble" in args.bd_detectors:
             get_freq_detection_scores(

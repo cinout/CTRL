@@ -261,8 +261,8 @@ class PoisonAgent:
                     y_train_tensor,
                     train_index,
                 )
-                if self.args.detect_trigger_channels
-                else TensorDataset(x_train_tensor, y_train_tensor, train_index)
+                # if self.args.detect_trigger_channels
+                # else TensorDataset(x_train_tensor, y_train_tensor, train_index)
             ),
             batch_size=self.args.batch_size,
             sampler=None,

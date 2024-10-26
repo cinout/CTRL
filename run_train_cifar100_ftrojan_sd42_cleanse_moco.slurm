@@ -55,9 +55,9 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 20241026_100911_29_46_trigger_estimation_mocov2_cifar100_ftrojan \
     \
-    --mitigate_epochs 1500 \
-    --trigger_overlay_option 2 \
-    --note "mitigate 1500 eps [trigger=2]" \
+    --mitigate_epochs 1000 \
+    --trigger_overlay_option 3 \
+    --note "mitigate 1000 eps [trigger=3]" \
 
 
 ##Log this job's resource usage stats###

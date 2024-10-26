@@ -356,6 +356,31 @@ def trigger_mitigation(args, backbone, trainset_data):
                     )
 
                     compare_view = backbone_unlearn_trigger(clean_view_3)
+                elif args.trigger_overlay_option == 3:
+                    trigger_width = random.randint(4, 10)
+
+                    mask = F.interpolate(mask, size=(trigger_width, trigger_width))
+                    delta = T.functional.normalize(delta, args.mean, args.std)
+                    delta = F.interpolate(delta, size=(trigger_width, trigger_width))
+
+                    trigger_location_x = random.uniform(0.1, 0.9)
+                    trigger_location_y = random.uniform(0.1, 0.9)
+
+                    location_x = int(
+                        (args.image_size - trigger_width) * trigger_location_x
+                    )
+                    location_y = int(
+                        (args.image_size - trigger_width) * trigger_location_y
+                    )
+
+                    clean_view_3[
+                        :,
+                        :,
+                        location_x : location_x + trigger_width,
+                        location_y : location_y + trigger_width,
+                    ] = delta
+
+                    compare_view = backbone_unlearn_trigger(clean_view_3)
 
             # loss_1 = norm_mse_loss(clean_view_1_feature, clean_view_2_feature)
             # loss_2 = norm_mse_loss(clean_view_1_feature, poison_view_feature)

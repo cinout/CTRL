@@ -55,7 +55,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path trigger_estimation_simclr_imagenet100_ftrojan \
+    --trigger_path 20241026_101050_10_29_trigger_estimation_simclr_imagenet100_ftrojan \
     \
     --mitigate_epochs 1000 \
     --note "mitigate 1000 eps" \

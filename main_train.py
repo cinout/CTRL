@@ -399,6 +399,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--trigger_path",
+    default="",
     type=str,
 )
 parser.add_argument(
@@ -633,7 +634,8 @@ if __name__ == "__main__":
         f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_linear_{args.linear_probe_normalize}_sd{args.seed}_[RAW]"
     )
 
-    args.trigger_path = f"{args.timestamp}_{args.trigger_path}"
+    if args.trigger_path == "":
+        args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}"
 
     if not os.path.exists(args.saved_path):
         os.makedirs(args.saved_path)

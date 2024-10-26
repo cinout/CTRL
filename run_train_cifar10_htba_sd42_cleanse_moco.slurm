@@ -57,8 +57,8 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 	20241026_101030_33_51_trigger_estimation_mocov2_cifar10_htba \
     \
-    --mitigate_epochs 1000 \
-    --note "mitigate 1000 eps" \
+    --mitigate_epochs 1500 \
+    --note "mitigate 1500 eps" \
 
 
 ##Log this job's resource usage stats###

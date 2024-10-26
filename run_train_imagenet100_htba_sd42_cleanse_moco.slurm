@@ -58,8 +58,8 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 20241026_101103_16_76_trigger_estimation_mocov2_imagenet100_htba \
     \
-    --mitigate_epochs 1000 \
-    --note "mitigate 1000 eps" \
+    --mitigate_epochs 1500 \
+    --note "mitigate 1500 eps" \
 
     
 

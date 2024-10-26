@@ -99,7 +99,9 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             """
             mask = torch.arctanh(
                 (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
-            ).to(device)
+            ).to(
+                device
+            )  # value range [-1, 1] -> arctanh -> (-inf, inf)
             delta = torch.arctanh(
                 (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
             ).to(device)
@@ -135,8 +137,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         device
                     )  # target cluster image representation
 
-                    mask_tanh = torch.tanh(mask) / 2 + 0.5
-                    delta_tanh = torch.tanh(delta) / 2 + 0.5
+                    mask_tanh = torch.tanh(mask) / 2 + 0.5  # value range (0, 1)
+                    delta_tanh = torch.tanh(delta) / 2 + 0.5  # value range (0, 1)
                     X_R = draw(
                         images, args.mean, args.std, mask_tanh, delta_tanh
                     )  # draw trigger mask onto the image
@@ -315,9 +317,45 @@ def trigger_mitigation(args, backbone, trainset_data):
             if random.random() < 0.5:
                 compare_view = backbone_unlearn_trigger(clean_view_2)
             else:
-                compare_view = backbone_unlearn_trigger(
-                    draw(clean_view_3, args.mean, args.std, mask, delta)
-                )
+                if args.trigger_overlay_option == 1:
+                    compare_view = backbone_unlearn_trigger(
+                        draw(clean_view_3, args.mean, args.std, mask, delta)
+                    )
+                elif args.trigger_overlay_option == 2:
+                    trigger_width = random.randint(4, 10)
+
+                    mask = F.interpolate(mask, size=(trigger_width, trigger_width))
+                    delta = T.functional.normalize(delta, args.mean, args.std)
+                    delta = F.interpolate(delta, size=(trigger_width, trigger_width))
+
+                    trigger_location_x = random.uniform(0.1, 0.9)
+                    trigger_location_y = random.uniform(0.1, 0.9)
+
+                    location_x = int(
+                        (args.image_size - trigger_width) * trigger_location_x
+                    )
+                    location_y = int(
+                        (args.image_size - trigger_width) * trigger_location_y
+                    )
+
+                    clean_view_3[
+                        :,
+                        :,
+                        location_x : location_x + trigger_width,
+                        location_y : location_y + trigger_width,
+                    ] = torch.mul(
+                        clean_view_3[
+                            :,
+                            :,
+                            location_x : location_x + trigger_width,
+                            location_y : location_y + trigger_width,
+                        ],
+                        1 - mask,
+                    ) + torch.mul(
+                        delta, mask
+                    )
+
+                    compare_view = backbone_unlearn_trigger(clean_view_3)
 
             # loss_1 = norm_mse_loss(clean_view_1_feature, clean_view_2_feature)
             # loss_2 = norm_mse_loss(clean_view_1_feature, poison_view_feature)

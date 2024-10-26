@@ -443,6 +443,10 @@ parser.add_argument("--trigger_width", type=int, default=6)
 parser.add_argument("--trigger_location", type=float, default=0.9)
 parser.add_argument("--one_image_path", type=str, required=False, default=None)
 parser.add_argument("--one_image_paths", type=str, nargs="*", default=None)
+# TODO: add to slurm
+parser.add_argument("--trigger_overlay_option", type=int, choices=[1, 2], default=1)
+# parser.add_argument("--trigger_width", type=int, default=6)
+# parser.add_argument("--trigger_location", type=float, default=0.9)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

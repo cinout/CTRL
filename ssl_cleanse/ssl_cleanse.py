@@ -1,3 +1,4 @@
+import random
 import torch.nn.functional as F
 from torch.utils import data
 import torch
@@ -285,7 +286,7 @@ def trigger_mitigation(args, backbone, trainset_data):
     trigger_masks = torch.cat(trigger_masks, dim=0)
     trigger_deltas = torch.cat(trigger_deltas, dim=0)
 
-    for ep in range(args.mitigate_epoches):
+    for ep in range(args.mitigate_epochs):
 
         for clean_view_1, clean_view_2, clean_view_3, trigger_index in dataloader:
             clean_view_1 = clean_view_1.to(device)  # [bs, 3, img_size, img_size]
@@ -308,20 +309,21 @@ def trigger_mitigation(args, backbone, trainset_data):
             #     delta_norm, mask
             # )
 
-            poison_view = draw(
-                clean_view_3, args.mean, args.std, mask, delta
-            )  # [bs, 3, img_size, img_size]
-
             with torch.no_grad():
                 clean_view_1_feature = backbone(clean_view_1)
 
-            clean_view_2_feature = backbone_unlearn_trigger(clean_view_2)
-            poison_view_feature = backbone_unlearn_trigger(poison_view)
+            if random.random() < 0.5:
+                compare_view = backbone_unlearn_trigger(clean_view_2)
+            else:
+                compare_view = backbone_unlearn_trigger(
+                    draw(clean_view_3, args.mean, args.std, mask, delta)
+                )
 
-            loss_1 = norm_mse_loss(clean_view_1_feature, clean_view_2_feature)
-            loss_2 = norm_mse_loss(clean_view_1_feature, poison_view_feature)
+            # loss_1 = norm_mse_loss(clean_view_1_feature, clean_view_2_feature)
+            # loss_2 = norm_mse_loss(clean_view_1_feature, poison_view_feature)
+            # loss_sum = loss_1 + loss_2
 
-            loss_sum = loss_1 + loss_2
+            loss_sum = norm_mse_loss(clean_view_1_feature, compare_view)
 
             loss_sum.backward()
 

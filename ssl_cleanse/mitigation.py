@@ -71,7 +71,7 @@ from torch.utils.data import Dataset
 
 
 def get_scheduler(args, optimizer):
-    m = [args.mitigate_epoches - a for a in args.drop]
+    m = [args.mitigate_epochs - a for a in args.drop]
     return MultiStepLR(optimizer, milestones=m, gamma=args.drop_gamma)
 
 

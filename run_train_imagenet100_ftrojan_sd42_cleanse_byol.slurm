@@ -57,6 +57,7 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path trigger_estimation_byol_imagenet100_ftrojan \
     \
+    --mitigate_epochs 1000 \
     --note "dynamic lam" \
 
     

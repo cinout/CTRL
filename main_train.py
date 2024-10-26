@@ -402,7 +402,7 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    "--mitigate_epoches",
+    "--mitigate_epochs",
     type=int,
     default=500,
 )

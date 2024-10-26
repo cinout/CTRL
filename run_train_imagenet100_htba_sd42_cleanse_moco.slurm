@@ -59,7 +59,7 @@ python -u main_train.py \
     --trigger_path trigger_estimation_mocov2_imagenet100_htba \
     \
     --mitigate_epochs 1000 \
-    --note "dynamic lam" \
+    --note "mitigate 1000 eps" \
 
     
 

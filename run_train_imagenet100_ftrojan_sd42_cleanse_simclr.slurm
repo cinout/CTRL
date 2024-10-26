@@ -58,7 +58,7 @@ python -u main_train.py \
     --trigger_path trigger_estimation_simclr_imagenet100_ftrojan \
     \
     --mitigate_epochs 1000 \
-    --note "dynamic lam" \
+    --note "mitigate 1000 eps" \
 
     
 

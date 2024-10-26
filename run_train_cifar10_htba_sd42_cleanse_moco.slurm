@@ -58,7 +58,7 @@ python -u main_train.py \
     --trigger_path trigger_estimation_mocov2_cifar10_htba \
     \
     --mitigate_epochs 1000 \
-    --note "dynamic lam" \
+    --note "mitigate 1000 eps" \
 
 
 ##Log this job's resource usage stats###

@@ -58,9 +58,9 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 20241026_101059_21_52_trigger_estimation_byol_imagenet100_htba \
     \
-    --mitigate_epochs 25 \
+    --mitigate_epochs 1 \
     --trigger_overlay_option 2 \
-    --note "mitigate 25 eps [trigger=2]" \
+    --note "mitigate 1 eps [trigger=2]" \
 
     
 

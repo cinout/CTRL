@@ -58,9 +58,9 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 20241026_101103_16_76_trigger_estimation_mocov2_imagenet100_htba \
     \
-    --mitigate_epochs 25 \
+    --mitigate_epochs 1 \
     --trigger_overlay_option 2 \
-    --note "mitigate 25 eps [trigger=2]" \
+    --note "mitigate 1 eps [trigger=2]" \
 
     
 

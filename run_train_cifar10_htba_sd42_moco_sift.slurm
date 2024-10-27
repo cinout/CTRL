@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-11:00:00
+#SBATCH --time=0-06:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -51,17 +51,22 @@ python -u main_train.py \
     --seed 42 \
     --num_views 1 \
     \
-    --siftout_poisoned_images \
+    --detect_trigger_channels \
+    --channel_num 40 \
+    \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.001 \
-    --minority_upper_bound 0.011 \
+    --minority_upper_bound 0.035 \
     \
-    --bd_detectors kdist \
+    --bd_detectors frequency_ensemble kdist \
+    --frequency_ensemble_size 1 \
     --kdist_k 8 \
     --normalize_backbone_features l2 \
-    --in_n_detectors 1 \
+    --in_n_detectors 2 \
     \
-    --note "kdist input-filtering 0.1-1.1p" \
+    --note "kdist + freq [0.1-3.5p] [channel removal]" \
 
 
 ##Log this job's resource usage stats###

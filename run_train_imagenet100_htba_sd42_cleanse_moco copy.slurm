@@ -53,13 +53,13 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
-    --attack_succ_threshold 0.9 \
+    --attack_succ_threshold 0.99 \
     --use_dynamic_lam \
     --lam 0.1 \
     \
-    --mitigate_epochs 1 \
+    --mitigate_epochs 5 \
     --trigger_overlay_option 2 \
-    --note "mitigate 1 eps [trigger=2]" \
+    --note "mitigate 5 eps [trigger=2]" \
 
     
 

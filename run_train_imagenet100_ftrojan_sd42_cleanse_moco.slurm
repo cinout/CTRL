@@ -57,9 +57,9 @@ python -u main_train.py \
     --lam 0.1 \
     --trigger_path 20241026_101042_93_2_trigger_estimation_mocov2_imagenet100_ftrojan \
     \
-    --mitigate_epochs 50 \
+    --mitigate_epochs 10 \
     --trigger_overlay_option 2 \
-    --note "mitigate 50 eps [trigger=2]" \
+    --note "mitigate 10 eps [trigger=2]" \
 
     
 

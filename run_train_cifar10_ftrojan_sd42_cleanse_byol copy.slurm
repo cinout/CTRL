@@ -53,7 +53,6 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_101009_36_60_trigger_estimation_byol_cifar10_ftrojan \
     \
     --mitigate_epochs 1 \
     --trigger_overlay_option 2 \

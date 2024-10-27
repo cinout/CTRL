@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-04:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -53,13 +53,14 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
-    --attack_succ_threshold 0.99 \
+    --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
+    --trigger_path 20241026_100959_24_65_trigger_estimation_mocov2_cifar100_htba \
     \
-    --mitigate_epochs 5 \
+    --mitigate_epochs 1 \
     --trigger_overlay_option 2 \
-    --note "mitigate 5 eps [trigger=2]" \
+    --note "mitigate 1 eps [trigger=2]" \
 
 
 ##Log this job's resource usage stats###

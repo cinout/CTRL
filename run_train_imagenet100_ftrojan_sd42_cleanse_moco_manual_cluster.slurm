@@ -4,14 +4,14 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="img_h"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-05:00:00
 
@@ -35,8 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method byol \
-    --trigger_type htba \
+    --method mocov2 \
     \
     --image_size 64 \
     \
@@ -45,8 +44,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_160737_22_62_imagenet100_htba_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_160737_22_62_imagenet100_htba_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_154032_6_1_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_154032_6_1_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -56,7 +55,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_101059_21_52_trigger_estimation_byol_imagenet100_htba \
+    --num_clusters 100 \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \

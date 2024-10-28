@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_f"
+#SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
 #SBATCH --time=0-04:00:00
 
@@ -29,6 +29,7 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -36,14 +37,15 @@ conda activate anogpt
 
 python -u main_train.py \
     --method byol \
+    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_121059_34_1_cifar10_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_121059_34_1_cifar10_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -53,7 +55,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_101009_36_60_trigger_estimation_byol_cifar10_ftrojan \
+    --num_clusters 10 \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \

@@ -105,14 +105,36 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             delta = torch.arctanh(
                 (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
             ).to(device)
+
+            if args.trigger_set_number == 2:
+                mask2 = torch.arctanh(
+                    (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
+                ).to(
+                    device
+                )  # value range [-1, 1] -> arctanh -> (-inf, inf)
+                delta2 = torch.arctanh(
+                    (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
+                ).to(device)
+
             if args.use_dynamic_lam:
                 mask_best = torch.tanh(mask) / 2 + 0.5
                 delta_best = torch.tanh(delta) / 2 + 0.5
+                if args.trigger_set_number == 2:
+                    mask2_best = torch.tanh(mask2) / 2 + 0.5
+                    delta2_best = torch.tanh(delta2) / 2 + 0.5
 
             mask.requires_grad = True
             delta.requires_grad = True
+            if args.trigger_set_number == 2:
+                mask2.requires_grad = True
+                delta2.requires_grad = True
 
-            opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
+            if args.trigger_set_number == 1:
+                opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
+            elif args.trigger_set_number == 2:
+                opt = optim.Adam(
+                    [delta, mask, delta2, mask2], lr=1e-1, betas=(0.5, 0.9)
+                )
 
             if args.use_dynamic_lam:
                 reg_best = (
@@ -136,6 +158,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     target_reps = target_reps.to(
                         device
                     )  # target cluster image representation
+
+                    # TODO: update here
 
                     mask_tanh = torch.tanh(mask) / 2 + 0.5  # value range (0, 1)
                     delta_tanh = torch.tanh(delta) / 2 + 0.5  # value range (0, 1)

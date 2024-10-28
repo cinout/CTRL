@@ -356,6 +356,14 @@ parser.add_argument(
 )
 
 # KDistance
+# TODO: update slurm
+parser.add_argument(
+    "--trigger_set_number",
+    type=int,
+    default=1,
+    choices=[1, 2],
+    help="use either 1 set or 2 sets of triggers for each cluster",
+)
 parser.add_argument(
     "--kdist_k",
     type=int,
@@ -392,6 +400,7 @@ parser.add_argument("--ratio", type=float, default=0.05)
 #     type=int,
 #     default=1000,
 # )
+# TODO: update later
 parser.add_argument(
     "--num_clusters",
     type=int,

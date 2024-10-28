@@ -36,7 +36,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method mocov2 \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
@@ -44,8 +44,8 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_104121_34_54_cifar10_htba_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_104121_34_54_cifar10_htba_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_142323_81_27_cifar10_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_142323_81_27_cifar10_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -55,7 +55,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_101037_9_60_trigger_estimation_simclr_cifar10_htba \
+    --num_clusters 10 \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \

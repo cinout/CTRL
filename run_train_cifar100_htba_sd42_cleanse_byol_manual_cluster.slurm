@@ -4,14 +4,14 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
 #SBATCH --time=0-04:00:00
 
@@ -29,6 +29,8 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+
+
 module purge
 
 eval "$(conda shell.bash hook)"
@@ -36,14 +38,15 @@ conda activate anogpt
 
 python -u main_train.py \
     --method byol \
+    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_143133_79_100_cifar100_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_143133_79_100_cifar100_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -53,7 +56,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_100910_1_19_trigger_estimation_byol_cifar100_ftrojan \
+    --num_clusters 100 \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \

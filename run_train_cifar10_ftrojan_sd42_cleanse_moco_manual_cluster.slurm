@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-04:00:00
 
@@ -39,11 +39,11 @@ python -u main_train.py \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar100 \
+    --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_134921_53_96_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_134921_53_96_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_141448_27_12_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_141448_27_12_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -53,7 +53,7 @@ python -u main_train.py \
     --attack_succ_threshold 0.9 \
     --use_dynamic_lam \
     --lam 0.1 \
-    --trigger_path 20241026_100911_29_46_trigger_estimation_mocov2_cifar100_ftrojan \
+    --num_clusters 10 \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \

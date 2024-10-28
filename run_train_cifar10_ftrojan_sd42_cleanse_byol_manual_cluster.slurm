@@ -57,7 +57,7 @@ python -u main_train.py \
     \
     --mitigate_epochs 5 \
     --trigger_overlay_option 2 \
-    --note "mitigate 5 eps [trigger=2]" \
+    --note "optimal clusters" \
 
 
 ##Log this job's resource usage stats###

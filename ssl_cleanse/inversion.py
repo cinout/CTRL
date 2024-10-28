@@ -20,8 +20,9 @@ def draw(base, mean, std, mask, delta, mask2=None, delta2=None):
         delta2_norm = torchvision.transforms.functional.normalize(delta2, mean, std)
         total_imgs = base.shape[0]
         half_total = int(total_imgs / 2)
-        img_part1 = img[:half_total]
-        img_part2 = img[half_total:]
+
+        img_part1 = base[:half_total]
+        img_part2 = base[half_total:]
 
         img_part1 = torch.mul(img_part1, 1 - mask) + torch.mul(delta_norm, mask)
         img_part2 = torch.mul(img_part2, 1 - mask2) + torch.mul(delta2_norm, mask2)

@@ -400,7 +400,6 @@ parser.add_argument("--ratio", type=float, default=0.05)
 #     type=int,
 #     default=1000,
 # )
-# TODO: update later
 parser.add_argument(
     "--num_clusters",
     type=int,

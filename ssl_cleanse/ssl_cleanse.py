@@ -159,10 +159,9 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         device
                     )  # target cluster image representation
 
-                    # TODO: update here
-
                     mask_tanh = torch.tanh(mask) / 2 + 0.5  # value range (0, 1)
                     delta_tanh = torch.tanh(delta) / 2 + 0.5  # value range (0, 1)
+
                     X_R = draw(
                         images, args.mean, args.std, mask_tanh, delta_tanh
                     )  # draw trigger mask onto the image
@@ -180,8 +179,28 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     opt.step()
 
                     # loss_asr_list.append(loss_asr.item())
-                    # loss_reg_list.append(loss_reg.item())
+                    loss_reg_list.append(loss_reg.item())
                     loss_list.append(loss.item())
+
+                    if args.trigger_set_number == 2:
+                        mask2_tanh = torch.tanh(mask2) / 2 + 0.5  # value range (0, 1)
+                        delta2_tanh = torch.tanh(delta2) / 2 + 0.5  # value range (0, 1)
+                        X_R = draw(images, args.mean, args.std, mask2_tanh, delta2_tanh)
+                        loss_asr = norm_mse_loss(target_reps, backbone(X_R))
+                        loss_reg = torch.mean(mask_tanh)
+
+                        if args.use_dynamic_lam:
+                            loss = loss_asr + lam * loss_reg
+                        else:
+                            loss = loss_asr + args.lam * loss_reg
+
+                        opt.zero_grad()
+                        loss.backward(retain_graph=True)
+                        opt.step()
+
+                        # loss_asr_list.append(loss_asr.item())
+                        loss_reg_list.append(loss_reg.item())
+                        loss_list.append(loss.item())
 
                 # avg_loss_asr = torch.tensor(loss_asr_list).mean()
                 avg_loss_reg = torch.tensor(loss_reg_list).mean()
@@ -190,11 +209,27 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                 """
                 evaluate
                 """
-                x_trigger = (
-                    draw(x.to(device), args.mean, args.std, mask_tanh, delta_tanh)
-                    .detach()
-                    .to("cpu")
-                )  # apply the learned trigger to all images
+                # apply the learned trigger to all images
+                if args.trigger_set_number == 1:
+                    x_trigger = (
+                        draw(x.to(device), args.mean, args.std, mask_tanh, delta_tanh)
+                        .detach()
+                        .to("cpu")
+                    )
+                elif args.trigger_set_number == 2:
+                    x_trigger = (
+                        draw(
+                            x.to(device),
+                            args.mean,
+                            args.std,
+                            mask_tanh,
+                            delta_tanh,
+                            mask2_tanh,
+                            delta2_tanh,
+                        )
+                        .detach()
+                        .to("cpu")
+                    )
 
                 # shuffle, and pick 1000 images
                 dataloader_eval = DataLoader(
@@ -224,6 +259,9 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         mask_best = mask_tanh
                         delta_best = delta_tanh
                         reg_best = avg_loss_reg
+                        if args.trigger_set_number == 2:
+                            mask2_best = mask2_tanh
+                            delta2_best = delta2_tanh
                     """
                     adjusting lambda
                     """
@@ -255,12 +293,26 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                 else:
                     mask_best = mask_tanh
                     delta_best = delta_tanh
+                    if args.trigger_set_number == 2:
+                        mask2_best = mask2_tanh
+                        delta2_best = delta2_tanh
 
             os.makedirs(args.trigger_path, exist_ok=True)
-            torch.save(
-                {"mask": mask_best, "delta": delta_best},
-                os.path.join(args.trigger_path, f"{target}.pth"),
-            )
+            if args.trigger_set_number == 1:
+                torch.save(
+                    {"mask": mask_best, "delta": delta_best},
+                    os.path.join(args.trigger_path, f"{target}.pth"),
+                )
+            elif args.trigger_set_number == 2:
+                torch.save(
+                    {
+                        "mask": mask_best,
+                        "delta": delta_best,
+                        "mask2": mask2_best,
+                        "delta2": delta2_best,
+                    },
+                    os.path.join(args.trigger_path, f"{target}.pth"),
+                )
 
     return (x_untransformed, y)
 
@@ -303,14 +355,25 @@ def trigger_mitigation(args, backbone, trainset_data):
 
     trigger_masks = []
     trigger_deltas = []
+    if args.trigger_set_number == 2:
+        trigger_masks2 = []
+        trigger_deltas2 = []
+
     for target in range(args.num_clusters):
         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
         trigger = torch.load(trigger_path, map_location=device)
 
         trigger_masks.append(trigger["mask"].detach())
         trigger_deltas.append(trigger["delta"].detach())
+        if args.trigger_set_number == 2:
+            trigger_masks2.append(trigger["mask2"].detach())
+            trigger_deltas2.append(trigger["delta2"].detach())
+
     trigger_masks = torch.cat(trigger_masks, dim=0)
     trigger_deltas = torch.cat(trigger_deltas, dim=0)
+    if args.trigger_set_number == 2:
+        trigger_masks2 = torch.cat(trigger_masks2, dim=0)
+        trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
 
     for ep in range(args.mitigate_epochs):
 
@@ -329,11 +392,9 @@ def trigger_mitigation(args, backbone, trainset_data):
 
             mask = trigger_masks[trigger_index]  # [bs, 1, img_size, img_size]
             delta = trigger_deltas[trigger_index]  # [bs, 3, img_size, img_size]
-
-            # delta_norm = T.functional.normalize(delta, args.mean, args.std)
-            # poison_view = torch.mul(clean_view_3, 1 - mask) + torch.mul(
-            #     delta_norm, mask
-            # )
+            if args.trigger_set_number == 2:
+                mask2 = trigger_masks2[trigger_index]
+                delta2 = trigger_deltas2[trigger_index]
 
             with torch.no_grad():
                 clean_view_1_feature = backbone(clean_view_1)
@@ -342,15 +403,23 @@ def trigger_mitigation(args, backbone, trainset_data):
                 compare_view = backbone_unlearn_trigger(clean_view_2)
             else:
                 if args.trigger_overlay_option == 1:
-                    compare_view = backbone_unlearn_trigger(
-                        draw(clean_view_3, args.mean, args.std, mask, delta)
-                    )
+
+                    if args.trigger_set_number == 1:
+                        compare_view = backbone_unlearn_trigger(
+                            draw(clean_view_3, args.mean, args.std, mask, delta)
+                        )
+                    elif args.trigger_set_number == 2:
+                        if random.random() < 0.5:
+                            compare_view = backbone_unlearn_trigger(
+                                draw(clean_view_3, args.mean, args.std, mask, delta)
+                            )
+                        else:
+                            compare_view = backbone_unlearn_trigger(
+                                draw(clean_view_3, args.mean, args.std, mask2, delta2)
+                            )
+
                 elif args.trigger_overlay_option == 2:
                     trigger_width = random.randint(4, 10)
-
-                    mask = F.interpolate(mask, size=(trigger_width, trigger_width))
-                    delta = T.functional.normalize(delta, args.mean, args.std)
-                    delta = F.interpolate(delta, size=(trigger_width, trigger_width))
 
                     trigger_location_x = random.uniform(0.1, 0.9)
                     trigger_location_y = random.uniform(0.1, 0.9)
@@ -360,6 +429,27 @@ def trigger_mitigation(args, backbone, trainset_data):
                     )
                     location_y = int(
                         (args.image_size - trigger_width) * trigger_location_y
+                    )
+
+                    if args.trigger_set_number == 1:
+                        applied_mask = mask
+                        applied_delta = delta
+                    elif args.trigger_set_number == 2:
+                        if random.random() < 0.5:
+                            applied_mask = mask
+                            applied_delta = delta
+                        else:
+                            applied_mask = mask2
+                            applied_delta = delta2
+
+                    applied_mask = F.interpolate(
+                        applied_mask, size=(trigger_width, trigger_width)
+                    )
+                    applied_delta = T.functional.normalize(
+                        applied_delta, args.mean, args.std
+                    )
+                    applied_delta = F.interpolate(
+                        applied_delta, size=(trigger_width, trigger_width)
                     )
 
                     clean_view_3[
@@ -374,18 +464,14 @@ def trigger_mitigation(args, backbone, trainset_data):
                             location_x : location_x + trigger_width,
                             location_y : location_y + trigger_width,
                         ],
-                        1 - mask,
+                        1 - applied_mask,
                     ) + torch.mul(
-                        delta, mask
+                        applied_delta, applied_mask
                     )
 
                     compare_view = backbone_unlearn_trigger(clean_view_3)
                 elif args.trigger_overlay_option == 3:
                     trigger_width = random.randint(4, 10)
-
-                    mask = F.interpolate(mask, size=(trigger_width, trigger_width))
-                    delta = T.functional.normalize(delta, args.mean, args.std)
-                    delta = F.interpolate(delta, size=(trigger_width, trigger_width))
 
                     trigger_location_x = random.uniform(0.1, 0.9)
                     trigger_location_y = random.uniform(0.1, 0.9)
@@ -397,18 +483,29 @@ def trigger_mitigation(args, backbone, trainset_data):
                         (args.image_size - trigger_width) * trigger_location_y
                     )
 
+                    if args.trigger_set_number == 1:
+                        applied_delta = delta
+                    elif args.trigger_set_number == 2:
+                        if random.random() < 0.5:
+                            applied_delta = delta
+                        else:
+                            applied_delta = delta2
+
+                    applied_delta = T.functional.normalize(
+                        applied_delta, args.mean, args.std
+                    )
+                    applied_delta = F.interpolate(
+                        applied_delta, size=(trigger_width, trigger_width)
+                    )
+
                     clean_view_3[
                         :,
                         :,
                         location_x : location_x + trigger_width,
                         location_y : location_y + trigger_width,
-                    ] = delta
+                    ] = applied_delta
 
                     compare_view = backbone_unlearn_trigger(clean_view_3)
-
-            # loss_1 = norm_mse_loss(clean_view_1_feature, clean_view_2_feature)
-            # loss_2 = norm_mse_loss(clean_view_1_feature, poison_view_feature)
-            # loss_sum = loss_1 + loss_2
 
             loss_sum = norm_mse_loss(clean_view_1_feature, compare_view)
 

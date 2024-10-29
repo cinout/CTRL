@@ -42,7 +42,10 @@ def draw_local(base, mean, std, mask, delta, image_size):
     mask = F.interpolate(mask, size=(trigger_width, trigger_width))
     delta = T.functional.normalize(delta, mean, std)
     delta = F.interpolate(delta, size=(trigger_width, trigger_width))
-    base[
+
+    img = base.clone()
+
+    img[
         :,
         :,
         location_x : location_x + trigger_width,

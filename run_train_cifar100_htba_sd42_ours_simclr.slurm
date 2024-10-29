@@ -4,14 +4,14 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c10_h"
+#SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
 #SBATCH --time=0-06:00:00
 
@@ -30,43 +30,43 @@
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 
+
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method byol \
+    --method simclr \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_121059_34_1_cifar10_htba_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_121059_34_1_cifar10_htba_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_103515_87_3_cifar100_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_103515_87_3_cifar100_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 1 \
+    --num_views 64 \
     \
     --detect_trigger_channels \
     --channel_num 40 \
     \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.010 \
     \
-    --minority_lower_bound 0.001 \
-    --minority_upper_bound 0.035 \
+    --bd_detectors entropy \
+    --normalize_backbone_features none \
+    --in_n_detectors 1 \
     \
-    --bd_detectors frequency_ensemble kdist \
-    --frequency_ensemble_size 1 \
-    --kdist_k 8 \
-    --normalize_backbone_features l2 \
-    --in_n_detectors 2 \
-    \
-    --note "kdist + freq [0.1-3.5p] [channel removal]" \
+    --ideal_case \
+    --note "ideal case" \
+## \
+##    --find_and_ignore_probe_channels \
+##    --ignore_probe_channel_num 30 \
 
 
 ##Log this job's resource usage stats###

@@ -496,10 +496,10 @@ def trigger_mitigation(args, backbone, trainset_data):
 
         trigger_masks1.append(trigger["mask1"].detach())
         trigger_deltas1.append(trigger["delta1"].detach())
-        trigger_regs1.append(trigger["reg1"].detach())
+        trigger_regs1.append(trigger["reg1"])
         trigger_masks2.append(trigger["mask2"].detach())
         trigger_deltas2.append(trigger["delta2"].detach())
-        trigger_regs2.append(trigger["reg2"].detach())
+        trigger_regs2.append(trigger["reg2"])
 
     trigger_masks1 = torch.cat(
         trigger_masks1, dim=0

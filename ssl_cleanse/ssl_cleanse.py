@@ -218,6 +218,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
     # estimate trigger for each cluster
     for target in np.unique(y):  # for each cluster
 
+        print(f"Now estimating triggers for cluster {target}...")
+
         if not os.path.exists(
             os.path.join(args.trigger_path, f"{target}.pth")
         ):  # if trigger is not available yet

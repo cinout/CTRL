@@ -4,34 +4,6 @@ import torch
 import torchvision
 
 
-# def norm_mse_loss(x0, x1):
-#     x0 = F.normalize(x0)
-#     x1 = F.normalize(x1)
-#     return 2 - 2 * (x0 * x1).sum(dim=-1).mean()
-
-
-def draw(base, mean, std, mask, delta, mask2=None, delta2=None):
-    if mask2 is None and delta2 is None:
-        delta_norm = torchvision.transforms.functional.normalize(delta, mean, std)
-        img = torch.mul(base, 1 - mask) + torch.mul(delta_norm, mask)
-        return img
-    else:
-        delta_norm = torchvision.transforms.functional.normalize(delta, mean, std)
-        delta2_norm = torchvision.transforms.functional.normalize(delta2, mean, std)
-        total_imgs = base.shape[0]
-        half_total = int(total_imgs / 2)
-
-        img_part1 = base[:half_total]
-        img_part2 = base[half_total:]
-
-        img_part1 = torch.mul(img_part1, 1 - mask) + torch.mul(delta_norm, mask)
-        img_part2 = torch.mul(img_part2, 1 - mask2) + torch.mul(delta2_norm, mask2)
-
-        img = torch.cat([img_part1, img_part2], dim=0)
-
-        return img
-
-
 class DatasetInit(data.Dataset):
     def __init__(self, train_probe_loader):
 

@@ -363,13 +363,6 @@ parser.add_argument(
     help="distance the k-th neighbor",
 )
 parser.add_argument(
-    "--trigger_set_number",
-    type=int,
-    default=2,
-    choices=[1, 2],
-    help="use either 1 set or 2 sets of triggers for each cluster",
-)  # TODO: remove this option
-parser.add_argument(
     "--use_ssl_cleanse",
     action="store_true",
     help="use the method from ECCV2024 paper: ssl-cleanse",

@@ -1,10 +1,9 @@
 import random
 import torch.nn.functional as F
-from torch.utils import data
 import torch
 import copy
-import torch.nn as nn
 import torchvision.transforms as T
+import torchvision
 from torch.utils.data import DataLoader
 from sklearn.cluster import KMeans
 import torch.optim as optim
@@ -14,20 +13,160 @@ from ssl_cleanse.inversion import (
     DatasetEval,
     DatasetInit,
     dataloader_cluster,
-    draw,
     eval_knn,
     get_data,
     # norm_mse_loss,
 )
-from ssl_cleanse.mitigation import ds_train, get_scheduler
+
+from ssl_cleanse.mitigation import ds_train, get_scheduler, outlier
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def draw_global(base, mean, std, mask, delta):
+    delta_norm = torchvision.transforms.functional.normalize(delta, mean, std)
+    img = torch.mul(base, 1 - mask) + torch.mul(delta_norm, mask)
+    return img
+
+
+def draw_local(base, mean, std, mask, delta, image_size):
+    # trigger_width = random.randint(4, 10)
+    trigger_width = int(image_size * random.uniform(0.05, 0.3))
+
+    trigger_location_x = random.uniform(0.1, 0.9)
+    trigger_location_y = random.uniform(0.1, 0.9)
+
+    location_x = int((image_size - trigger_width) * trigger_location_x)
+    location_y = int((image_size - trigger_width) * trigger_location_y)
+
+    mask = F.interpolate(mask, size=(trigger_width, trigger_width))
+    delta = T.functional.normalize(delta, mean, std)
+    delta = F.interpolate(delta, size=(trigger_width, trigger_width))
+    base[
+        :,
+        :,
+        location_x : location_x + trigger_width,
+        location_y : location_y + trigger_width,
+    ] = torch.mul(
+        base[
+            :,
+            :,
+            location_x : location_x + trigger_width,
+            location_y : location_y + trigger_width,
+        ],
+        1 - mask,
+    ) + torch.mul(
+        delta, mask
+    )
+    return base
 
 
 def norm_mse_loss(x0, x1):
     x0 = F.normalize(x0)
     x1 = F.normalize(x1)
     return 2 - 2 * (x0 * x1).sum(dim=-1).mean()
+
+
+def evaluate_trigger_during_inversion(
+    trigger_type,
+    ep,
+    args,
+    x,
+    rep,
+    y,
+    target,
+    mask_tanh,
+    delta_tanh,
+    backbone,
+    feat_dim,
+    avg_loss,
+    avg_loss_reg,
+    statistics,
+):
+
+    # apply the learned trigger to all images
+    if trigger_type == "local":
+        x_trigger = (
+            draw_local(
+                x.to(device),
+                args.mean,
+                args.std,
+                mask_tanh,
+                delta_tanh,
+                args.image_size,
+            )
+            .detach()
+            .to("cpu")
+        )
+    elif trigger_type == "global":
+        x_trigger = (
+            draw_global(
+                x.to(device),
+                args.mean,
+                args.std,
+                mask_tanh,
+                delta_tanh,
+            )
+            .detach()
+            .to("cpu")
+        )
+
+    # shuffle, and pick 1000 images
+    dataloader_eval = DataLoader(
+        dataset=DatasetEval(x_trigger, 1000),
+        batch_size=100,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True,
+        drop_last=True,
+    )
+
+    # return the percentage of triggered images that are predictd to be the current cluster, aka, attack success rate
+    asr_knn = eval_knn(
+        device,
+        backbone,
+        dataloader_eval,
+        rep,  # ALL clean images' latent representation
+        torch.tensor(y),  # ALL predicted cluster ids
+        target,  # current cluster id
+        feat_dim,
+    )
+
+    print(f"ep: {ep}, asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}")
+
+    if asr_knn > args.attack_succ_threshold and avg_loss_reg < statistics["reg_best"]:
+        statistics["mask_best"] = mask_tanh
+        statistics["delta_best"] = delta_tanh
+        statistics["reg_best"] = avg_loss_reg
+
+    """
+    adjusting lambda
+    """
+    if statistics["lam"] == 0 and asr_knn >= args.attack_succ_threshold:
+        statistics["cost_set_counter"] += 1
+        if statistics["cost_set_counter"] >= args.patience:  # >=5 patience is 5
+            statistics["lam"] = args.lam  # reset to initial value
+            statistics["cost_up_counter"] = 0
+            statistics["cost_down_counter"] = 0
+    else:
+        statistics["cost_set_counter"] = 0
+
+    if asr_knn >= args.attack_succ_threshold:
+        statistics["cost_up_counter"] += 1
+        statistics["cost_down_counter"] = 0
+    else:
+        statistics["cost_up_counter"] = 0
+        statistics["cost_down_counter"] += 1
+
+    if statistics["lam"] != 0 and statistics["cost_up_counter"] >= args.patience:
+        # boost up
+        statistics["cost_up_counter"] = 0
+        statistics["lam"] *= args.lam_multiplier_up
+
+    elif statistics["lam"] != 0 and statistics["cost_down_counter"] >= args.patience:
+        # bring down
+        statistics["cost_down_counter"] = 0
+        statistics["lam"] /= args.lam_multiplier_up
 
 
 def trigger_inversion(args, backbone, poison, feat_dim):
@@ -73,8 +212,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
 
         counts_label = {}  # # of images belonging to cluster i
         for i in range(np.unique(y).shape[0]):
-            mask = y == i
-            counts_label[i] = mask.sum()  # #images belonging to cluster i
+            mask_for_cluster = y == i
+            counts_label[i] = mask_for_cluster.sum()  # #images belonging to cluster i
 
     # estimate trigger for each cluster
     for target in np.unique(y):  # for each cluster
@@ -97,50 +236,49 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             """
             initialize mask and delta
             """
-            mask = torch.arctanh(
+            mask1 = torch.arctanh(
                 (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
             ).to(
                 device
             )  # value range [-1, 1] -> arctanh -> (-inf, inf)
-            delta = torch.arctanh(
+            delta1 = torch.arctanh(
                 (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
             ).to(device)
-            mask_best = torch.tanh(mask) / 2 + 0.5
-            delta_best = torch.tanh(delta) / 2 + 0.5
 
-            if args.trigger_set_number == 2:
-                mask2 = torch.arctanh(
-                    (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
-                ).to(
-                    device
-                )  # value range [-1, 1] -> arctanh -> (-inf, inf)
-                delta2 = torch.arctanh(
-                    (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
-                ).to(device)
-                mask2_best = torch.tanh(mask2) / 2 + 0.5
-                delta2_best = torch.tanh(delta2) / 2 + 0.5
+            mask2 = torch.arctanh(
+                (torch.rand([1, 1, args.image_size, args.image_size]) - 0.5) * 2
+            ).to(
+                device
+            )  # value range [-1, 1] -> arctanh -> (-inf, inf)
+            delta2 = torch.arctanh(
+                (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
+            ).to(device)
 
-            mask.requires_grad = True
-            delta.requires_grad = True
-            if args.trigger_set_number == 2:
-                mask2.requires_grad = True
-                delta2.requires_grad = True
+            mask1.requires_grad = True
+            delta1.requires_grad = True
+            mask2.requires_grad = True
+            delta2.requires_grad = True
 
-            if args.trigger_set_number == 1:
-                opt = optim.Adam([delta, mask], lr=1e-1, betas=(0.5, 0.9))
-            elif args.trigger_set_number == 2:
-                opt = optim.Adam(
-                    [delta, mask, delta2, mask2], lr=1e-1, betas=(0.5, 0.9)
-                )
+            opt = optim.Adam([delta1, mask1, delta2, mask2], lr=1e-1, betas=(0.5, 0.9))
 
-            # TODO: create two sets
-            reg_best = (
-                torch.inf
-            )  # records the current best (smallest) regression loss (constraining the size and magnitude of triggers)
-            lam = 0  # coefficient for two losses
-            cost_set_counter = 0
-            cost_up_counter = 0
-            cost_down_counter = 0
+            trigger_1_statistics = {
+                "reg_best": torch.inf,  # records optimal regression loss
+                "lam": 0,
+                "cost_set_counter": 0,
+                "cost_up_counter": 0,
+                "cost_down_counter": 0,
+                "mask_best": torch.tanh(mask1) / 2 + 0.5,
+                "delta_best": torch.tanh(delta1) / 2 + 0.5,
+            }
+            trigger_2_statistics = {
+                "reg_best": torch.inf,  # records optimal regression loss
+                "lam": 0,
+                "cost_set_counter": 0,
+                "cost_up_counter": 0,
+                "cost_down_counter": 0,
+                "mask_best": torch.tanh(mask2) / 2 + 0.5,
+                "delta_best": torch.tanh(delta2) / 2 + 0.5,
+            }
 
             dataloader_train = dataloader_cluster(args, rep_target, x_other_sample)
 
@@ -148,7 +286,9 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                 """
                 train and learn triggers
                 """
-                loss_asr_list, loss_reg_list, loss_list = [], [], []
+                loss_reg_list_1, loss_list_1 = [], []
+                loss_reg_list_2, loss_list_2 = [], []
+
                 for images, target_reps in dataloader_train:
 
                     images = images.to(device)  # image from another cluster
@@ -156,148 +296,123 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         device
                     )  # target cluster image representation
 
-                    mask_tanh = torch.tanh(mask) / 2 + 0.5  # value range (0, 1)
-                    delta_tanh = torch.tanh(delta) / 2 + 0.5  # value range (0, 1)
+                    """
+                    trigger 1: patch-based (size-based, local)
+                    """
+                    mask1_tanh = torch.tanh(mask1) / 2 + 0.5  # value range (0, 1)
+                    delta1_tanh = torch.tanh(delta1) / 2 + 0.5  # value range (0, 1)
 
-                    X_R = draw(
-                        images, args.mean, args.std, mask_tanh, delta_tanh
-                    )  # draw trigger mask onto the image
+                    X_R = draw_local(
+                        images,
+                        args.mean,
+                        args.std,
+                        mask1_tanh,
+                        delta1_tanh,
+                        args.image_size,
+                    )  # draw trigger mask1 onto the image
 
                     loss_asr = norm_mse_loss(target_reps, backbone(X_R))
-                    loss_reg = torch.mean(mask_tanh * delta_tanh)
+                    loss_reg = torch.mean(mask1_tanh)
 
-                    loss = loss_asr + lam * loss_reg
+                    loss = loss_asr + trigger_1_statistics["lam"] * loss_reg
 
                     opt.zero_grad()
                     loss.backward(retain_graph=True)
                     opt.step()
 
                     # loss_asr_list.append(loss_asr.item())
-                    loss_reg_list.append(loss_reg.item())
-                    loss_list.append(loss.item())
+                    loss_reg_list_1.append(loss_reg.item())
+                    loss_list_1.append(loss.item())
 
-                    if args.trigger_set_number == 2:
-                        mask2_tanh = torch.tanh(mask2) / 2 + 0.5  # value range (0, 1)
-                        delta2_tanh = torch.tanh(delta2) / 2 + 0.5  # value range (0, 1)
-                        X_R = draw(images, args.mean, args.std, mask2_tanh, delta2_tanh)
-                        loss_asr = norm_mse_loss(target_reps, backbone(X_R))
-                        loss_reg = torch.mean(mask2_tanh)
+                    """
+                    trigger 2: magnitude-based (global)
+                    """
 
-                        loss = loss_asr + lam * loss_reg
+                    mask2_tanh = torch.tanh(mask2) / 2 + 0.5  # value range (0, 1)
+                    delta2_tanh = torch.tanh(delta2) / 2 + 0.5  # value range (0, 1)
+                    X_R = draw_global(
+                        images, args.mean, args.std, mask2_tanh, delta2_tanh
+                    )
+                    loss_asr = norm_mse_loss(target_reps, backbone(X_R))
+                    loss_reg = torch.mean(mask2_tanh * delta2_tanh)
 
-                        opt.zero_grad()
-                        loss.backward(retain_graph=True)
-                        opt.step()
+                    loss = loss_asr + trigger_2_statistics["lam"] * loss_reg
 
-                        # loss_asr_list.append(loss_asr.item())
-                        loss_reg_list.append(loss_reg.item())
-                        loss_list.append(loss.item())
+                    opt.zero_grad()
+                    loss.backward(retain_graph=True)
+                    opt.step()
+
+                    # loss_asr_list.append(loss_asr.item())
+                    loss_reg_list_2.append(loss_reg.item())
+                    loss_list_2.append(loss.item())
 
                 # avg_loss_asr = torch.tensor(loss_asr_list).mean()
-                avg_loss_reg = torch.tensor(loss_reg_list).mean()
-                avg_loss = torch.tensor(loss_list).mean()
+                avg_loss_reg_1 = torch.tensor(loss_reg_list_1).mean()
+                avg_loss_1 = torch.tensor(loss_list_1).mean()
+                avg_loss_reg_2 = torch.tensor(loss_reg_list_2).mean()
+                avg_loss_2 = torch.tensor(loss_list_2).mean()
 
                 """
-                evaluate
+                evaluate trigger 1
                 """
-                # apply the learned trigger to all images
-                if args.trigger_set_number == 1:
-                    x_trigger = (
-                        draw(x.to(device), args.mean, args.std, mask_tanh, delta_tanh)
-                        .detach()
-                        .to("cpu")
-                    )
-                elif args.trigger_set_number == 2:
-                    x_trigger = (
-                        draw(
-                            x.to(device),
-                            args.mean,
-                            args.std,
-                            mask_tanh,
-                            delta_tanh,
-                            mask2_tanh,
-                            delta2_tanh,
-                        )
-                        .detach()
-                        .to("cpu")
-                    )
 
-                # shuffle, and pick 1000 images
-                dataloader_eval = DataLoader(
-                    dataset=DatasetEval(x_trigger, 1000),
-                    batch_size=100,
-                    shuffle=True,
-                    num_workers=args.num_workers,
-                    pin_memory=True,
-                    drop_last=True,
-                )
-
-                # return the percentage of triggered images that are predictd to be the current cluster, aka, attack success rate
-                asr_knn = eval_knn(
-                    device,
+                evaluate_trigger_during_inversion(
+                    "local",
+                    ep,
+                    args,
+                    x,
+                    rep,
+                    y,
+                    target,
+                    mask1_tanh,
+                    delta1_tanh,
                     backbone,
-                    dataloader_eval,
-                    rep,  # ALL clean images' latent representation
-                    torch.tensor(y),  # ALL predicted cluster ids
-                    target,  # current cluster id
                     feat_dim,
+                    avg_loss_1,
+                    avg_loss_reg_1,
+                    trigger_1_statistics,
                 )
 
-                print(f"ep: {ep}, asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}")
-
-                # TODO: creatte two sets
-                if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
-                    mask_best = mask_tanh
-                    delta_best = delta_tanh
-                    reg_best = avg_loss_reg
-                    if args.trigger_set_number == 2:
-                        mask2_best = mask2_tanh
-                        delta2_best = delta2_tanh
                 """
-                adjusting lambda
+                evaluate trigger 2
                 """
-                if lam == 0 and asr_knn >= args.attack_succ_threshold:
-                    cost_set_counter += 1
-                    if cost_set_counter >= args.patience:  # >=5 patience is 5
-                        lam = args.lam  # reset lambda to initial value
-                        cost_up_counter = 0
-                        cost_down_counter = 0
-                else:
-                    cost_set_counter = 0
-
-                if asr_knn >= args.attack_succ_threshold:
-                    cost_up_counter += 1
-                    cost_down_counter = 0
-                else:
-                    cost_up_counter = 0
-                    cost_down_counter += 1
-
-                if lam != 0 and cost_up_counter >= args.patience:
-                    # boost up lambda
-                    cost_up_counter = 0
-                    lam *= args.lam_multiplier_up
-
-                elif lam != 0 and cost_down_counter >= args.patience:
-                    # bring down lambda
-                    cost_down_counter = 0
-                    lam /= args.lam_multiplier_up
+                evaluate_trigger_during_inversion(
+                    "global",
+                    ep,
+                    args,
+                    x,
+                    rep,
+                    y,
+                    target,
+                    mask2_tanh,
+                    delta2_tanh,
+                    backbone,
+                    feat_dim,
+                    avg_loss_2,
+                    avg_loss_reg_2,
+                    trigger_2_statistics,
+                )
 
             os.makedirs(args.trigger_path, exist_ok=True)
-            if args.trigger_set_number == 1:
-                torch.save(
-                    {"mask": mask_best, "delta": delta_best},
-                    os.path.join(args.trigger_path, f"{target}.pth"),
-                )
-            elif args.trigger_set_number == 2:
-                torch.save(
-                    {
-                        "mask": mask_best,
-                        "delta": delta_best,
-                        "mask2": mask2_best,
-                        "delta2": delta2_best,
-                    },
-                    os.path.join(args.trigger_path, f"{target}.pth"),
-                )
+            torch.save(
+                {
+                    "mask1": trigger_1_statistics["mask_best"],
+                    "delta1": trigger_1_statistics["delta_best"],
+                    "reg1": (
+                        trigger_1_statistics["reg_best"]
+                        if trigger_1_statistics["reg_best"] != torch.inf
+                        else 1
+                    ),
+                    "mask2": trigger_2_statistics["mask_best"],
+                    "delta2": trigger_2_statistics["delta_best"],
+                    "reg2": (
+                        trigger_2_statistics["reg_best"]
+                        if trigger_2_statistics["reg_best"] != torch.inf
+                        else 1
+                    ),
+                },
+                os.path.join(args.trigger_path, f"{target}.pth"),
+            )
 
     return (x_untransformed, y)
 
@@ -338,35 +453,43 @@ def trigger_mitigation(args, backbone, trainset_data):
         drop_last=True,
     )
 
-    trigger_masks = []
-    trigger_deltas = []
-    if args.trigger_set_number == 2:
-        trigger_masks2 = []
-        trigger_deltas2 = []
+    trigger_masks1, trigger_deltas1, trigger_regs1 = [], [], []
+    trigger_masks2, trigger_deltas2, trigger_regs2 = [], [], []
 
     for target in range(args.num_clusters):
         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
         trigger = torch.load(trigger_path, map_location=device)
 
-        trigger_masks.append(trigger["mask"].detach())
-        trigger_deltas.append(trigger["delta"].detach())
-        if args.trigger_set_number == 2:
-            trigger_masks2.append(trigger["mask2"].detach())
-            trigger_deltas2.append(trigger["delta2"].detach())
+        trigger_masks1.append(trigger["mask1"].detach())
+        trigger_deltas1.append(trigger["delta1"].detach())
+        trigger_regs1.append(trigger["reg1"].detach())
+        trigger_masks2.append(trigger["mask2"].detach())
+        trigger_deltas2.append(trigger["delta2"].detach())
+        trigger_regs2.append(trigger["reg2"].detach())
 
-    trigger_masks = torch.cat(trigger_masks, dim=0)
-    trigger_deltas = torch.cat(trigger_deltas, dim=0)
-    if args.trigger_set_number == 2:
-        trigger_masks2 = torch.cat(trigger_masks2, dim=0)
-        trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
+    trigger_masks1 = torch.cat(
+        trigger_masks1, dim=0
+    )  # [#clusters, 1, imgsize, imgsize]
+    trigger_deltas1 = torch.cat(
+        trigger_deltas1, dim=0
+    )  # [#clusters, 3, imgsize, imgsize]
+    trigger_masks2 = torch.cat(trigger_masks2, dim=0)
+    trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
+
+    trigger_regs1 = torch.stack(trigger_regs1, dim=0)  # [#clusters,]
+    trigger_regs2 = torch.stack(trigger_regs2, dim=0)
+    trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
+    trigger2_top_indices = outlier(trigger_regs2)  # global
 
     for ep in range(args.mitigate_epochs):
 
-        for clean_view_1, clean_view_2, clean_view_3, trigger_index in dataloader:
+        for clean_view_1, clean_view_2, cluster_ids in dataloader:
             clean_view_1 = clean_view_1.to(device)  # [bs, 3, img_size, img_size]
             clean_view_2 = clean_view_2.to(device)  # [bs, 3, img_size, img_size]
-            clean_view_3 = clean_view_3.to(device)  # [bs, 3, img_size, img_size]
-            trigger_index = trigger_index.to(device)  # [bs]
+            # clean_view_3 = clean_view_3.to(device)  # [bs, 3, img_size, img_size]
+            cluster_ids = cluster_ids.to(
+                device
+            )  # [bs], the cluster id of current image
 
             if lr_warmup < 500:
                 lr_scale = (lr_warmup + 1) / 500
@@ -375,127 +498,65 @@ def trigger_mitigation(args, backbone, trainset_data):
                 lr_warmup += 1
             optimizer.zero_grad()
 
-            mask = trigger_masks[trigger_index]  # [bs, 1, img_size, img_size]
-            delta = trigger_deltas[trigger_index]  # [bs, 3, img_size, img_size]
-            if args.trigger_set_number == 2:
-                mask2 = trigger_masks2[trigger_index]
-                delta2 = trigger_deltas2[trigger_index]
-
             with torch.no_grad():
                 clean_view_1_feature = backbone(clean_view_1)
 
-            if random.random() < 0.5:
-                compare_view = backbone_unlearn_trigger(clean_view_2)
-            else:
-                if args.trigger_overlay_option == 1:
-                    # TODO: change to if global trigger
+            compare_views = []
+            for idx, view2 in enumerate(clean_view_2):
+                # view2.shape: [3, img_size, img_size]
+                view2 = view2.unsqueeze(0)  # [1, 3, img_size, img_size]
 
-                    if args.trigger_set_number == 1:
-                        compare_view = backbone_unlearn_trigger(
-                            draw(clean_view_3, args.mean, args.std, mask, delta)
+                use_clean_view = random.random() < 0.5
+
+                if use_clean_view:
+                    """
+                    # no trigger added
+                    """
+                    compare_views.append(backbone_unlearn_trigger(view2))
+                else:
+                    """
+                    # let's add trigger
+                    """
+
+                    use_local_trigger = random.random() < 0.5
+                    cid = cluster_ids[idx]  # cluster id of the image
+
+                    if use_local_trigger:
+                        """
+                        # ADD LOCAL TRIGGER
+                        """
+                        trigger_index = random.choice(
+                            [index for index in trigger1_top_indices if index != cid]
                         )
-                    elif args.trigger_set_number == 2:
-                        if random.random() < 0.5:
-                            compare_view = backbone_unlearn_trigger(
-                                draw(clean_view_3, args.mean, args.std, mask, delta)
-                            )
-                        else:
-                            compare_view = backbone_unlearn_trigger(
-                                draw(clean_view_3, args.mean, args.std, mask2, delta2)
-                            )
+                        mask = trigger_masks1[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 1, imgsize, imgsize]
+                        delta = trigger_deltas1[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 3, imgsize, imgsize]
+                        new_view = draw_local(
+                            view2, args.mean, args.std, mask, delta, args.image_size
+                        )
+                    else:
+                        """
+                        # ADD GLOBAL TRIGGER
+                        """
+                        trigger_index = random.choice(
+                            [index for index in trigger2_top_indices if index != cid]
+                        )
+                        mask = trigger_masks2[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 1, imgsize, imgsize]
+                        delta = trigger_deltas2[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 3, imgsize, imgsize]
+                        new_view = draw_global(view2, args.mean, args.std, mask, delta)
 
-                elif args.trigger_overlay_option == 2:
-                    # TODO: change to if local trigger
+                    compare_views.append(backbone_unlearn_trigger(new_view))
 
-                    trigger_width = random.randint(4, 10)
+            compare_views = torch.cat(compare_views, dim=0)
 
-                    trigger_location_x = random.uniform(0.1, 0.9)
-                    trigger_location_y = random.uniform(0.1, 0.9)
-
-                    location_x = int(
-                        (args.image_size - trigger_width) * trigger_location_x
-                    )
-                    location_y = int(
-                        (args.image_size - trigger_width) * trigger_location_y
-                    )
-
-                    if args.trigger_set_number == 1:
-                        applied_mask = mask
-                        applied_delta = delta
-                    elif args.trigger_set_number == 2:
-                        if random.random() < 0.5:
-                            applied_mask = mask
-                            applied_delta = delta
-                        else:
-                            applied_mask = mask2
-                            applied_delta = delta2
-
-                    applied_mask = F.interpolate(
-                        applied_mask, size=(trigger_width, trigger_width)
-                    )
-                    applied_delta = T.functional.normalize(
-                        applied_delta, args.mean, args.std
-                    )
-                    applied_delta = F.interpolate(
-                        applied_delta, size=(trigger_width, trigger_width)
-                    )
-
-                    clean_view_3[
-                        :,
-                        :,
-                        location_x : location_x + trigger_width,
-                        location_y : location_y + trigger_width,
-                    ] = torch.mul(
-                        clean_view_3[
-                            :,
-                            :,
-                            location_x : location_x + trigger_width,
-                            location_y : location_y + trigger_width,
-                        ],
-                        1 - applied_mask,
-                    ) + torch.mul(
-                        applied_delta, applied_mask
-                    )
-
-                    compare_view = backbone_unlearn_trigger(clean_view_3)
-                # elif args.trigger_overlay_option == 3:
-                #     trigger_width = random.randint(4, 10)
-
-                #     trigger_location_x = random.uniform(0.1, 0.9)
-                #     trigger_location_y = random.uniform(0.1, 0.9)
-
-                #     location_x = int(
-                #         (args.image_size - trigger_width) * trigger_location_x
-                #     )
-                #     location_y = int(
-                #         (args.image_size - trigger_width) * trigger_location_y
-                #     )
-
-                #     if args.trigger_set_number == 1:
-                #         applied_delta = delta
-                #     elif args.trigger_set_number == 2:
-                #         if random.random() < 0.5:
-                #             applied_delta = delta
-                #         else:
-                #             applied_delta = delta2
-
-                #     applied_delta = T.functional.normalize(
-                #         applied_delta, args.mean, args.std
-                #     )
-                #     applied_delta = F.interpolate(
-                #         applied_delta, size=(trigger_width, trigger_width)
-                #     )
-
-                #     clean_view_3[
-                #         :,
-                #         :,
-                #         location_x : location_x + trigger_width,
-                #         location_y : location_y + trigger_width,
-                #     ] = applied_delta
-
-                #     compare_view = backbone_unlearn_trigger(clean_view_3)
-
-            loss_sum = norm_mse_loss(clean_view_1_feature, compare_view)
+            loss_sum = norm_mse_loss(clean_view_1_feature, compare_views)
 
             loss_sum.backward()
 

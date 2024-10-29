@@ -89,18 +89,31 @@ def evaluate_trigger_during_inversion(
 
     # apply the learned trigger to all images
     if trigger_type == "local":
-        x_trigger = (
-            draw_local(
-                x.to(device),
-                args.mean,
-                args.std,
-                mask_tanh,
-                delta_tanh,
-                args.image_size,
+        if args.draw_local_trigger_by == "local":
+            x_trigger = (
+                draw_local(
+                    x.to(device),
+                    args.mean,
+                    args.std,
+                    mask_tanh,
+                    delta_tanh,
+                    args.image_size,
+                )
+                .detach()
+                .to("cpu")
             )
-            .detach()
-            .to("cpu")
-        )
+        elif args.draw_local_trigger_by == "global":
+            x_trigger = (
+                draw_global(
+                    x.to(device),
+                    args.mean,
+                    args.std,
+                    mask_tanh,
+                    delta_tanh,
+                )
+                .detach()
+                .to("cpu")
+            )
     elif trigger_type == "global":
         x_trigger = (
             draw_global(
@@ -314,14 +327,23 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     mask1_tanh = torch.tanh(mask1) / 2 + 0.5  # value range (0, 1)
                     delta1_tanh = torch.tanh(delta1) / 2 + 0.5  # value range (0, 1)
 
-                    X_R = draw_local(
-                        images,
-                        args.mean,
-                        args.std,
-                        mask1_tanh,
-                        delta1_tanh,
-                        args.image_size,
-                    )  # draw trigger mask1 onto the image
+                    if args.draw_local_trigger_by == "local":
+                        X_R = draw_local(
+                            images,
+                            args.mean,
+                            args.std,
+                            mask1_tanh,
+                            delta1_tanh,
+                            args.image_size,
+                        )  # draw trigger mask1 onto the image
+                    elif args.draw_local_trigger_by == "global":
+                        X_R = draw_global(
+                            images,
+                            args.mean,
+                            args.std,
+                            mask1_tanh,
+                            delta1_tanh,
+                        )  # draw trigger mask1 onto the image
 
                     loss_asr = norm_mse_loss(target_reps, backbone(X_R))
                     loss_reg = torch.mean(mask1_tanh)
@@ -546,9 +568,16 @@ def trigger_mitigation(args, backbone, trainset_data):
                         delta = trigger_deltas1[trigger_index].unsqueeze(
                             0
                         )  # [1, 3, imgsize, imgsize]
-                        new_view = draw_local(
-                            view2, args.mean, args.std, mask, delta, args.image_size
-                        )
+
+                        if args.draw_local_trigger_by == "local":
+
+                            new_view = draw_local(
+                                view2, args.mean, args.std, mask, delta, args.image_size
+                            )
+                        elif args.draw_local_trigger_by == "global":
+                            new_view = draw_global(
+                                view2, args.mean, args.std, mask, delta
+                            )
                     else:
                         """
                         # ADD GLOBAL TRIGGER

@@ -403,6 +403,9 @@ parser.add_argument(
     default=500,
 )  # TODO: update this option
 parser.add_argument(
+    "--draw_local_trigger_by", type=str, choices=["global", "local"], default="local"
+)
+parser.add_argument(
     "--drop",
     type=int,
     nargs="*",

@@ -55,9 +55,9 @@ python -u main_train.py \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
     --num_clusters 100 \
-    \
     --mitigate_epochs 5 \
-    --note "closets [mitigate 5 epochs]" \
+    --draw_local_trigger_by global \
+    --note "closest, draw_local_by_global [mitigate 5 epochs]" \
 
 
 ##Log this job's resource usage stats###

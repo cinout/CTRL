@@ -135,7 +135,14 @@ def evaluate_trigger_during_inversion(
         feat_dim,
     )
 
-    print(f"ep: {ep}, asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}")
+    if trigger_type == "local":
+        print(
+            f"ep: {ep}, [trigger 1 local], asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}, avg_loss_reg: {avg_loss_reg:.3f}"
+        )
+    elif trigger_type == "global":
+        print(
+            f"ep: {ep}, [trigger 2 global], asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}, avg_loss_reg: {avg_loss_reg:.3f}"
+        )
 
     if asr_knn > args.attack_succ_threshold and avg_loss_reg < statistics["reg_best"]:
         statistics["mask_best"] = mask_tanh

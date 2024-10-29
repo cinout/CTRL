@@ -356,20 +356,19 @@ parser.add_argument(
 )
 
 # KDistance
-# TODO: update slurm
-parser.add_argument(
-    "--trigger_set_number",
-    type=int,
-    default=1,
-    choices=[1, 2],
-    help="use either 1 set or 2 sets of triggers for each cluster",
-)
 parser.add_argument(
     "--kdist_k",
     type=int,
     default=8,
     help="distance the k-th neighbor",
 )
+parser.add_argument(
+    "--trigger_set_number",
+    type=int,
+    default=2,
+    choices=[1, 2],
+    help="use either 1 set or 2 sets of triggers for each cluster",
+)  # TODO: remove this option
 parser.add_argument(
     "--use_ssl_cleanse",
     action="store_true",
@@ -384,13 +383,8 @@ parser.add_argument(
 parser.add_argument(
     "--lam",
     type=float,
-    default=0.01,
+    default=0.1,
     help="",
-)
-parser.add_argument(
-    "--use_dynamic_lam",
-    action="store_true",
-    help="use dynamic lam",
 )
 parser.add_argument("--patience", type=int, default=5)
 parser.add_argument("--lam_multiplier_up", type=float, default=1.5)
@@ -414,7 +408,7 @@ parser.add_argument(
     "--mitigate_epochs",
     type=int,
     default=500,
-)
+)  # TODO: update this option
 parser.add_argument(
     "--drop",
     type=int,
@@ -449,9 +443,9 @@ parser.add_argument("--crop_r1", default=(4 / 3), help="crop ratio to")
 parser.add_argument("--hf_p", default=0.5, help="horizontal flip probability")
 parser.add_argument("--trigger_width", type=int, default=6)
 parser.add_argument("--trigger_location", type=float, default=0.9)
-parser.add_argument("--one_image_path", type=str, required=False, default=None)
-parser.add_argument("--one_image_paths", type=str, nargs="*", default=None)
-parser.add_argument("--trigger_overlay_option", type=int, choices=[1, 2, 3], default=1)
+# parser.add_argument(
+#     "--trigger_overlay_option", type=int, choices=[1, 2, 3], default=1
+# )
 # parser.add_argument("--trigger_width", type=int, default=6)
 # parser.add_argument("--trigger_location", type=float, default=0.9)
 

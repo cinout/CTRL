@@ -50,14 +50,11 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
-    --attack_succ_threshold 0.9 \
-    --use_dynamic_lam \
-    --lam 0.1 \
+    --attack_succ_threshold 0.99 \
     --num_clusters 10 \
     \
     --mitigate_epochs 5 \
-    --trigger_overlay_option 2 \
-    --note "optimal clusters" \
+    --note "closets [mitigate 5 epochs]" \
 
 
 ##Log this job's resource usage stats###

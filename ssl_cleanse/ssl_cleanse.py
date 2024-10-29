@@ -105,6 +105,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
             delta = torch.arctanh(
                 (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
             ).to(device)
+            mask_best = torch.tanh(mask) / 2 + 0.5
+            delta_best = torch.tanh(delta) / 2 + 0.5
 
             if args.trigger_set_number == 2:
                 mask2 = torch.arctanh(
@@ -115,13 +117,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                 delta2 = torch.arctanh(
                     (torch.rand([1, 3, args.image_size, args.image_size]) - 0.5) * 2
                 ).to(device)
-
-            if args.use_dynamic_lam:
-                mask_best = torch.tanh(mask) / 2 + 0.5
-                delta_best = torch.tanh(delta) / 2 + 0.5
-                if args.trigger_set_number == 2:
-                    mask2_best = torch.tanh(mask2) / 2 + 0.5
-                    delta2_best = torch.tanh(delta2) / 2 + 0.5
+                mask2_best = torch.tanh(mask2) / 2 + 0.5
+                delta2_best = torch.tanh(delta2) / 2 + 0.5
 
             mask.requires_grad = True
             delta.requires_grad = True
@@ -136,14 +133,14 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     [delta, mask, delta2, mask2], lr=1e-1, betas=(0.5, 0.9)
                 )
 
-            if args.use_dynamic_lam:
-                reg_best = (
-                    torch.inf
-                )  # records the current best (smallest) regression loss (constraining the size and magnitude of triggers)
-                lam = 0  # coefficient for two losses
-                cost_set_counter = 0
-                cost_up_counter = 0
-                cost_down_counter = 0
+            # TODO: create two sets
+            reg_best = (
+                torch.inf
+            )  # records the current best (smallest) regression loss (constraining the size and magnitude of triggers)
+            lam = 0  # coefficient for two losses
+            cost_set_counter = 0
+            cost_up_counter = 0
+            cost_down_counter = 0
 
             dataloader_train = dataloader_cluster(args, rep_target, x_other_sample)
 
@@ -169,10 +166,7 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                     loss_asr = norm_mse_loss(target_reps, backbone(X_R))
                     loss_reg = torch.mean(mask_tanh * delta_tanh)
 
-                    if args.use_dynamic_lam:
-                        loss = loss_asr + lam * loss_reg
-                    else:
-                        loss = loss_asr + args.lam * loss_reg
+                    loss = loss_asr + lam * loss_reg
 
                     opt.zero_grad()
                     loss.backward(retain_graph=True)
@@ -187,12 +181,9 @@ def trigger_inversion(args, backbone, poison, feat_dim):
                         delta2_tanh = torch.tanh(delta2) / 2 + 0.5  # value range (0, 1)
                         X_R = draw(images, args.mean, args.std, mask2_tanh, delta2_tanh)
                         loss_asr = norm_mse_loss(target_reps, backbone(X_R))
-                        loss_reg = torch.mean(mask_tanh)
+                        loss_reg = torch.mean(mask2_tanh)
 
-                        if args.use_dynamic_lam:
-                            loss = loss_asr + lam * loss_reg
-                        else:
-                            loss = loss_asr + args.lam * loss_reg
+                        loss = loss_asr + lam * loss_reg
 
                         opt.zero_grad()
                         loss.backward(retain_graph=True)
@@ -254,48 +245,42 @@ def trigger_inversion(args, backbone, poison, feat_dim):
 
                 print(f"ep: {ep}, asr_knn: {asr_knn:.3f}, avg_loss: {avg_loss:.3f}")
 
-                if args.use_dynamic_lam:
-                    if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
-                        mask_best = mask_tanh
-                        delta_best = delta_tanh
-                        reg_best = avg_loss_reg
-                        if args.trigger_set_number == 2:
-                            mask2_best = mask2_tanh
-                            delta2_best = delta2_tanh
-                    """
-                    adjusting lambda
-                    """
-                    if lam == 0 and asr_knn >= args.attack_succ_threshold:
-                        cost_set_counter += 1
-                        if cost_set_counter >= args.patience:  # >=5 patience is 5
-                            lam = args.lam  # reset lambda to initial value
-                            cost_up_counter = 0
-                            cost_down_counter = 0
-                    else:
-                        cost_set_counter = 0
-
-                    if asr_knn >= args.attack_succ_threshold:
-                        cost_up_counter += 1
-                        cost_down_counter = 0
-                    else:
-                        cost_up_counter = 0
-                        cost_down_counter += 1
-
-                    if lam != 0 and cost_up_counter >= args.patience:
-                        # boost up lambda
-                        cost_up_counter = 0
-                        lam *= args.lam_multiplier_up
-
-                    elif lam != 0 and cost_down_counter >= args.patience:
-                        # bring down lambda
-                        cost_down_counter = 0
-                        lam /= args.lam_multiplier_up
-                else:
+                # TODO: creatte two sets
+                if asr_knn > args.attack_succ_threshold and avg_loss_reg < reg_best:
                     mask_best = mask_tanh
                     delta_best = delta_tanh
+                    reg_best = avg_loss_reg
                     if args.trigger_set_number == 2:
                         mask2_best = mask2_tanh
                         delta2_best = delta2_tanh
+                """
+                adjusting lambda
+                """
+                if lam == 0 and asr_knn >= args.attack_succ_threshold:
+                    cost_set_counter += 1
+                    if cost_set_counter >= args.patience:  # >=5 patience is 5
+                        lam = args.lam  # reset lambda to initial value
+                        cost_up_counter = 0
+                        cost_down_counter = 0
+                else:
+                    cost_set_counter = 0
+
+                if asr_knn >= args.attack_succ_threshold:
+                    cost_up_counter += 1
+                    cost_down_counter = 0
+                else:
+                    cost_up_counter = 0
+                    cost_down_counter += 1
+
+                if lam != 0 and cost_up_counter >= args.patience:
+                    # boost up lambda
+                    cost_up_counter = 0
+                    lam *= args.lam_multiplier_up
+
+                elif lam != 0 and cost_down_counter >= args.patience:
+                    # bring down lambda
+                    cost_down_counter = 0
+                    lam /= args.lam_multiplier_up
 
             os.makedirs(args.trigger_path, exist_ok=True)
             if args.trigger_set_number == 1:
@@ -403,6 +388,7 @@ def trigger_mitigation(args, backbone, trainset_data):
                 compare_view = backbone_unlearn_trigger(clean_view_2)
             else:
                 if args.trigger_overlay_option == 1:
+                    # TODO: change to if global trigger
 
                     if args.trigger_set_number == 1:
                         compare_view = backbone_unlearn_trigger(
@@ -419,6 +405,8 @@ def trigger_mitigation(args, backbone, trainset_data):
                             )
 
                 elif args.trigger_overlay_option == 2:
+                    # TODO: change to if local trigger
+
                     trigger_width = random.randint(4, 10)
 
                     trigger_location_x = random.uniform(0.1, 0.9)
@@ -470,42 +458,42 @@ def trigger_mitigation(args, backbone, trainset_data):
                     )
 
                     compare_view = backbone_unlearn_trigger(clean_view_3)
-                elif args.trigger_overlay_option == 3:
-                    trigger_width = random.randint(4, 10)
+                # elif args.trigger_overlay_option == 3:
+                #     trigger_width = random.randint(4, 10)
 
-                    trigger_location_x = random.uniform(0.1, 0.9)
-                    trigger_location_y = random.uniform(0.1, 0.9)
+                #     trigger_location_x = random.uniform(0.1, 0.9)
+                #     trigger_location_y = random.uniform(0.1, 0.9)
 
-                    location_x = int(
-                        (args.image_size - trigger_width) * trigger_location_x
-                    )
-                    location_y = int(
-                        (args.image_size - trigger_width) * trigger_location_y
-                    )
+                #     location_x = int(
+                #         (args.image_size - trigger_width) * trigger_location_x
+                #     )
+                #     location_y = int(
+                #         (args.image_size - trigger_width) * trigger_location_y
+                #     )
 
-                    if args.trigger_set_number == 1:
-                        applied_delta = delta
-                    elif args.trigger_set_number == 2:
-                        if random.random() < 0.5:
-                            applied_delta = delta
-                        else:
-                            applied_delta = delta2
+                #     if args.trigger_set_number == 1:
+                #         applied_delta = delta
+                #     elif args.trigger_set_number == 2:
+                #         if random.random() < 0.5:
+                #             applied_delta = delta
+                #         else:
+                #             applied_delta = delta2
 
-                    applied_delta = T.functional.normalize(
-                        applied_delta, args.mean, args.std
-                    )
-                    applied_delta = F.interpolate(
-                        applied_delta, size=(trigger_width, trigger_width)
-                    )
+                #     applied_delta = T.functional.normalize(
+                #         applied_delta, args.mean, args.std
+                #     )
+                #     applied_delta = F.interpolate(
+                #         applied_delta, size=(trigger_width, trigger_width)
+                #     )
 
-                    clean_view_3[
-                        :,
-                        :,
-                        location_x : location_x + trigger_width,
-                        location_y : location_y + trigger_width,
-                    ] = applied_delta
+                #     clean_view_3[
+                #         :,
+                #         :,
+                #         location_x : location_x + trigger_width,
+                #         location_y : location_y + trigger_width,
+                #     ] = applied_delta
 
-                    compare_view = backbone_unlearn_trigger(clean_view_3)
+                #     compare_view = backbone_unlearn_trigger(clean_view_3)
 
             loss_sum = norm_mse_loss(clean_view_1_feature, compare_view)
 

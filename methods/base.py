@@ -1503,6 +1503,9 @@ class CLTrainer:
                 trained_linear,
                 poison.ss_transform,
             )
+            print(
+                f"[IDEAL CASE] [CLEAN VAL SET] predicted trigger channels are: {clean_val_contributing_indices}"
+            )
             poi_val_contributing_indices = find_trigger_channels(
                 self.args,
                 poison.test_pos_loader,  # poisoned training set
@@ -1512,6 +1515,9 @@ class CLTrainer:
                 projector,
                 trained_linear,
                 poison.ss_transform,
+            )
+            print(
+                f"[IDEAL CASE] [POISON VAL SET] predicted trigger channels are: {poi_val_contributing_indices}"
             )
             ############# KNN
             clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
@@ -1652,8 +1658,8 @@ class CLTrainer:
         # feature_bank: [dim, total num]
         feature_bank = torch.cat(feature_bank, dim=0).t().contiguous()
 
-        if args.detect_trigger_channels and args.replacement_value == "ref_mean":
-            feature_bank_mean = torch.mean(feature_bank, dim=1)  # shape: [D, ]
+        # if args.detect_trigger_channels and args.replacement_value == "ref_mean":
+        #     feature_bank_mean = torch.mean(feature_bank, dim=1)  # shape: [D, ]
 
         # feature_labels: [total num]
         feature_labels = (

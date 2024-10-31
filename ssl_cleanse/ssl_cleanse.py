@@ -546,7 +546,7 @@ def trigger_mitigation(args, backbone, trainset_data):
                     """
                     # no trigger added
                     """
-                    compare_views.append(backbone_unlearn_trigger(view2))
+                    compare_views.append(view2)
                 else:
                     """
                     # let's add trigger
@@ -593,11 +593,13 @@ def trigger_mitigation(args, backbone, trainset_data):
                         )  # [1, 3, imgsize, imgsize]
                         new_view = draw_global(view2, args.mean, args.std, mask, delta)
 
-                    compare_views.append(backbone_unlearn_trigger(new_view))
+                    compare_views.append(new_view)
 
             compare_views = torch.cat(compare_views, dim=0)
 
-            loss_sum = norm_mse_loss(clean_view_1_feature, compare_views)
+            loss_sum = norm_mse_loss(
+                clean_view_1_feature, backbone_unlearn_trigger(compare_views)
+            )
 
             loss_sum.backward()
 

@@ -53,7 +53,7 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
-    --trigger_path "" \
+    --trigger_path "20241029_222841_6_43_trigger_estimation_byol_imagenet100_ftrojan" \
     --num_clusters 100 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by local \

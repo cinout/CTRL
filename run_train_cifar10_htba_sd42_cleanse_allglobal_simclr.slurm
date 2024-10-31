@@ -53,7 +53,7 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
-    --trigger_path "" \
+    --trigger_path "20241030_102134_99_90_trigger_estimation_simclr_cifar10_htba" \
     --num_clusters 10 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by global \

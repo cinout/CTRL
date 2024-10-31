@@ -11,16 +11,16 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-18:00:00
+#SBATCH --time=1-14:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=80G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -35,15 +35,17 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method byol \
+    --method simclr \
     \
-    --magnitude_train 50.0 \
-    --magnitude_val 100.0 \
-    --dataset cifar100 \
-    --target_class 0 \
+    --image_size 64 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_110000_31_46_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
+    --dataset imagenet100 \
+    --target_class 26 \
+    \
+    --pretrained_ssl_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_104418_99_90_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -51,11 +53,13 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
+    --trigger_path "" \
     --num_clusters 100 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by global \
     --note "closest, draw_local_by_global [mitigate 5 epochs]" \
 
+    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

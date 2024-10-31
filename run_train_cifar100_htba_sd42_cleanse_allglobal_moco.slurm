@@ -4,16 +4,16 @@
 
 ###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c10_f"
+#SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-04:00:00
+#SBATCH --time=0-18:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -29,21 +29,24 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+
+
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method mocov2 \
+    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_104115_51_65_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_222944_33_19_cifar100_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_222944_33_19_cifar100_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -51,7 +54,8 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
-    --num_clusters 10 \
+    --trigger_path "" \
+    --num_clusters 100 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by global \
     --note "closest, draw_local_by_global [mitigate 5 epochs]" \

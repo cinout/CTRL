@@ -35,15 +35,15 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method mocov2 \
+    --method byol \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_141448_27_12_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_141448_27_12_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241024_113814_70_46_cifar10_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -51,10 +51,11 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
+    --trigger_path "" \
     --num_clusters 10 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by global \
-    --note "closest, draw_local_by_global [mitigate 5 epochs]" \
+    --note "closest, draw_local_by_global [mitigate 5 epochs] [CONTINUE...]" \
 
 
 ##Log this job's resource usage stats###

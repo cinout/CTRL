@@ -35,49 +35,16 @@ from methods.base import get_pairwise_distance
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+overall = "20241029_182849_100_11_trigger_estimation_byol_cifar10_ftrojan"
+trigger_regs1 = []
+for target in range(10):
+    trigger_path = os.path.join(overall, f"{target}.pth")
+    trigger = torch.load(trigger_path, map_location=device)
+    trigger_regs1.append(trigger["reg1"])
 
-view_1 = torch.randint(0, 10, size=(10, 4))
-view_2 = torch.randint(0, 10, size=(10, 4))
+trigger_regs1 = torch.tensor(trigger_regs1)
+print(trigger_regs1)
 
-for idx, (a, b) in enumerate(zip(view_1, view_2)):
-    print(idx)
-    print(a)
-    print(b)
-
-# image_size = 64
-
-
-# class RandomBlur:
-#     def __init__(self, r0, r1):
-#         self.r0, self.r1 = r0, r1
-
-#     def __call__(self, image):
-#         r = random.uniform(self.r0, self.r1)
-#         return image.filter(ImageFilter.GaussianBlur(radius=r))
-
-
-# basic_transform = T.Compose(
-#     [
-#         T.RandomResizedCrop(
-#             image_size,
-#             scale=(0.2, 1.0),
-#             ratio=(0.75, 4 / 3),
-#             interpolation=T.InterpolationMode.BICUBIC,
-#         ),
-#         T.RandomApply([T.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-#         T.RandomGrayscale(p=0.1),
-#         T.RandomApply([RandomBlur(0.1, 2.0)], p=0.5),
-#         T.RandomHorizontalFlip(p=0.5),
-#     ]
-# )
-# img = Image.open(
-#     "/Users/haitianh/Downloads/Code/_datasets/Imagenet100/val/n02087046/ILSVRC2012_val_00014912.jpg"
-# ).convert("RGB")
-
-# clean_view_1 = basic_transform(img)
-# clean_view_2 = basic_transform(img)
-# clean_view_1.save("view1.png", "png")
-# clean_view_2.save("view2.png", "png")
 exit()
 
 

@@ -51,11 +51,11 @@ python -u main_train.py \
     \
     --use_ssl_cleanse \
     --attack_succ_threshold 0.99 \
-    --trigger_path "" \
+    --trigger_path "20241029_164820_54_6_trigger_estimation_byol_cifar100_ftrojan" \
     --num_clusters 100 \
     --mitigate_epochs 5 \
-    --draw_local_trigger_by global \
-    --note "closest, draw_local_by_global [mitigate 5 epochs]" \
+    --draw_local_trigger_by local \
+    --note "closest, local&global [mitigate 5 epochs] [CONTINUE...]" \
 
 
 ##Log this job's resource usage stats###

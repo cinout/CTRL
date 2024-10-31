@@ -54,8 +54,8 @@ python -u main_train.py \
     --trigger_path "" \
     --num_clusters 10 \
     --mitigate_epochs 5 \
-    --draw_local_trigger_by global \
-    --note "closest, draw_local_by_global [mitigate 5 epochs] [CONTINUE...]" \
+    --draw_local_trigger_by local \
+    --note "closest, local&global [mitigate 5 epochs] [CONTINUE...]" \
 
 
 ##Log this job's resource usage stats###

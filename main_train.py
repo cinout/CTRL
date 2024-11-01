@@ -354,7 +354,6 @@ parser.add_argument(
     default="none",
     choices=["none", "l2"],
 )
-# TODO: add to slurm
 parser.add_argument(
     "--retrain_linear_after_channel_removal",
     action="store_true",
@@ -407,7 +406,7 @@ parser.add_argument(
     "--mitigate_epochs",
     type=int,
     default=500,
-)  # TODO: update this option
+)
 parser.add_argument(
     "--draw_local_trigger_by", type=str, choices=["global", "local"], default="local"
 )

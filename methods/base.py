@@ -326,8 +326,8 @@ def find_trigger_channels(
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
-    projector,
-    linear,
+    # projector,
+    # linear,
     ss_transform,
 ):
     bd_detector_scores = dict()
@@ -826,7 +826,7 @@ def find_trigger_channels(
     return essential_indices
 
 
-def get_feats(loader, model, args):
+def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=None):
 
     # switch to evaluate mode
     model.eval()
@@ -840,8 +840,13 @@ def get_feats(loader, model, args):
             images = images.to(device)
 
             # Normalize for MoCo, BYOL etc.
+            output = model(images)
 
-            cur_feats = F.normalize(model(images), dim=1).cpu()  # default: L2 norm
+            if args.detect_trigger_channels and use_ss_detector:
+                indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                output[:, indices_toremove] = 0.0
+
+            cur_feats = F.normalize(output, dim=1).cpu()  # default: L2 norm
             B, D = cur_feats.shape
 
             inds = torch.arange(B) + ptr  # [0, 1, ..., B-1] + prt
@@ -865,6 +870,8 @@ def train_linear_classifier(
     linear,
     optimizer,
     args,
+    use_ss_detector=False,
+    contributing_indices=None,
 ):
     backbone.eval()
     linear.train()
@@ -877,6 +884,9 @@ def train_linear_classifier(
         # compute output
         with torch.no_grad():
             output = backbone(images)
+            if args.detect_trigger_channels and use_ss_detector:
+                indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                output[:, indices_toremove] = 0.0
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -1031,6 +1041,91 @@ class CLTrainer:
 
         # if self.args.detect_trigger_channels:
         #     self.contributing_indices = None
+
+    def retrain_linear_with_channel_removed_encoder(
+        self, poison, backbone, contributing_indices
+    ):
+        # training linear
+        if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
+            _, feat_dim = model_dict_cifar[self.args.arch]
+        else:
+            _, feat_dim = model_dict[self.args.arch]
+
+        # train_probe_feats_mean = None
+        if (
+            self.args.linear_probe_normalize == "ref_set"
+            or self.args.replacement_value == "ref_mean"
+        ):
+            train_probe_feats = get_feats(
+                poison.train_probe_loader,
+                backbone,
+                self.args,
+                use_ss_detector=True,
+                contributing_indices=contributing_indices,
+            )  # shape: ? [N, D]
+
+        if self.args.linear_probe_normalize == "ref_set":
+            train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                FullBatchNorm(
+                    train_var, train_mean
+                ),  # the train_var/mean are from L2-normed features
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        elif self.args.linear_probe_normalize == "batch":
+            linear = nn.Sequential(
+                nn.BatchNorm1d(feat_dim, affine=False),
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        elif self.args.linear_probe_normalize == "none":
+            linear = nn.Linear(feat_dim, self.args.num_classes)
+        elif self.args.linear_probe_normalize == "regular":
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        linear = linear.to(device)
+
+        optimizer = torch.optim.SGD(
+            linear.parameters(),
+            lr=0.06,
+            momentum=0.9,
+            weight_decay=1e-4,
+        )
+        sched = [15, 30, 40]
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=sched)
+
+        # train linear classifier
+        linear_probing_epochs = 40
+        for epoch in range(linear_probing_epochs):
+            print(
+                f"training linear classifier with backbone's channel removed, epoch: {epoch}"
+            )
+            train_linear_classifier(
+                poison.train_probe_loader,
+                backbone,
+                linear,
+                optimizer,
+                self.args,
+                use_ss_detector=True,
+                contributing_indices=contributing_indices,
+            )
+            # modify lr
+            lr_scheduler.step()
+
+        # if not self.args.distributed or (
+        #     self.args.distributed
+        #     and self.args.local_rank % self.args.ngpus_per_node == 0
+        # ):
+        #     save_model(
+        #         linear.state_dict(),
+        #         filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
+        #     )
+
+        linear.eval()
+        return linear
 
     # Linear Probe training and evalaution
     def linear_probing(
@@ -1219,9 +1314,7 @@ class CLTrainer:
                     nn.Linear(feat_dim, self.args.num_classes),
                 )
             elif self.args.linear_probe_normalize == "none":
-                linear = nn.Linear(
-                    feat_dim, self.args.num_classes
-                )  # FIXME: tune learning rate
+                linear = nn.Linear(feat_dim, self.args.num_classes)
             elif self.args.linear_probe_normalize == "regular":
                 linear = nn.Sequential(
                     Normalize(),  # L2 norm
@@ -1464,8 +1557,8 @@ class CLTrainer:
             poison.train_probe_loader,
             poison.train_probe_freq_detector_loader,
             backbone,
-            projector,
-            trained_linear,
+            # projector,
+            # trained_linear,
             poison.ss_transform,
         )  # numpy
         return estimated_poisoned_file_indices
@@ -1499,8 +1592,8 @@ class CLTrainer:
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
-                projector,
-                trained_linear,
+                # projector,
+                # trained_linear,
                 poison.ss_transform,
             )
             print(
@@ -1512,8 +1605,8 @@ class CLTrainer:
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
-                projector,
-                trained_linear,
+                # projector,
+                # trained_linear,
                 poison.ss_transform,
             )
             print(
@@ -1537,6 +1630,11 @@ class CLTrainer:
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                 )
 
+            if self.args.retrain_linear_after_channel_removal:
+                trained_linear = self.retrain_linear_with_channel_removed_encoder(
+                    poison, backbone, clean_val_contributing_indices
+                )
+
             ########### Linear Probe
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
@@ -1548,6 +1646,11 @@ class CLTrainer:
                 use_ss_detector=True,
                 contributing_indices=clean_val_contributing_indices,
             )
+
+            if self.args.retrain_linear_after_channel_removal:
+                trained_linear = self.retrain_linear_with_channel_removed_encoder(
+                    poison, backbone, poi_val_contributing_indices
+                )
 
             print(f"<<<<<<<<< evaluating linear on POISON val")
             poison_acc1 = eval_linear_classifier(
@@ -1563,7 +1666,6 @@ class CLTrainer:
                 print(
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
-
         else:
             ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
             contributing_indices = find_trigger_channels(
@@ -1572,8 +1674,8 @@ class CLTrainer:
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
-                projector,
-                trained_linear,
+                # projector,
+                # trained_linear,
                 poison.ss_transform,
             )
 
@@ -1592,6 +1694,11 @@ class CLTrainer:
             for k in self.args.channel_num:
                 print(
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+                )
+
+            if self.args.retrain_linear_after_channel_removal:
+                trained_linear = self.retrain_linear_with_channel_removed_encoder(
+                    poison, backbone, contributing_indices
                 )
 
             ########### Linear Probe

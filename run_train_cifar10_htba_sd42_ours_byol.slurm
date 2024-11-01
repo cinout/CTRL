@@ -62,7 +62,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --ideal_case \
-    --note "ideal case" \
+    --retrain_linear_after_channel_removal \
+    --note "ideal case [re-train linear]" \
 ## \
 ##    --find_and_ignore_probe_channels \
 ##    --ignore_probe_channel_num 30 \

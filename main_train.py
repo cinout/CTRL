@@ -52,7 +52,7 @@ parser.add_argument("--image_size", type=int, default=32)
 
 parser.add_argument(
     "--linear_probe_normalize",
-    default="regular",
+    default="ref_set",
     choices=["regular", "none", "ref_set", "batch"],
 )
 parser.add_argument(
@@ -354,6 +354,12 @@ parser.add_argument(
     default="none",
     choices=["none", "l2"],
 )
+# TODO: add to slurm
+parser.add_argument(
+    "--retrain_linear_after_channel_removal",
+    action="store_true",
+    help="allow re-training the linear classifier after the encoder is channel removed",
+)
 
 # KDistance
 parser.add_argument(
@@ -568,6 +574,9 @@ def main(args):
         )
         _ = new_trainer.linear_probing(cleansed_backbone, poison, force_training=True)
 
+    """
+    IDEA 2: input filtering
+    """
     # Sift out estimated poisoned images, and re-train the SSL model
     if args.siftout_poisoned_images:
         estimated_poisoned_file_indices = trainer.siftout_poisoned_images(
@@ -612,11 +621,16 @@ def main(args):
             backbone = copy.deepcopy(new_model.backbone)
         _ = new_trainer.linear_probing(backbone, poison, force_training=True)
 
-    # Channel Removal Strategy
+    """
+    IDEA 3: Channel Removal Strategy
+    """
     if args.detect_trigger_channels:
         trainer.trigger_channel_removal(model, poison, trained_linear)
 
-    # Mask Pruning Strategy
+    """
+    IDEA 4:  Mask Pruning Strategy
+    """
+
     if args.use_mask_pruning:
         if args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)

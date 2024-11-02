@@ -55,13 +55,13 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors entropy \
+    --bd_detectors ss_score \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
     --ideal_case \
-    --retrain_linear_after_channel_removal \
-    --note "ideal case [re-train linear]" \
+    --note "ideal case [channel=40, detector=ss_score]" \
+##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \
 ##    --ignore_probe_channel_num 30 \

@@ -516,7 +516,7 @@ def trigger_mitigation(args, backbone, trainset_data):
     if args.triggers_combined:
         trigger_masks = torch.cat([trigger_masks1, trigger_masks2], dim=0)
         trigger_deltas = torch.cat([trigger_deltas1, trigger_deltas2], dim=0)
-        combined = torch.stack([trigger_regs1, trigger_regs2], dim=0)
+        combined = torch.cat([trigger_regs1, trigger_regs2], dim=0)
         trigger_top_indices = outlier(combined, combined=True)
         print(f"trigger_masks.shape: {trigger_masks.shape}")
         print(f"trigger_deltas.shape: {trigger_deltas.shape}")

@@ -14,16 +14,19 @@ CONSISTENCY = 1.4826
 
 
 def outlier(l1_norm_list):
-    # TODO: is this the best solution? (to debug, we can return all indices without topk)
-    return list(range(len(l1_norm_list)))
+    # TODO: (Option 1) return all indices
+    # return list(range(len(l1_norm_list)))
 
     median = torch.median(l1_norm_list)  # median of the list
     median_dist_to_median = CONSISTENCY * torch.median(torch.abs(l1_norm_list - median))
     scores = torch.abs(l1_norm_list - median) / median_dist_to_median
 
-    # TODO: another option is to use ||>2 as indicated in the paper, but we need to be aware of potential zero set issue
+    # TODO: (Option 2) use ||>2 as indicated in the paper, but we need to be aware of potential zero set issue
+    indices = torch.nonzero(scores > 2).flatten()
+    print(f"indices.shape: {indices.shape}")
 
-    _, indices = torch.topk(scores, k=2, largest=True, sorted=True)
+    # TODO: (Option 3) return top 2
+    # _, indices = torch.topk(scores, k=2, largest=True, sorted=True)
 
     return indices.tolist()
 

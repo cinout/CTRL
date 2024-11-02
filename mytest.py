@@ -35,16 +35,11 @@ from methods.base import get_pairwise_distance
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-overall = "20241029_182849_100_11_trigger_estimation_byol_cifar10_ftrojan"
-trigger_regs1 = []
-for target in range(10):
-    trigger_path = os.path.join(overall, f"{target}.pth")
-    trigger = torch.load(trigger_path, map_location=device)
-    trigger_regs1.append(trigger["reg1"])
 
-trigger_regs1 = torch.tensor(trigger_regs1)
-print(trigger_regs1)
-
+d = torch.randint(0, 10, (10,))
+print(d)
+dop = torch.nonzero(d > 5).flatten()
+print(dop)
 exit()
 
 

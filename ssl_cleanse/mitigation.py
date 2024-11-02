@@ -13,7 +13,7 @@ from torch.utils.data import Dataset
 CONSISTENCY = 1.4826
 
 
-def outlier(l1_norm_list):
+def outlier(l1_norm_list, combined=False):
     # TODO: (Option 1) return all indices
     # return list(range(len(l1_norm_list)))
 
@@ -22,11 +22,14 @@ def outlier(l1_norm_list):
     scores = torch.abs(l1_norm_list - median) / median_dist_to_median
 
     # TODO: (Option 2) use ||>2 as indicated in the paper, but we need to be aware of potential zero set issue
-    indices = torch.nonzero(scores > 2).flatten()
-    print(f"indices.shape: {indices.shape}")
+    # indices = torch.nonzero(scores > 2).flatten()
+    # print(f"indices.shape: {indices.shape}")
 
     # TODO: (Option 3) return top 2
-    # _, indices = torch.topk(scores, k=2, largest=True, sorted=True)
+    if combined:
+        _, indices = torch.topk(scores, k=4, largest=True, sorted=True)
+    else:
+        _, indices = torch.topk(scores, k=2, largest=True, sorted=True)
 
     return indices.tolist()
 

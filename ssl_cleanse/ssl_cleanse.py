@@ -518,6 +518,10 @@ def trigger_mitigation(args, backbone, trainset_data):
         trigger_deltas = torch.cat([trigger_deltas1, trigger_deltas2], dim=0)
         combined = torch.stack([trigger_regs1, trigger_regs2], dim=0)
         trigger_top_indices = outlier(combined, combined=True)
+        print(f"trigger_masks.shape: {trigger_masks.shape}")
+        print(f"trigger_deltas.shape: {trigger_deltas.shape}")
+        print(f"combined.shape: {combined.shape}")
+        print(f"trigger_top_indices: {trigger_top_indices}")
     else:
         trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
         trigger2_top_indices = outlier(trigger_regs2)  # global

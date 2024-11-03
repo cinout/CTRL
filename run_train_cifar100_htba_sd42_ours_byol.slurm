@@ -63,7 +63,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --ideal_case \
-    --note "ideal [channel=40, detector=entropy]" \
+    --retrain_linear_after_channel_removal \
+    --note "ideal [retrain linear] [channel=40, detector=entropy]" \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

@@ -51,6 +51,8 @@ python -u main_train.py \
     \
     --detect_trigger_channels \
     --channel_num 40 \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -59,8 +61,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --tap_trigger \
-    --note "[tap trigger] [channel=40, detector=entropy]" \
+    --note "[channel=40, detector=entropy]" \
     --trigger_path "20241030_025136_67_1_trigger_estimation_mocov2_cifar10_ftrojan" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

@@ -54,6 +54,8 @@ python -u main_train.py \
     \
     --detect_trigger_channels \
     --channel_num 40 \
+    --find_and_ignore_probe_channels \
+    --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -62,8 +64,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --ideal_case \
-    --note "ideal case [channel=40, detector=ss_score]" \
+    --note "[channel=40, ignore=30, detector=ss_score]" \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

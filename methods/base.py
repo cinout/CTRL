@@ -853,7 +853,7 @@ def find_trigger_channels(
     for detector, values in bd_detector_scores.items():
         bd_scores = np.array(values)
 
-        if not args.ideal_case:
+        if not args.ideal_case and not args.tap_trigger:
             auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
             print(
                 f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"

@@ -29,7 +29,7 @@ def outlier(l1_norm_list, combined=False):
     if combined:
         _, indices = torch.topk(scores, k=4, largest=True, sorted=True)
     else:
-        _, indices = torch.topk(scores, k=2, largest=True, sorted=True)
+        _, indices = torch.topk(scores, k=1, largest=True, sorted=True)
 
     return indices.tolist()
 

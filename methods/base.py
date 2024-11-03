@@ -705,18 +705,18 @@ def find_trigger_channels(
 
             views = transform(views)
 
-            # : add trigger to views
-            use_local_trigger = random.random() < 0.5
-            if use_local_trigger:
-                trigger_index = random.choice(trigger1_top_indices)
-                mask = trigger_masks1[trigger_index].unsqueeze(0)
-                delta = trigger_deltas1[trigger_index].unsqueeze(0)
-                views = draw_global(views, args.mean, args.std, mask, delta)
-            else:
-                trigger_index = random.choice(trigger2_top_indices)
-                mask = trigger_masks2[trigger_index].unsqueeze(0)
-                delta = trigger_deltas2[trigger_index].unsqueeze(0)
-                views = draw_global(views, args.mean, args.std, mask, delta)
+            # # : add trigger to views
+            # use_local_trigger = random.random() < 0.5
+            # if use_local_trigger:
+            #     trigger_index = random.choice(trigger1_top_indices)
+            #     mask = trigger_masks1[trigger_index].unsqueeze(0)
+            #     delta = trigger_deltas1[trigger_index].unsqueeze(0)
+            #     views = draw_global(views, args.mean, args.std, mask, delta)
+            # else:
+            trigger_index = random.choice(trigger2_top_indices)
+            mask = trigger_masks2[trigger_index].unsqueeze(0)
+            delta = trigger_deltas2[trigger_index].unsqueeze(0)
+            views = draw_global(views, args.mean, args.std, mask, delta)
 
             with torch.no_grad():
                 vision_features = backbone(views)  # [bs*n_views, 512]

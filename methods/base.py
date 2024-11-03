@@ -205,10 +205,6 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     else:
         take_channel = max(args.channel_num)
 
-    # TODO: remove later
-    print(f"max_indices.shape: {max_indices.shape}")
-    print(f"take_channel is {take_channel}")
-
     max_indices_at_channel = max_indices[
         :, :, -take_channel:
     ]  # [bs, n_view, take_channel]
@@ -730,7 +726,7 @@ def find_trigger_channels(
             _, C = vision_features.shape
 
             corrs, max_indices_at_channel = get_ss_statistics(
-                vision_features.detach().cpu().numpy(), bs, C, args, probe_set=True
+                vision_features.detach().cpu().numpy(), bs, C, args
             )
 
             get_detection_scores(

@@ -61,7 +61,8 @@ python -u main_train.py \
     --normalize_backbone_features l2 \
     --in_n_detectors 1 \
     \
-    --note "[channel=40, ignore=30, detector=kdist]" \
+    --retrain_linear_after_channel_removal \
+    --note "[retrain linear] [channel=40, ignore=30, detector=kdist]" \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

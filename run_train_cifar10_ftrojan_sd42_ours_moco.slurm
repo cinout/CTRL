@@ -59,6 +59,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
+    --ideal_case \
     --note "ideal [channel=40, detector=entropy]" \
 ##    --retrain_linear_after_channel_removal \
 ## \

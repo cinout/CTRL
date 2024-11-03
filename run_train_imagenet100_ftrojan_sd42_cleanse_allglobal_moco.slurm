@@ -45,7 +45,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --pretrained_ssl_model "./Experiments/20241024_154032_6_1_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241024_154032_6_1_imagenet100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
@@ -57,8 +57,7 @@ python -u main_train.py \
     --num_clusters 100 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by global \
-    --triggers_combined \
-    --note "closest, all global [trigger combined, mitigate 5 epochs]" \
+    --note "[all global] [all triggers] [mitigate 5 epochs]" \
 
     
 

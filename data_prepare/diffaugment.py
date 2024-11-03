@@ -382,7 +382,8 @@ def set_aug_diff(args):
     ####################### Define Diff Transforms #######################
 
     if "cifar" in args.dataset or args.dataset == "imagenet100":
-        # this is applied during training, not during poison generation, so don't worry
+        # this is applied during training, not during poison generation
+        # TODO: the last step normalize needs to be applied to training linear and other steps
         train_transform = nn.Sequential(
             aug.RandomResizedCrop(
                 size=(args.image_size, args.image_size), scale=(0.2, 1.0)

@@ -16,6 +16,7 @@ from utils.util import AverageMeter, save_model
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.models as models
+import torchvision.transforms as T
 from networks.mask_batchnorm import MaskBatchNorm2d
 import h5py
 import PIL
@@ -315,7 +316,9 @@ def generate_view_tensors(input, ss_transform):
         )  # [num_views, c, h, w]
         view_tensors.append(tensors_of_an_image)
 
-    view_tensors = torch.stack(view_tensors, dim=0)  # [total, num_views, c, h, w]
+    view_tensors = torch.stack(
+        view_tensors, dim=0
+    )  # [total, num_views, c, h, w], value in [0,1]
 
     return view_tensors
 
@@ -330,6 +333,11 @@ def find_trigger_channels(
     # linear,
     ss_transform,
 ):
+    transform = T.Compose(
+        [
+            T.Normalize(args.mean, args.std),
+        ]
+    )
     bd_detector_scores = dict()
     for detector in args.bd_detectors:
         if detector == "frequency_ensemble":
@@ -550,6 +558,8 @@ def find_trigger_channels(
 
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+
+            views = transform(views)
             with torch.no_grad():
                 # if args.unlearn_before_finding_trigger_channels:
                 #     vision_features = unlearnt_backbone(views)
@@ -642,6 +652,8 @@ def find_trigger_channels(
 
     # else:
 
+    # TODO: # inout x for draw_global: [#total_images, 3, image_size, image_size], tensored (value range in 0-1), and transformed by mean/std
+
     # batch by batch (default)
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:
@@ -661,10 +673,13 @@ def find_trigger_channels(
             views = views.unsqueeze(1)
         else:
             views = generate_view_tensors(images, ss_transform)
+
         views = views.to(device)
 
         bs, n_views, c, h, w = views.shape
         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+
+        views = transform(views)
         with torch.no_grad():
             # if args.unlearn_before_finding_trigger_channels:
             #     vision_features = unlearnt_backbone(views)
@@ -827,6 +842,11 @@ def find_trigger_channels(
 
 
 def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=None):
+    transform = T.Compose(
+        [
+            T.Normalize(args.mean, args.std),
+        ]
+    )
 
     # switch to evaluate mode
     model.eval()
@@ -838,6 +858,8 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
 
             # images = images.cuda(non_blocking=True)
             images = images.to(device)
+
+            images = transform(images)
 
             # Normalize for MoCo, BYOL etc.
             output = model(images)
@@ -875,10 +897,17 @@ def train_linear_classifier(
 ):
     backbone.eval()
     linear.train()
+    transform = T.Compose(
+        [
+            T.Normalize(args.mean, args.std),
+        ]
+    )
     for i, content in enumerate(train_loader):
         (images, target, _) = content
 
         images = images.to(device)
+        images = transform(images)
+
         target = target.to(device)
 
         # compute output
@@ -913,6 +942,11 @@ def produces_evaluation_results(linear, output, target, acc1_accumulator, total_
 def eval_linear_classifier(
     val_loader, backbone, linear, args, val_mode, use_ss_detector, contributing_indices
 ):
+    transform = T.Compose(
+        [
+            T.Normalize(args.mean, args.std),
+        ]
+    )
     with torch.no_grad():
         if args.detect_trigger_channels and use_ss_detector:
             acc1_accumulator_dict = {}
@@ -934,6 +968,7 @@ def eval_linear_classifier(
                 raise Exception(f"unimplemented val_mode {val_mode}")
 
             images = images.to(device)
+            images = transform(images)
             target = target.to(device)
 
             if val_mode == "poison":
@@ -1429,7 +1464,7 @@ class CLTrainer:
             # 1 epoch training
             start = time.time()
 
-            # TRAIN
+            # SSL TRAIN
             if self.args.pretrained_ssl_model == "" or force_training:
                 for i, content in enumerate(
                     train_loader
@@ -1667,7 +1702,10 @@ class CLTrainer:
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
         else:
+
             ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
+            # TODO: update here
+
             contributing_indices = find_trigger_channels(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set
@@ -1745,6 +1783,11 @@ class CLTrainer:
         clean_val_contributing_indices=None,
         poi_val_contributing_indices=None,
     ):
+        transform = T.Compose(
+            [
+                T.Normalize(args.mean, args.std),
+            ]
+        )
 
         net.eval()
 
@@ -1756,8 +1799,11 @@ class CLTrainer:
             leave=False,
             disable=hide_progress,
         ):
+            data = data.to(device)
+            data = transform(data)
+
             with torch.no_grad():
-                feature = net(data.to(device))
+                feature = net(data)
 
             feature = F.normalize(feature, dim=1)
             feature_bank.append(feature)
@@ -1792,6 +1838,8 @@ class CLTrainer:
             (data, target, _) = content
 
             data, target = data.to(device), target.to(device)
+            data = transform(data)
+
             with torch.no_grad():
                 feature = net(data)
 
@@ -1851,6 +1899,8 @@ class CLTrainer:
                 target.to(device),
                 original_label.to(device),
             )
+
+            data = transform(data)
 
             valid_indices = original_label != args.target_class
             if torch.all(~valid_indices):

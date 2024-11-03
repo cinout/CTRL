@@ -61,9 +61,8 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --ideal_case \
-    --retrain_linear_after_channel_removal \
-    --note "ideal [retrain linear] [channel=40, detector=entropy]" \
+    --tap_trigger \
+    --note "[tap trigger] [channel=40, detector=entropy]" \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

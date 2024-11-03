@@ -12,6 +12,8 @@ from sklearn.metrics import roc_auc_score
 from collections import Counter
 from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
+from ssl_cleanse.mitigation import outlier
+from ssl_cleanse.ssl_cleanse import draw_global
 from utils.util import AverageMeter, save_model
 from tqdm import tqdm
 import torch.nn.functional as F
@@ -652,68 +654,157 @@ def find_trigger_channels(
 
     # else:
 
-    # batch by batch (default)
-    for i, content in tqdm(enumerate(data_loader)):
-        if args.ideal_case:
-            images = content[0]
+    if args.tap_trigger:
+        trigger_masks1, trigger_deltas1, trigger_regs1 = [], [], []
+        trigger_masks2, trigger_deltas2, trigger_regs2 = [], [], []
+
+        for target in range(args.num_clusters):
+            trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
+            trigger = torch.load(trigger_path, map_location=device)
+
+            trigger_masks1.append(trigger["mask1"].detach())
+            trigger_deltas1.append(trigger["delta1"].detach())
+            trigger_regs1.append(trigger["reg1"])
+            trigger_masks2.append(trigger["mask2"].detach())
+            trigger_deltas2.append(trigger["delta2"].detach())
+            trigger_regs2.append(trigger["reg2"])
+
+        trigger_masks1 = torch.cat(
+            trigger_masks1, dim=0
+        )  # [#clusters, 1, imgsize, imgsize]
+        trigger_deltas1 = torch.cat(
+            trigger_deltas1, dim=0
+        )  # [#clusters, 3, imgsize, imgsize]
+        trigger_masks2 = torch.cat(trigger_masks2, dim=0)
+        trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
+
+        trigger_regs1 = torch.tensor(trigger_regs1)  # [#clusters,]
+        trigger_regs2 = torch.tensor(trigger_regs2)
+
+        trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
+        trigger2_top_indices = outlier(trigger_regs2)  # global
+
+        for i, content in enumerate(train_probe_loader):
+            (images, _, _) = content
+
+            images = images.to(device)
+
             is_batch_poisoned = torch.ones(size=(images.shape[0],))
             is_batch_poisoned = is_batch_poisoned.to(device)
-        else:
-            (images, is_batch_poisoned, _, file_index) = content
-            is_batch_poisoned = is_batch_poisoned.to(device)
 
-        images = images.to(device)
-        if args.siftout_poisoned_images:
-            trainset_file_indices.append(file_index)
+            if args.num_views == 1:
+                views = images.clone()
+                views = views.unsqueeze(1)
+            else:
+                views = generate_view_tensors(images, ss_transform)
 
-        if args.num_views == 1:
-            views = images.clone()
-            views = views.unsqueeze(1)
-        else:
-            views = generate_view_tensors(images, ss_transform)
+            views = views.to(device)
 
-        views = views.to(device)
+            bs, n_views, c, h, w = views.shape
+            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
 
-        bs, n_views, c, h, w = views.shape
-        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+            views = transform(views)
 
-        views = transform(views)
-        with torch.no_grad():
-            # if args.unlearn_before_finding_trigger_channels:
-            #     vision_features = unlearnt_backbone(views)
-            # else:
-            vision_features = backbone(views)  # [bs*n_views, 512]
+            # : add trigger to views
+            use_local_trigger = random.random() < 0.5
+            if use_local_trigger:
+                trigger_index = random.choice(trigger1_top_indices)
+                mask = trigger_masks1[trigger_index].unsqueeze(0)
+                delta = trigger_deltas1[trigger_index].unsqueeze(0)
+                views = draw_global(views, args.mean, args.std, mask, delta)
+            else:
+                trigger_index = random.choice(trigger2_top_indices)
+                mask = trigger_masks2[trigger_index].unsqueeze(0)
+                delta = trigger_deltas2[trigger_index].unsqueeze(0)
+                views = draw_global(views, args.mean, args.std, mask, delta)
 
-        if "frequency_ensemble" in args.bd_detectors:
-            get_freq_detection_scores(
-                images, freq_detector_ensemble, bd_detector_scores, args
+            with torch.no_grad():
+                vision_features = backbone(views)  # [bs*n_views, 512]
+
+            if args.normalize_backbone_features == "l2":
+                vision_features = F.normalize(vision_features, dim=-1)
+            _, C = vision_features.shape
+
+            corrs, max_indices_at_channel = get_ss_statistics(
+                vision_features.detach().cpu().numpy(), bs, C, args, probe_set=True
             )
 
-        # if args.compare_backbone_predictor or args.only_detect_projector_features:
-        #     get_detection_scores_from_projector(
-        #         vision_features, projector, bs, bd_detector_scores, args
-        #     )
+            get_detection_scores(
+                vision_features,
+                corrs,
+                max_indices_at_channel,
+                bd_detector_scores,
+                args,
+            )
 
-        # if not args.only_detect_projector_features:
-        if args.normalize_backbone_features == "l2":
-            vision_features = F.normalize(vision_features, dim=-1)
-        _, C = vision_features.shape
+            is_poisoned.append(is_batch_poisoned)
+            all_votes.append(max_indices_at_channel)
 
-        corrs, max_indices_at_channel = get_ss_statistics(
-            vision_features.detach().cpu().numpy(), bs, C, args
-        )
+    else:
 
-        # if not args.only_detect_projector_features:
-        get_detection_scores(
-            vision_features,
-            corrs,
-            max_indices_at_channel,
-            bd_detector_scores,
-            args,
-        )
+        # batch by batch (default)
+        for i, content in tqdm(enumerate(data_loader)):
+            if args.ideal_case:
+                images = content[0]
+                is_batch_poisoned = torch.ones(size=(images.shape[0],))
+                is_batch_poisoned = is_batch_poisoned.to(device)
+            else:
+                (images, is_batch_poisoned, _, file_index) = content
+                is_batch_poisoned = is_batch_poisoned.to(device)
 
-        all_votes.append(max_indices_at_channel)
-        is_poisoned.append(is_batch_poisoned)
+            images = images.to(device)
+            if args.siftout_poisoned_images:
+                trainset_file_indices.append(file_index)
+
+            if args.num_views == 1:
+                views = images.clone()
+                views = views.unsqueeze(1)
+            else:
+                views = generate_view_tensors(images, ss_transform)
+
+            views = views.to(device)
+
+            bs, n_views, c, h, w = views.shape
+            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+
+            views = transform(views)
+
+            with torch.no_grad():
+                # if args.unlearn_before_finding_trigger_channels:
+                #     vision_features = unlearnt_backbone(views)
+                # else:
+                vision_features = backbone(views)  # [bs*n_views, 512]
+
+            if "frequency_ensemble" in args.bd_detectors:
+                get_freq_detection_scores(
+                    images, freq_detector_ensemble, bd_detector_scores, args
+                )
+
+            # if args.compare_backbone_predictor or args.only_detect_projector_features:
+            #     get_detection_scores_from_projector(
+            #         vision_features, projector, bs, bd_detector_scores, args
+            #     )
+
+            # if not args.only_detect_projector_features:
+            if args.normalize_backbone_features == "l2":
+                vision_features = F.normalize(vision_features, dim=-1)
+            _, C = vision_features.shape
+
+            corrs, max_indices_at_channel = get_ss_statistics(
+                vision_features.detach().cpu().numpy(), bs, C, args
+            )
+
+            # if not args.only_detect_projector_features:
+            get_detection_scores(
+                vision_features,
+                corrs,
+                max_indices_at_channel,
+                bd_detector_scores,
+                args,
+            )
+
+            all_votes.append(max_indices_at_channel)
+            is_poisoned.append(is_batch_poisoned)
 
     # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
@@ -1700,10 +1791,7 @@ class CLTrainer:
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
         else:
-
             ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
-            # TODO: update here
-
             contributing_indices = find_trigger_channels(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set

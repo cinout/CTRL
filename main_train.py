@@ -449,12 +449,19 @@ parser.add_argument("--trigger_location", type=float, default=0.9)
 # )
 # parser.add_argument("--trigger_width", type=int, default=6)
 # parser.add_argument("--trigger_location", type=float, default=0.9)
-# TODO: add to slurm
 parser.add_argument(
     "--triggers_combined",
     action="store_true",
     help="combine trigger set 1 and set 2, and choose top 4",
 )
+
+# TODO: also add num_clusters trigger_path
+parser.add_argument(
+    "--tap_trigger",
+    action="store_true",
+    help="add the estimated triggers to clean images to locate trigger channels",
+)
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

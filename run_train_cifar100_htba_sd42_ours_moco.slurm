@@ -64,6 +64,8 @@ python -u main_train.py \
     \
     --tap_trigger \
     --note "[tap trigger] [channel=40, detector=entropy]" \
+    --trigger_path "20241030_171908_82_49_trigger_estimation_mocov2_cifar100_htba" \
+    --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

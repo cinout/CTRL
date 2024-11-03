@@ -63,6 +63,8 @@ python -u main_train.py \
     \
     --tap_trigger \
     --note "[tap trigger] [channel=40, detector=entropy]" \
+    --trigger_path "20241030_084839_67_65_trigger_estimation_byol_cifar10_htba" \
+    --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

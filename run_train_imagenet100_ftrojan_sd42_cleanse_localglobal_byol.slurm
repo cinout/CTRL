@@ -57,7 +57,7 @@ python -u main_train.py \
     --num_clusters 100 \
     --mitigate_epochs 5 \
     --draw_local_trigger_by local \
-    --note "closest, local&global [mitigate 5 epochs] [CONTINUE...]" \
+    --note "local&global [all triggers]" \
 
     
 

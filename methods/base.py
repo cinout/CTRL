@@ -652,8 +652,6 @@ def find_trigger_channels(
 
     # else:
 
-    # TODO: # inout x for draw_global: [#total_images, 3, image_size, image_size], tensored (value range in 0-1), and transformed by mean/std
-
     # batch by batch (default)
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:

@@ -541,8 +541,6 @@ def main(args):
     # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
 
-    # TODO: check from here, we need to normalize input by mean and std
-
     # Linear Probe and Evaluation
     if args.method == "mocov2":
         backbone = copy.deepcopy(model.encoder_q)

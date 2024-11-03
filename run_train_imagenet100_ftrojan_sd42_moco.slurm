@@ -45,7 +45,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_linear_model "./Experiments/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

@@ -45,7 +45,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --pretrained_ssl_model "./Experiments/20241024_154032_6_1_imagenet100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "" \
+    --pretrained_linear_model "./Experiments/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

@@ -57,12 +57,11 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors ss_score \
-    --normalize_backbone_features none \
+    --bd_detectors kdist \
+    --normalize_backbone_features l2 \
     --in_n_detectors 1 \
     \
-    --retrain_linear_after_channel_removal \
-    --note "[retrain linear] [channel=40, ignore=30, detector=ss_score]" \
+    --note "[channel=40, ignore=30, detector=kdist]" \
 ##    --retrain_linear_after_channel_removal \
 ## \
 ##    --find_and_ignore_probe_channels \

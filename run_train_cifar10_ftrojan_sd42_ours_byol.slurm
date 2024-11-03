@@ -57,11 +57,11 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors ss_score \
-    --normalize_backbone_features none \
+    --bd_detectors kdist \
+    --normalize_backbone_features l2 \
     --in_n_detectors 1 \
     \
-    --note "[channel=40, detector=ss_score]" \
+    --note "[channel=40, detector=kdist]" \
     --trigger_path "20241030_005757_33_28_trigger_estimation_byol_cifar10_ftrojan" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

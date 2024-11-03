@@ -59,11 +59,11 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors entropy \
+    --bd_detectors ss_score \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "[channel=40, detector=entropy]" \
+    --note "[channel=40, detector=ss_score]" \
     --trigger_path "20241030_102134_99_90_trigger_estimation_simclr_cifar10_htba" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

@@ -222,6 +222,7 @@ class PoisonAgent:
         """
         # POISONed Train Set (for stage 1 attack)
         """
+        # TODO: where to change
         poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
         poison_index = poison_index[: self.poison_num]
 

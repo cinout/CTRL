@@ -51,7 +51,6 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --poison_ratio 0 \
     --note "all clean training set" \
 
 

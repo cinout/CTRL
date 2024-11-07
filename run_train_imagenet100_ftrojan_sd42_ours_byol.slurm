@@ -52,7 +52,7 @@ python -u main_train.py \
     --num_views 64 \
     \
     --detect_trigger_channels \
-    --channel_num 20 \
+    --channel_num 60 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -61,7 +61,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "[channel=20] [using actual poisoned images from train set]" \
+    --note "[channel=60] [using actual poisoned images from train set]" \
     --trigger_path "20241030_103835_79_99_trigger_estimation_byol_imagenet100_ftrojan" \
     --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \

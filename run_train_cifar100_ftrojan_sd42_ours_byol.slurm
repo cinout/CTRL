@@ -2,10 +2,10 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
 #SBATCH --partition=deeplearn
 #SBATCH --qos=gpgpudeeplearn
@@ -50,7 +50,7 @@ python -u main_train.py \
     --num_views 64 \
     \
     --detect_trigger_channels \
-    --channel_num 40 \
+    --channel_num 20 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -59,7 +59,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "[channel=40] [using actual poisoned images from train set]" \
+    --note "[channel=20] [using actual poisoned images from train set]" \
     --trigger_path "20241030_075005_50_75_trigger_estimation_byol_cifar100_ftrojan" \
     --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \

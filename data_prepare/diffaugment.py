@@ -222,8 +222,8 @@ class PoisonAgent:
         """
         # POISONed Train Set (for stage 1 attack)
         """
-        # TODO: where to change
-        if True:
+        if False:
+            # don't poison train set at all
             train_is_poisoned = torch.zeros_like(y_train_tensor)
         else:
             poison_index = torch.where(y_train_tensor == self.args.target_class)[0]

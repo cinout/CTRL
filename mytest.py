@@ -36,10 +36,10 @@ from methods.base import get_pairwise_distance
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-d = torch.randint(0, 10, (10,))
-print(d)
-dop = torch.nonzero(d > 5).flatten()
-print(dop)
+is_poisoned = np.random.randint(0, 2, size=(10,))
+print(is_poisoned)
+indices = np.nonzero(is_poisoned == 1)[0]
+print(indices)
 exit()
 
 

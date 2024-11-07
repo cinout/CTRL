@@ -850,31 +850,36 @@ def find_trigger_channels(
     #             minority_indices_local = bd_indices[-minority_ub:]
     #         minority_indices.extend(minority_indices_local.tolist())
     # else:
-    for detector, values in bd_detector_scores.items():
-        bd_scores = np.array(values)
 
-        if not args.ideal_case and not args.tap_trigger:
-            auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-            print(
-                f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
-            )
+    if True:
+        # get the real poisoned indices from train set
+        minority_indices = np.nonzero(is_poisoned == 1)[0]
+    else:
+        for detector, values in bd_detector_scores.items():
+            bd_scores = np.array(values)
 
-        bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+            if not args.ideal_case and not args.tap_trigger:
+                auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+                print(
+                    f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
+                )
 
-        if minority_lb > 0:
-            minority_indices_local = bd_indices[
-                -minority_ub:-minority_lb
-            ]  # numpy array
-        else:
-            minority_indices_local = bd_indices[-minority_ub:]
-        minority_indices.extend(minority_indices_local.tolist())
+            bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
 
-    minority_indices_counter = Counter(minority_indices)
-    minority_indices = [
-        idx
-        for idx, count in minority_indices_counter.items()
-        if count in args.in_n_detectors
-    ]
+            if minority_lb > 0:
+                minority_indices_local = bd_indices[
+                    -minority_ub:-minority_lb
+                ]  # numpy array
+            else:
+                minority_indices_local = bd_indices[-minority_ub:]
+            minority_indices.extend(minority_indices_local.tolist())
+
+        minority_indices_counter = Counter(minority_indices)
+        minority_indices = [
+            idx
+            for idx, count in minority_indices_counter.items()
+            if count in args.in_n_detectors
+        ]
 
     print(f"all_votes.shape: {all_votes.shape}")
     print(f"len(minority_indices): {len(minority_indices)}")

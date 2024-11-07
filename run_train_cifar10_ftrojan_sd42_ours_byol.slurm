@@ -51,17 +51,15 @@ python -u main_train.py \
     \
     --detect_trigger_channels \
     --channel_num 40 \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors kdist \
-    --normalize_backbone_features l2 \
+    --bd_detectors entropy \
+    --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "[channel=40, detector=kdist]" \
+    --note "[channel=40] [using actual poisoned images from train set]" \
     --trigger_path "20241030_005757_33_28_trigger_estimation_byol_cifar10_ftrojan" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

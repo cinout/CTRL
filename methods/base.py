@@ -850,7 +850,7 @@ def find_trigger_channels(
     #             minority_indices_local = bd_indices[-minority_ub:]
     #         minority_indices.extend(minority_indices_local.tolist())
     # else:
-
+    # TODO: make changes here
     if True:
         # get the real poisoned indices from train set
         minority_indices = np.nonzero(is_poisoned == 1)[0]

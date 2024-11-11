@@ -32,14 +32,46 @@ from frequency_detector import (
     spatter_rain,
 )
 from methods.base import get_pairwise_distance
+from kornia import augmentation as aug
+import torch.nn as nn
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+image_size = 64
 
-is_poisoned = np.random.randint(0, 2, size=(10,))
-print(is_poisoned)
-indices = np.nonzero(is_poisoned == 1)[0]
-print(indices)
+
+class RandomApply(nn.Module):
+    def __init__(self, fn, p: float):
+        super().__init__()
+        self.fn = fn
+        self.p = p
+
+    def forward(self, x):
+        return x if random.random() > self.p else self.fn(x)
+
+
+transform = transforms.Compose(
+    [
+        aug.RandomResizedCrop(size=(image_size, image_size), scale=(0.2, 1.0)),
+        aug.RandomHorizontalFlip(),
+        RandomApply(aug.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),
+        aug.RandomGrayscale(p=0.2),
+        transforms.RandomApply([transforms.GaussianBlur(kernel_size=(3, 7))], p=0.5),
+    ]
+)
+train_transform = (transform, transform)
+
+(transform_1, transform_2) = train_transform
+
+img = Image.open(
+    "/Users/haitianh/Downloads/Code/_datasets/Imagenet100/val/n02087046/ILSVRC2012_val_00014912.jpg"
+).convert("RGB")
+view_1 = transform_1(img)
+view_2 = transform_2(img)
+view_1.save("view1.png", "PNG")
+view_2.save("view2.png", "PNG")
+
+
 exit()
 
 

@@ -547,7 +547,7 @@ def main(args):
     #     model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
     # )
 
-    optimizer = LARS(model.parameters(), 1.5e-4, weight_decay=args.wd, momentum=0.9)
+    optimizer = LARS(model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9)
 
     # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
@@ -626,7 +626,9 @@ def main(args):
         # optimizer = optim.SGD(
         #     new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
         # )
-        optimizer = LARS(model.parameters(), 1.5e-4, weight_decay=args.wd, momentum=0.9)
+        optimizer = LARS(
+            model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9
+        )
 
         # SSL attack and KNN Evaluation
         new_trainer.train_freq(

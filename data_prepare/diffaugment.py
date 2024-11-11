@@ -397,7 +397,7 @@ def set_aug_diff(args):
 
         #  use different train_transform for different SSL methods
         if args.method == "byol":
-            transform_1 = nn.Sequential(
+            transform_1 = transforms.Compose(
                 [
                     aug.RandomResizedCrop(
                         size=(args.image_size, args.image_size), scale=(0.2, 1.0)
@@ -409,7 +409,7 @@ def set_aug_diff(args):
                     normalize,
                 ]
             )
-            transform_2 = nn.Sequential(
+            transform_2 = transforms.Compose(
                 [
                     aug.RandomResizedCrop(
                         size=(args.image_size, args.image_size), scale=(0.2, 1.0)
@@ -425,7 +425,7 @@ def set_aug_diff(args):
             train_transform = (transform_1, transform_2)
 
         elif args.method == "simclr":
-            transform = nn.Sequential(
+            transform = transforms.Compose(
                 [
                     aug.RandomResizedCrop(
                         size=(args.image_size, args.image_size), scale=(0.2, 1.0)
@@ -440,7 +440,7 @@ def set_aug_diff(args):
             train_transform = (transform, transform)
 
         elif args.method == "mocov2":
-            transform = nn.Sequential(
+            transform = transforms.Compose(
                 [
                     aug.RandomResizedCrop(
                         size=(args.image_size, args.image_size), scale=(0.2, 1.0)

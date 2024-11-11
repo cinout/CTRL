@@ -386,11 +386,11 @@ def set_aug_diff(args):
 
     ####################### Define Diff Transforms #######################
 
-    class GaussianBlur(object):
-        def __call__(self, x):
-            sigma = np.random.uniform(0.1, 2.0)
-            x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
-            return x
+    # class GaussianBlur(object):
+    #     def __call__(self, x):
+    #         sigma = np.random.uniform(0.1, 2.0)
+    #         x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+    #         return x
 
     if "cifar" in args.dataset or args.dataset == "imagenet100":
         # this is applied during training, not during poison generation
@@ -405,7 +405,9 @@ def set_aug_diff(args):
                     aug.RandomHorizontalFlip(),
                     RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
                     aug.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([GaussianBlur()], p=1.0),
+                    transforms.RandomApply(
+                        [transforms.GaussianBlur(kernel_size=(3, 7))], p=1.0
+                    ),
                     normalize,
                 ]
             )
@@ -417,7 +419,9 @@ def set_aug_diff(args):
                     aug.RandomHorizontalFlip(),
                     RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
                     aug.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([GaussianBlur()], p=0.1),
+                    transforms.RandomApply(
+                        [transforms.GaussianBlur(kernel_size=(3, 7))], p=0.1
+                    ),
                     aug.RandomSolarize(p=0.2),
                     normalize,
                 ]
@@ -433,7 +437,9 @@ def set_aug_diff(args):
                     aug.RandomHorizontalFlip(),
                     RandomApply(aug.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),
                     aug.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([GaussianBlur()], p=0.5),
+                    transforms.RandomApply(
+                        [transforms.GaussianBlur(kernel_size=(3, 7))], p=0.5
+                    ),
                     normalize,
                 ]
             )
@@ -448,7 +454,9 @@ def set_aug_diff(args):
                     aug.RandomHorizontalFlip(),
                     RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
                     aug.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([GaussianBlur()], p=0.5),
+                    transforms.RandomApply(
+                        [transforms.GaussianBlur(kernel_size=(3, 7))], p=0.5
+                    ),
                     normalize,
                 ]
             )

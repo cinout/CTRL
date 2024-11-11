@@ -388,17 +388,66 @@ def set_aug_diff(args):
     if "cifar" in args.dataset or args.dataset == "imagenet100":
         # this is applied during training, not during poison generation
 
-        train_transform = nn.Sequential(
-            aug.RandomResizedCrop(
-                size=(args.image_size, args.image_size), scale=(0.2, 1.0)
-            ),
-            aug.RandomHorizontalFlip(),
-            RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
-            aug.RandomGrayscale(p=0.2),
-            normalize,
-        )
+        #  use different train_transform for different SSL methods
+        if args.method == "byol":
+            transform_1 = nn.Sequential(
+                [
+                    aug.RandomResizedCrop(
+                        size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                    ),
+                    aug.RandomHorizontalFlip(),
+                    RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
+                    aug.RandomGrayscale(p=0.2),
+                    aug.RandomGaussianBlur(p=1.0),
+                    normalize,
+                ]
+            )
+            transform_2 = nn.Sequential(
+                [
+                    aug.RandomResizedCrop(
+                        size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                    ),
+                    aug.RandomHorizontalFlip(),
+                    RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
+                    aug.RandomGrayscale(p=0.2),
+                    aug.RandomGaussianBlur(p=0.1),
+                    aug.RandomSolarize(p=0.2),
+                    normalize,
+                ]
+            )
+            train_transform = (transform_1, transform_2)
 
-        # applied to a PIL image
+        elif args.method == "simclr":
+            transform = nn.Sequential(
+                [
+                    aug.RandomResizedCrop(
+                        size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                    ),
+                    aug.RandomHorizontalFlip(),
+                    RandomApply(aug.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),
+                    aug.RandomGrayscale(p=0.2),
+                    aug.RandomGaussianBlur(p=0.5),
+                    normalize,
+                ]
+            )
+            train_transform = (transform, transform)
+
+        elif args.method == "mocov2":
+            transform = nn.Sequential(
+                [
+                    aug.RandomResizedCrop(
+                        size=(args.image_size, args.image_size), scale=(0.2, 1.0)
+                    ),
+                    aug.RandomHorizontalFlip(),
+                    RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
+                    aug.RandomGrayscale(p=0.2),
+                    aug.RandomGaussianBlur(p=0.5),
+                    normalize,
+                ]
+            )
+            train_transform = (transform, transform)
+
+        # applied to a PIL image (never used?)
         transform_load = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize(mean, std)]  # arrive here
         )

@@ -6,6 +6,7 @@ from datetime import datetime
 from data_prepare.diffaugment import set_aug_diff, PoisonAgent
 from methods import set_model
 from methods.base import CLTrainer
+from optimizer import LARS
 from utils.util import *
 from utils.frequency import PoisonFre
 from utils.htba import PoisonHTBA
@@ -540,9 +541,13 @@ def main(args):
     """
     Train and Evaluate
     """
-    optimizer = optim.SGD(
-        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-    )
+
+    # update here
+    # optimizer = optim.SGD(
+    #     model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+    # )
+
+    optimizer = LARS(model.parameters(), 1.5e-4, weight_decay=args.wd, momentum=0.9)
 
     # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
@@ -616,9 +621,13 @@ def main(args):
         new_model = set_model(args)
         new_model = new_model.to(device)
         new_trainer = CLTrainer(args)
-        optimizer = optim.SGD(
-            new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-        )
+
+        # update here too
+        # optimizer = optim.SGD(
+        #     new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+        # )
+        optimizer = LARS(model.parameters(), 1.5e-4, weight_decay=args.wd, momentum=0.9)
+
         # SSL attack and KNN Evaluation
         new_trainer.train_freq(
             new_model, optimizer, train_transform, poison, force_training=True

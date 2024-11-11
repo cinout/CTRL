@@ -100,7 +100,7 @@ def get_pairwise_distance(
 def get_detection_scores(
     vision_features,
     corrs,
-    max_indices_at_channel,
+    max_indices_at_channel,  #  [bs, n_view*take_channel]
     bd_detector_scores,
     args,
     from_predictor=False,
@@ -850,8 +850,9 @@ def find_trigger_channels(
     #             minority_indices_local = bd_indices[-minority_ub:]
     #         minority_indices.extend(minority_indices_local.tolist())
     # else:
-    # TODO: make changes here
-    if True:
+
+    # make changes here
+    if False:
         # get the real poisoned indices from train set
         minority_indices = np.nonzero(is_poisoned == 1)[0]
     else:
@@ -1553,7 +1554,10 @@ class CLTrainer:
             losses = AverageMeter()
             cl_losses = AverageMeter()
 
-            train_transform = train_transform.to(device)
+            (transform_1, transform_2) = train_transform
+
+            transform_1 = transform_1.to(device)
+            transform_2 = transform_2.to(device)
 
             # 1 epoch training
             start = time.time()
@@ -1575,8 +1579,8 @@ class CLTrainer:
                     images = images.to(device)
 
                     # data
-                    v1 = train_transform(images)
-                    v2 = train_transform(images)
+                    v1 = transform_1(images)
+                    v2 = transform_2(images)
 
                     if self.args.method == "simclr":
                         features = model(v1, v2)

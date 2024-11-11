@@ -49,7 +49,7 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --note "all clean training set" \
+    --note "different augmentations and LARS optimizer" \
 ##    --ignore_probe_channel_num 30 \
 
 

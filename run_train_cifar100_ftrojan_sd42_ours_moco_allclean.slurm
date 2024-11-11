@@ -49,7 +49,7 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --note "all clean training set" \
+    --note "different augmentations and LARS optimizer" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

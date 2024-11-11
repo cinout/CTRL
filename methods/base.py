@@ -1556,8 +1556,8 @@ class CLTrainer:
 
             (transform_1, transform_2) = train_transform
 
-            transform_1 = transform_1.to(device)
-            transform_2 = transform_2.to(device)
+            # transform_1 = transform_1.to(device)
+            # transform_2 = transform_2.to(device)
 
             # 1 epoch training
             start = time.time()

@@ -67,6 +67,8 @@ parser.add_argument("--data_path", default="./datasets/")
 parser.add_argument(
     "--dataset", default="cifar10", choices=["cifar10", "cifar100", "imagenet100"]
 )
+parser.add_argument("--optimizer", default="sgd", choices=["sgd", "lars"])
+
 parser.add_argument("--disable_normalize", action="store_true", default=True)
 parser.add_argument("--full_dataset", action="store_true", default=True)
 parser.add_argument("--window_size", default=32, type=int)
@@ -543,11 +545,14 @@ def main(args):
     """
 
     # update here
-    # optimizer = optim.SGD(
-    #     model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-    # )
-
-    optimizer = LARS(model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9)
+    if args.optimizer == "sgd":
+        optimizer = optim.SGD(
+            model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+        )
+    elif args.optimizer == "lars":
+        optimizer = LARS(
+            model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9
+        )
 
     # SSL attack and KNN Evaluation
     trainer.train_freq(model, optimizer, train_transform, poison)
@@ -622,13 +627,14 @@ def main(args):
         new_model = new_model.to(device)
         new_trainer = CLTrainer(args)
 
-        # update here too
-        # optimizer = optim.SGD(
-        #     new_model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
-        # )
-        optimizer = LARS(
-            model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9
-        )
+        if args.optimizer == "sgd":
+            optimizer = optim.SGD(
+                model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd
+            )
+        elif args.optimizer == "lars":
+            optimizer = LARS(
+                model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9
+            )
 
         # SSL attack and KNN Evaluation
         new_trainer.train_freq(

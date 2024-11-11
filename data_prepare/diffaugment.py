@@ -436,7 +436,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=1.0),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=1.0),
                 normalize,
             )
             transform_2 = nn.Sequential(
@@ -446,7 +446,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.2, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=0.1),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.1),
                 aug.RandomSolarize(p=0.2),
                 normalize,
             )
@@ -476,7 +476,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=0.5),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.5),
                 normalize,
             )
             transform_2 = nn.Sequential(
@@ -486,7 +486,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=0.5),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.5),
                 normalize,
             )
 
@@ -515,7 +515,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=0.5),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.5),
                 normalize,
             )
             transform_2 = nn.Sequential(
@@ -525,7 +525,7 @@ def set_aug_diff(args):
                 aug.RandomHorizontalFlip(),
                 RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
                 aug.RandomGrayscale(p=0.2),
-                aug.RandomGaussianBlur(kernel_size=(3, 4), sigma=(0.1, 2.0), p=0.5),
+                aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.5),
                 normalize,
             )
             train_transform = (transform_1, transform_2)

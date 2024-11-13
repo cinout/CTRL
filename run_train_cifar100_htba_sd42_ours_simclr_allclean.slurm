@@ -52,7 +52,8 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --note "new augmentation" \
+    --optimizer lars \
+    --note "opt=lars" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

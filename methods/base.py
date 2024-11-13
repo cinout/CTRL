@@ -1554,11 +1554,11 @@ class CLTrainer:
             losses = AverageMeter()
             cl_losses = AverageMeter()
 
-            (transform_1, transform_2) = train_transform
-            transform_1 = transform_1.to(device)
-            transform_2 = transform_2.to(device)
+            # (transform_1, transform_2) = train_transform
+            # transform_1 = transform_1.to(device)
+            # transform_2 = transform_2.to(device)
 
-            # train_transform = train_transform.to(device)
+            train_transform = train_transform.to(device)
 
             # 1 epoch training
             start = time.time()
@@ -1579,11 +1579,11 @@ class CLTrainer:
                     model.train()
                     images = images.to(device)
 
-                    # data
-                    v1 = transform_1(images)
-                    v2 = transform_2(images)
-                    # v1 = train_transform(images)
-                    # v2 = train_transform(images)
+                    # # data
+                    # v1 = transform_1(images)
+                    # v2 = transform_2(images)
+                    v1 = train_transform(images)
+                    v2 = train_transform(images)
 
                     if self.args.method == "simclr":
                         features = model(v1, v2)

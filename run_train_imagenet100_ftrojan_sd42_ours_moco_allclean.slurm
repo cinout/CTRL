@@ -51,7 +51,8 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --note "new augmentation" \
+    --optimizer lars \
+    --note "opt=lars" \
 
     
 

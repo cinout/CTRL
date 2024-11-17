@@ -220,7 +220,7 @@ def get_ss_statistics(
 ):
     # is_poisoned is the GTs for poisoned train set, when not None, means the function is called by train set
 
-    if args.knn_before_svd:
+    if args.cluster_before_svd:
         if is_poisoned:
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
@@ -638,7 +638,7 @@ def find_trigger_channels(
             int(trainset_features.shape[0] / args.num_views),
             trainset_features.shape[1],
             args,
-            # is_poisoned=is_poisoned,
+            is_poisoned=is_poisoned,
         )
         # if args.only_detect_projector_features:
         #     get_detection_scores_from_projector(

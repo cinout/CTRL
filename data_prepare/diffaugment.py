@@ -272,7 +272,8 @@ class PoisonAgent:
             batch_size=self.args.batch_size,
             sampler=None,
             shuffle=True,
-            drop_last=True if self.args.method == "mocov2" else False,
+            drop_last=False,
+            # drop_last=True if self.args.method == "mocov2" else False,
         )
 
         # clean validation set (used in knn eval only, in base.py)

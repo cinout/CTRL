@@ -319,7 +319,7 @@ parser.add_argument(
     help="use dense density as poison estimator",
 )
 parser.add_argument(
-    "--knn_before_svd",
+    "--cluster_before_svd",
     action="store_true",
     help="apply kNN to features before performing spectral signature",
 )
@@ -618,7 +618,8 @@ def main(args):
             batch_size=args.batch_size,
             sampler=None,
             shuffle=True,
-            drop_last=True if args.method == "mocov2" else False,
+            drop_last=False,
+            # drop_last=True if args.method == "mocov2" else False,
         )
         print(f"filtered_dataset.shape: {len(poison.train_pos_loader.dataset)}")
 

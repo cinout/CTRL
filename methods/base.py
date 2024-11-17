@@ -584,7 +584,6 @@ def find_trigger_channels(
     Actual train loader with 1% poisoned images
     """
 
-    # TODO: update
     if args.full_dataset_svd:
         trainset_features = h5py_handler.create_dataset(
             "trainset_features", (len(data_loader.dataset) * args.num_views, feat_dim)

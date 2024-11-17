@@ -50,7 +50,7 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 64 \
+    --num_views 1 \
     \
     --detect_trigger_channels \
     --channel_num 40 \
@@ -65,7 +65,7 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --full_dataset_svd \
-    --note "full dataset SVD" \
+    --note "full dataset SVD [n_view=1]" \
     --trigger_path "20241030_172740_26_0_trigger_estimation_simclr_cifar100_htba" \
     --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \

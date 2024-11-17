@@ -313,11 +313,11 @@ parser.add_argument(
     action="store_true",
     help="when trigger channels are found from val set directly",
 )
-# parser.add_argument(
-#     "--full_dataset_svd",
-#     action="store_true",
-#     help="apply spectral signature on whole dataset",
-# )
+parser.add_argument(
+    "--full_dataset_svd",
+    action="store_true",
+    help="use dense density as poison estimator",
+)
 parser.add_argument(
     "--knn_before_svd",
     action="store_true",

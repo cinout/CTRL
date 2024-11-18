@@ -244,6 +244,26 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
+            distances = avearge_knn_distance(visual_features, k=30)
+            sorted_distances = np.sort(distances)
+            fig, ax = plt.subplots()
+            fig.set_figheight(12)
+            fig.set_figwidth(16)
+            ax.set(xlabel="point", ylabel="dist", title="distance")
+            ax.scatter(
+                list(range(len(sorted_distances))),
+                sorted_distances,
+                # label="RRC + Hflip + Vflip",
+                marker=".",
+                color="#b0c94b",
+                # linestyle="-",
+            )
+
+            plt.show()
+            plt.savefig(
+                f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
+            )
+
         # scaler = MinMaxScaler()
         scaler = StandardScaler()
         # iso = IsolationForest(contamination=0.05)
@@ -257,28 +277,6 @@ def get_ss_statistics(
         #     n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
-
-        distances = avearge_knn_distance(visual_features, k=30)
-        sorted_distances = np.sort(distances)
-        fig, ax = plt.subplots()
-        fig.set_figheight(12)
-        fig.set_figwidth(16)
-        ax.set(xlabel="point", ylabel="dist", title="distance")
-        ax.scatter(
-            list(range(len(sorted_distances))),
-            sorted_distances,
-            # label="RRC + Hflip + Vflip",
-            marker=".",
-            color="#b0c94b",
-            # linestyle="-",
-        )
-
-        plt.show()
-        plt.savefig(
-            f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
-        )
-
-        exit()
 
         dbscan = DBSCAN(eps=0.3, min_samples=30)
         labels = dbscan.fit_predict(visual_features)

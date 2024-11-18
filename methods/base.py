@@ -246,7 +246,7 @@ def get_ss_statistics(
 
             distances = avearge_knn_distance(visual_features, k=30)
 
-            minority_len = int(len(gt) * 0.01)
+            minority_len = int(len(gt) * 0.005)
 
             smallest_k_indices = np.argsort(distances)[:minority_len]
             poisoned_in_dense = gt[smallest_k_indices].sum()

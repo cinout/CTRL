@@ -35,6 +35,15 @@ from methods.base import get_pairwise_distance
 from kornia import augmentation as aug
 import torch.nn as nn
 
+
+arr = np.random.randint(0, 100, size=(10,))
+print(arr)
+haha = np.percentile(arr, q=10)
+print(haha)
+
+
+exit()
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 image_size = 64

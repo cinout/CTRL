@@ -241,6 +241,7 @@ def get_ss_statistics(
 
     if args.cluster_before_svd:
         if is_poisoned:
+            # train set
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
@@ -248,8 +249,8 @@ def get_ss_statistics(
 
             minority_len = int(len(gt) * 0.005)
 
-            smallest_k_indices = np.argsort(distances)[:minority_len]
-            poisoned_in_dense = gt[smallest_k_indices].sum()
+            dense_indices = np.argsort(distances)[:minority_len]
+            poisoned_in_dense = gt[dense_indices].sum()
 
             print(
                 f"<><><><> we found {poisoned_in_dense} poisoned in {minority_len} images"
@@ -274,8 +275,14 @@ def get_ss_statistics(
                 f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
             )
 
+            dist_threshold = np.percentile(distances, q=8)
+            dbscan = DBSCAN(eps=dist_threshold, min_samples=50)
+        else:
+            # probe set
+            dbscan = DBSCAN(eps=0.3, min_samples=30)
+
         # scaler = MinMaxScaler()
-        scaler = StandardScaler()
+        # scaler = StandardScaler()
         # iso = IsolationForest(contamination=0.05)
         # y_iso = iso.fit_predict(visual_features)
         # X_filtered = visual_features[y_iso == 1]
@@ -288,7 +295,6 @@ def get_ss_statistics(
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
 
-        dbscan = DBSCAN(eps=0.3, min_samples=30)
         labels = dbscan.fit_predict(visual_features)
         # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
 

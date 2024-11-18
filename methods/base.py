@@ -245,6 +245,16 @@ def get_ss_statistics(
             gt = np.array(gt.cpu())  # [#dataset]
 
             distances = avearge_knn_distance(visual_features, k=30)
+
+            minority_len = int(len(gt) * 0.01)
+
+            smallest_k_indices = np.argsort(distances)[:minority_len]
+            poisoned_in_dense = gt[smallest_k_indices].sum()
+
+            print(
+                f"<><><><> we found {poisoned_in_dense} poisoned in {minority_len} images"
+            )
+
             sorted_distances = np.sort(distances)
             fig, ax = plt.subplots()
             fig.set_figheight(12)

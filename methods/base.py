@@ -247,7 +247,9 @@ def get_ss_statistics(
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
-            distances = avearge_knn_distance(visual_features, k=neighbors)
+            distances = avearge_knn_distance(
+                visual_features, k=neighbors
+            )  # [samples, ]
 
             minority_len = int(len(gt) * percentage)
 
@@ -320,8 +322,10 @@ def get_ss_statistics(
 
             if is_poisoned:
                 total_poisoned_in_cluster = gt[matching_indices].sum()
+                this_cluster_dist = distances[matching_indices]
+                this_cluster_dist = np.mean(this_cluster_dist)
                 print(
-                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}"
+                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,2)}"
                 )
             else:
                 print(

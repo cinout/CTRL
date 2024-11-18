@@ -41,8 +41,27 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import DBSCAN
 from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import NearestNeighbors
+import matplotlib.pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def avearge_knn_distance(matrix, k):
+
+    # Fit the NearestNeighbors model
+    nbrs = NearestNeighbors(n_neighbors=k + 1, algorithm="auto").fit(matrix)
+
+    # Compute distances to k+1 nearest neighbors (including the point itself at distance 0)
+    distances, _ = nbrs.kneighbors(matrix)
+
+    # Exclude the point itself (distance = 0) by slicing from index 1 onwards
+    k_nearest_distances = distances[:, 1:]
+
+    # Compute the average of k nearest distances for each point
+    avg_distances = np.mean(k_nearest_distances, axis=1)
+
+    return avg_distances  # [#samples, ]
 
 
 def get_freq_detection_scores(images, freq_detector_ensemble, bd_detector_scores, args):
@@ -239,9 +258,26 @@ def get_ss_statistics(
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
 
+        distances = avearge_knn_distance(visual_features, k=30)
+        sorted_distances = np.sort(distances)
+        fig, ax = plt.subplots()
+        fig.set_figheight(12)
+        fig.set_figwidth(16)
+        ax.set(xlabel="point", ylabel="dist", title="distance")
+        ax.scatter(
+            list(range(len(sorted_distances))),
+            sorted_distances,
+            # label="RRC + Hflip + Vflip",
+            marker=".",
+            color="#b0c94b",
+            # linestyle="-",
+        )
+
+        exit()
+
         dbscan = DBSCAN(eps=0.3, min_samples=30)
-        # labels = dbscan.fit_predict(visual_features)
-        labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
+        labels = dbscan.fit_predict(visual_features)
+        # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
 
         # gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
         # labels = gmm.fit_predict(scaler.fit_transform(visual_features))

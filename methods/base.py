@@ -273,6 +273,11 @@ def get_ss_statistics(
             # linestyle="-",
         )
 
+        plt.show()
+        plt.savefig(
+            f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
+        )
+
         exit()
 
         dbscan = DBSCAN(eps=0.3, min_samples=30)

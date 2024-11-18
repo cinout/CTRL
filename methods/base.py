@@ -327,6 +327,7 @@ def get_ss_statistics(
                 this_cluster_dist = distances[matching_indices]
                 this_cluster_dist = np.mean(this_cluster_dist)
                 if this_cluster_dist < densest_value:
+                    densest_value = this_cluster_dist
                     densest_cluster = cluster_id
                 print(
                     f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,2)}"

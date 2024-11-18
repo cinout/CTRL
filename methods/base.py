@@ -242,12 +242,14 @@ def get_ss_statistics(
     if args.cluster_before_svd:
         if is_poisoned:
             # train set
+            neighbors = 30
+            percentage = 0.008
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
-            distances = avearge_knn_distance(visual_features, k=30)
+            distances = avearge_knn_distance(visual_features, k=neighbors)
 
-            minority_len = int(len(gt) * 0.005)
+            minority_len = int(len(gt) * percentage)
 
             dense_indices = np.argsort(distances)[:minority_len]
             poisoned_in_dense = gt[dense_indices].sum()
@@ -275,8 +277,10 @@ def get_ss_statistics(
                 f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
             )
 
-            dist_threshold = np.percentile(distances, q=8)
-            dbscan = DBSCAN(eps=dist_threshold, min_samples=50)
+            dist_threshold = np.percentile(
+                distances, q=percentage * 100
+            )  # TODO: change to max rate change
+            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
         else:
             # probe set
             dbscan = DBSCAN(eps=0.3, min_samples=30)

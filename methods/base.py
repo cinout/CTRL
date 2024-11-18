@@ -240,8 +240,8 @@ def get_ss_statistics(
         # labels = clusters.labels_
 
         dbscan = DBSCAN(eps=0.3, min_samples=30)
-        labels = dbscan.fit_predict(visual_features)
-        # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
+        # labels = dbscan.fit_predict(visual_features)
+        labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
 
         # gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
         # labels = gmm.fit_predict(scaler.fit_transform(visual_features))

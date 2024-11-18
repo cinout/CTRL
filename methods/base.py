@@ -317,6 +317,8 @@ def get_ss_statistics(
             shape=(bs, take_channel), dtype=np.int64
         )
 
+        densest_cluster = None
+        densest_value = np.inf
         for cluster_id in set(labels):  # FIXME: update
             matching_indices = labels == cluster_id  # An array of True and False
 
@@ -324,6 +326,8 @@ def get_ss_statistics(
                 total_poisoned_in_cluster = gt[matching_indices].sum()
                 this_cluster_dist = distances[matching_indices]
                 this_cluster_dist = np.mean(this_cluster_dist)
+                if this_cluster_dist < densest_value:
+                    densest_cluster = cluster_id
                 print(
                     f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,2)}"
                 )
@@ -340,6 +344,8 @@ def get_ss_statistics(
             # need to remember the indices of the statistics
             corrs_total[:, matching_indices] = corrs
             max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
+        if is_poisoned:
+            print(f"The densest cluster is {densest_cluster}")
 
         # print(
         #     f"max_indices_at_channel_total.dtype: {max_indices_at_channel_total.dtype}"

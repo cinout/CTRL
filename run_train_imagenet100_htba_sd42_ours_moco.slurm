@@ -65,7 +65,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --full_dataset_svd \
-    --note "full dataset SVD [n_view=1]" \
+    --cluster_before_svd \
+    --note "full dataset SVD [n_view=1] [cluster]" \
     --trigger_path "20241030_173710_75_75_trigger_estimation_mocov2_imagenet100_htba" \
     --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \

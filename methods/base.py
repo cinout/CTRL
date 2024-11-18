@@ -239,11 +239,12 @@ def get_ss_statistics(
         # ).fit(pca.fit_transform(visual_features))
         # labels = clusters.labels_
 
-        # dbscan = DBSCAN(eps=0.5, min_samples=5)
+        dbscan = DBSCAN(eps=0.3, min_samples=30)
+        labels = dbscan.fit_predict(visual_features)
         # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
 
-        gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
-        labels = gmm.fit_predict(scaler.fit_transform(visual_features))
+        # gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
+        # labels = gmm.fit_predict(scaler.fit_transform(visual_features))
         # num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)

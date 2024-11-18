@@ -64,7 +64,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --full_dataset_svd \
-    --note "full dataset SVD [n_view=1]" \
+    --cluster_before_svd \
+    --note "full dataset SVD [n_view=1] [cluster]" \
     --trigger_path "20241030_102134_99_90_trigger_estimation_simclr_cifar10_htba" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

@@ -64,7 +64,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --full_dataset_svd \
-    --note "full dataset SVD [n_view=1]" \
+    --cluster_before_svd \
+    --note "full dataset SVD [n_view=1] [cluster]" \
     --trigger_path "20241030_121725_13_70_trigger_estimation_simclr_imagenet100_ftrojan" \
     --num_clusters 100 \
 ##    --retrain_linear_after_channel_removal \

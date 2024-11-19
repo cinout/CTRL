@@ -127,6 +127,13 @@ class MoCo(nn.Module):
         # replace the keys at ptr (dequeue and enqueue)
 
         if ptr + batch_size > self.K:
+            print(f"<<<<< ptr: {ptr}")
+            print(f"<<<<< batch_size: {batch_size}")
+            print(f"<<<<< self.K: {self.K}")
+            print(f"<<<<< self.queue.shape: {self.queue.shape}")
+            print(f"<<<<< keys.T.shape: {keys.T.shape}")
+            print(f"<<<<<<<<<<<<<<<")
+
             self.queue[:, ptr : self.K] = keys.T[:, : self.K - ptr]
             self.queue[: ptr + batch_size - self.K] = keys.T[:, self.K - ptr :]
         else:

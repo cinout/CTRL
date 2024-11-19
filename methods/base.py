@@ -241,6 +241,9 @@ def get_ss_statistics(
 
     if args.cluster_before_svd:
         if is_poisoned:
+            # TODO: should we normalize?
+            scaler = StandardScaler()
+            visual_features = scaler.fit_transform(visual_features)
             # train set
             neighbors = 30
             percentage = 0.012

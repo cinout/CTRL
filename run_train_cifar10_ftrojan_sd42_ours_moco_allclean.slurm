@@ -46,11 +46,10 @@ python -u main_train.py \
     --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 20 \
     --num_views 64 \
     \
-    --optimizer lars \
-    --note "opt=lars" \
+    --note "seed=20" \
 ##    --ignore_probe_channel_num 30 \
 
 

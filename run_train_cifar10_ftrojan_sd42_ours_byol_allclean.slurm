@@ -46,11 +46,10 @@ python -u main_train.py \
     --pretrained_linear_model "" \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 20 \
     --num_views 64 \
     \
-    --optimizer lars \
-    --note "opt=lars" \
+    --note "seed=20" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

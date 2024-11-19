@@ -39,7 +39,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, OPTICS
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
@@ -241,9 +241,10 @@ def get_ss_statistics(
 
     if args.cluster_before_svd:
         if is_poisoned:
-            # TODO: should we normalize?
-            scaler = StandardScaler()
-            visual_features = scaler.fit_transform(visual_features)
+            # # should we normalize?
+            # scaler = StandardScaler()
+            # visual_features = scaler.fit_transform(visual_features)
+
             # train set
             neighbors = 30
             percentage = 0.012
@@ -266,7 +267,8 @@ def get_ss_statistics(
             dist_threshold = np.percentile(
                 distances, q=percentage * 100
             )  # TODO: change to max rate change
-            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
+            # dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
+            dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
 
             sorted_distances = np.sort(distances)
             fig, ax = plt.subplots()

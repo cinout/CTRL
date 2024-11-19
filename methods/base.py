@@ -260,6 +260,11 @@ def get_ss_statistics(
                 f"<><><><> we found {poisoned_in_dense} poisoned in {minority_len} images"
             )
 
+            dist_threshold = np.percentile(
+                distances, q=percentage * 100
+            )  # TODO: change to max rate change
+            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
+
             sorted_distances = np.sort(distances)
             fig, ax = plt.subplots()
             fig.set_figheight(12)
@@ -279,10 +284,6 @@ def get_ss_statistics(
                 f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
             )
 
-            dist_threshold = np.percentile(
-                distances, q=percentage * 100
-            )  # TODO: change to max rate change
-            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
         else:
             # probe set
             dbscan = DBSCAN(eps=0.3, min_samples=30)

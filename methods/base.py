@@ -278,6 +278,7 @@ def get_ss_statistics(
                 color="#b0c94b",
                 # linestyle="-",
             )
+            ax.axvline(x=dist_threshold, color="blue")
 
             plt.show()
             plt.savefig(

@@ -269,7 +269,11 @@ def get_ss_statistics(
             fig, ax = plt.subplots()
             fig.set_figheight(12)
             fig.set_figwidth(16)
-            ax.set(xlabel="point", ylabel="dist", title="distance")
+            ax.set(
+                xlabel="point",
+                ylabel="dist",
+                title=f"{args.dataset} {args.trigger_type} {args.method}",
+            )
             ax.scatter(
                 list(range(len(sorted_distances))),
                 sorted_distances,

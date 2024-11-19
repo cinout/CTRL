@@ -243,7 +243,7 @@ def get_ss_statistics(
         if is_poisoned:
             # train set
             neighbors = 30
-            percentage = 0.008
+            percentage = 0.012
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
@@ -336,7 +336,7 @@ def get_ss_statistics(
                     densest_value = this_cluster_dist
                     densest_cluster = cluster_id
                 print(
-                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,2)}"
+                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,4)}"
                 )
             else:
                 print(

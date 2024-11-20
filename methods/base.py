@@ -247,7 +247,7 @@ def get_ss_statistics(
 
             # train set
             neighbors = 30
-            percentage = 0.012
+            percentage = 0.004
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
@@ -267,8 +267,8 @@ def get_ss_statistics(
             dist_threshold = np.percentile(
                 distances, q=percentage * 100
             )  # TODO: change to max rate change
-            # dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
-            dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
+            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
+            # dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
 
             sorted_distances = np.sort(distances)
             fig, ax = plt.subplots()

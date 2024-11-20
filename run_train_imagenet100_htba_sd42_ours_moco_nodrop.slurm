@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,8 +45,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20241119_224817_59_54_imagenet100_htba_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241119_224817_59_54_imagenet100_htba_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

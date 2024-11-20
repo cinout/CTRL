@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -42,8 +42,8 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "" \
-    --pretrained_linear_model "" \
+    --pretrained_ssl_model "./Experiments/20241120_032447_26_1_cifar100_ftrojan_linear_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/20241120_032447_26_1_cifar100_ftrojan_linear_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

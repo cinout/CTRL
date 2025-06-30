@@ -247,7 +247,7 @@ def get_ss_statistics(
 
             # train set
             neighbors = 30
-            percentage = 0.004
+            percentage = 0.004  # TODO: changed in each experiment
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
@@ -284,7 +284,7 @@ def get_ss_statistics(
                 sorted_distances,
                 # label="RRC + Hflip + Vflip",
                 marker=".",
-                color="#b0c94b",
+                color="#6d744e",
                 # linestyle="-",
             )
             ax.axvline(x=dist_threshold, color="blue")

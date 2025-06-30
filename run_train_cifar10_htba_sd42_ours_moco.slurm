@@ -59,13 +59,11 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors ss_score \
+    --bd_detectors frequency_ensemble \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --full_dataset_svd \
-    --cluster_before_svd \
-    --note "full dataset SVD [n_view=1] [cluster]" \
+    --note "apply frequency detector to SD42" \
     --trigger_path "20241030_090810_82_13_trigger_estimation_mocov2_cifar10_htba" \
     --num_clusters 10 \
 ##    --retrain_linear_after_channel_removal \

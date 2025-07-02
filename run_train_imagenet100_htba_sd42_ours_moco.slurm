@@ -45,8 +45,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20241024_235233_77_100_imagenet100_htba_linear_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241103_191643_57_83_imagenet100_htba_linear_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/imagenet100_htba_moco_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_htba_moco_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \

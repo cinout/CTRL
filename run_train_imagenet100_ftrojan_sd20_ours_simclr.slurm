@@ -44,8 +44,8 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --pretrained_ssl_model "./Experiments/20241119_185303_20_40_imagenet100_ftrojan_linear_ref_set_sd20/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/20241119_185303_20_40_imagenet100_ftrojan_linear_ref_set_sd20/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd20/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 20 \

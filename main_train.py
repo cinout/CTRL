@@ -697,7 +697,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.saved_path = os.path.join(
-        f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_linear_{args.linear_probe_normalize}_sd{args.seed}_[RAW]"
+        f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}_{args.linear_probe_normalize}_sd{args.seed}"
     )
 
     # Defense Baseline: SSL-Cleanse generated triggers

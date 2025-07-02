@@ -137,10 +137,12 @@ def get_pairwise_distance(
 
 
 """
-Store the detection scores for each detector. Used in function find_trigger_channels().
-Results are stored in the bd_detector_scores dictionary, which is initialised in function find_trigger_channels().
+Store the detection scores for each detector. Used in function find_trigger_channels_or_poisoned_images().
+Results are stored in the bd_detector_scores dictionary, which is initialised in function find_trigger_channels_or_poisoned_images().
+Even if the detector itself does not need spectral signature (SS) information, we still need to calculate SS using get_ss_statistics() because the detector's purpose is to estimate poisoned images, and we still need the backdoor channels voting results from these estimated images.
+
+Although if args.siftout_poisoned_images == True and detector is frequency etc, we don't really need SS results. In such case, we could improve efficiency by not calling get_ss_statistics(), but for convenience, let's leave it as it is for now.
 """
-# TODO: if the detector does not use spectral signature (corrs & max_indices_at_channel), we don't need to compute it using get_ss_statistics() to improve computation time.
 
 
 def get_detection_scores(
@@ -270,7 +272,7 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
 
 
 """
-A WRAPPER for getting Spectral Signature results, used in function find_trigger_channels(). 
+A WRAPPER for getting Spectral Signature results, used in function find_trigger_channels_or_poisoned_images(). 
 The actual calculation is performed in another function ss_statistics()
 """
 
@@ -371,7 +373,7 @@ def get_ss_statistics(
 
         densest_cluster = None
         densest_value = np.inf
-        for cluster_id in set(labels):  # TODO: update
+        for cluster_id in set(labels):
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:
@@ -415,7 +417,7 @@ def get_ss_statistics(
 
 
 """
-To augment image into N views, used in function find_trigger_channels()
+To augment image into N views, used in function find_trigger_channels_or_poisoned_images()
 """
 
 
@@ -454,11 +456,14 @@ def generate_view_tensors(input, ss_transform):
 
 
 """
-Locate the trigger channels, called by CLTrainer class
+Called by CLTrainer class
+
+If args.siftout_poisoned_images == True, return indices of estimated poisoned images;
+Else, return the estimated trigger channels.
 """
 
 
-def find_trigger_channels(
+def find_trigger_channels_or_poisoned_images(
     args,
     data_loader,
     train_probe_loader,
@@ -1133,7 +1138,7 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
             # Normalize for MoCo, BYOL etc.
             output = model(images)
 
-            if args.detect_trigger_channels and use_ss_detector:
+            if args.use_trigger_channel_removal and use_ss_detector:
                 indices_toremove = contributing_indices[0 : max(args.channel_num)]
                 output[:, indices_toremove] = 0.0
 
@@ -1187,7 +1192,7 @@ def train_linear_classifier(
         # compute output
         with torch.no_grad():
             output = backbone(images)
-            if args.detect_trigger_channels and use_ss_detector:
+            if args.use_trigger_channel_removal and use_ss_detector:
                 indices_toremove = contributing_indices[0 : max(args.channel_num)]
                 output[:, indices_toremove] = 0.0
 
@@ -1232,7 +1237,7 @@ def eval_linear_classifier(
         ]
     )
     with torch.no_grad():
-        if args.detect_trigger_channels and use_ss_detector:
+        if args.use_trigger_channel_removal and use_ss_detector:
             acc1_accumulator_dict = {}
             total_count_dict = {}
             for k in args.channel_num:
@@ -1266,7 +1271,7 @@ def eval_linear_classifier(
 
             # compute output
             output = backbone(images)
-            if args.detect_trigger_channels and use_ss_detector:
+            if args.use_trigger_channel_removal and use_ss_detector:
                 for k in args.channel_num:
                     indices_toremove = contributing_indices[0:k]
                     output[:, indices_toremove] = 0.0
@@ -1286,7 +1291,7 @@ def eval_linear_classifier(
                     linear, output, target, acc1_accumulator, total_count
                 )
 
-        if args.detect_trigger_channels and use_ss_detector:
+        if args.use_trigger_channel_removal and use_ss_detector:
             results_dict = {}
             for k in args.channel_num:
                 results_dict[k] = acc1_accumulator_dict[k] / total_count_dict[k] * 100.0
@@ -1378,11 +1383,14 @@ class CLTrainer:
 
         self.args.warmup_epoch = 10
 
-        # if self.args.detect_trigger_channels:
+        # if self.args.use_trigger_channel_removal:
         #     self.contributing_indices = None
 
     """
-    [Experiment] Retrain the linear classifier after the SSL trigger channels are moved
+    [Experiment] Retrain the linear classifier after the SSL trigger channels are moved.
+
+    Called in CLTrainer class's function trigger_channel_removal(), which is only called if args.use_trigger_channel_removal == True.
+
     TODO: check if this conflicts with linear_probing() function
     """
 
@@ -1789,7 +1797,7 @@ class CLTrainer:
                     train_loader
                 ):  # frequency backdoor has been injected
 
-                    # if self.args.detect_trigger_channels:
+                    # if self.args.use_trigger_channel_removal:
                     #     (images, is_poisoned, __, _) = content
                     # else:
                     #     (images, __, _) = content
@@ -1910,7 +1918,7 @@ class CLTrainer:
         backbone.eval()
         projector.eval()
 
-        estimated_poisoned_file_indices = find_trigger_channels(
+        estimated_poisoned_file_indices = find_trigger_channels_or_poisoned_images(
             self.args,
             poison.train_pos_loader,
             poison.train_probe_loader,
@@ -1923,14 +1931,13 @@ class CLTrainer:
         return estimated_poisoned_file_indices
 
     """
-    Channel Voting Strategy. Only called if args.detect_trigger_channels == True
+    Use Channel Removal Strategy. Only called if args.use_trigger_channel_removal == True
     """
 
     def trigger_channel_removal(self, model, poison, trained_linear):
         ######## Prepare backbone and linear
 
         trained_linear.eval()
-
         model.eval()
 
         if self.args.method == "mocov2":
@@ -1948,7 +1955,8 @@ class CLTrainer:
         projector.eval()
 
         if self.args.ideal_case:
-            clean_val_contributing_indices = find_trigger_channels(
+            # Get the estimated trigger indices
+            clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
                 poison.test_clean_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
@@ -1961,7 +1969,7 @@ class CLTrainer:
             print(
                 f"[IDEAL CASE] [CLEAN VAL SET] predicted trigger channels are: {clean_val_contributing_indices}"
             )
-            poi_val_contributing_indices = find_trigger_channels(
+            poi_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
                 poison.test_pos_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
@@ -1974,6 +1982,7 @@ class CLTrainer:
             print(
                 f"[IDEAL CASE] [POISON VAL SET] predicted trigger channels are: {poi_val_contributing_indices}"
             )
+
             ############# KNN
             clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
                 backbone,
@@ -1986,18 +1995,17 @@ class CLTrainer:
                 clean_val_contributing_indices=clean_val_contributing_indices,
                 poi_val_contributing_indices=poi_val_contributing_indices,
             )
-
             for k in self.args.channel_num:
                 print(
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                 )
 
+            ########### Linear Probe
             if self.args.retrain_linear_after_channel_removal:
+                # if need to retrain linear classifier
                 trained_linear = self.retrain_linear_with_channel_removed_encoder(
                     poison, backbone, clean_val_contributing_indices
                 )
-
-            ########### Linear Probe
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
                 poison.test_clean_loader,
@@ -2013,7 +2021,6 @@ class CLTrainer:
                 trained_linear = self.retrain_linear_with_channel_removed_encoder(
                     poison, backbone, poi_val_contributing_indices
                 )
-
             print(f"<<<<<<<<< evaluating linear on POISON val")
             poison_acc1 = eval_linear_classifier(
                 poison.test_pos_loader,
@@ -2024,13 +2031,15 @@ class CLTrainer:
                 use_ss_detector=True,
                 contributing_indices=poi_val_contributing_indices,
             )
+
             for k in self.args.channel_num:
                 print(
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
         else:
             ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
-            contributing_indices = find_trigger_channels(
+
+            contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
@@ -2058,12 +2067,12 @@ class CLTrainer:
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                 )
 
+            ########### Linear Probe
             if self.args.retrain_linear_after_channel_removal:
                 trained_linear = self.retrain_linear_with_channel_removed_encoder(
                     poison, backbone, contributing_indices
                 )
 
-            ########### Linear Probe
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
                 poison.test_clean_loader,
@@ -2140,7 +2149,7 @@ class CLTrainer:
         # feature_bank: [dim, total num]
         feature_bank = torch.cat(feature_bank, dim=0).t().contiguous()
 
-        # if args.detect_trigger_channels and args.replacement_value == "ref_mean":
+        # if args.use_trigger_channel_removal and args.replacement_value == "ref_mean":
         #     feature_bank_mean = torch.mean(feature_bank, dim=1)  # shape: [D, ]
 
         # feature_labels: [total num]

@@ -97,7 +97,7 @@ class PoisonAgent:
         self.magnitude_train = magnitude_train
         self.magnitude_val = magnitude_val
 
-        # if self.args.detect_trigger_channels:
+        # if self.args.use_trigger_channel_removal:
         ss_views_aug = [
             transforms.RandomResizedCrop(
                 self.args.image_size,
@@ -266,7 +266,7 @@ class PoisonAgent:
                     y_train_tensor,
                     train_index,
                 )
-                # if self.args.detect_trigger_channels
+                # if self.args.use_trigger_channel_removal
                 # else TensorDataset(x_train_tensor, y_train_tensor, train_index)
             ),
             batch_size=self.args.batch_size,

@@ -46,7 +46,7 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
     total_count = 0
     with torch.no_grad():
         for content in data_loader:
-            # if args.detect_trigger_channels:
+            # if args.use_trigger_channel_removal:
             #     if val_mode == "poison":
             #         (images, views, labels, original_label, _) = content
             #         original_label = original_label.to(device)

@@ -51,7 +51,7 @@ python -u main_train.py \
     --seed 42 \
     --num_views 1 \
     \
-    --detect_trigger_channels \
+    --use_trigger_channel_removal \
     --channel_num 40 \
     --find_and_ignore_probe_channels \
     --ignore_probe_channel_num 30 \

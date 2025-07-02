@@ -202,9 +202,9 @@ parser.add_argument(
 
 # Spectral Signature / Probe Dataset / Channel Detection, Removal, or Input Filtering
 parser.add_argument(
-    "--detect_trigger_channels",
+    "--use_trigger_channel_removal",
     action="store_true",
-    help="use Spectral Signature to detect channels, this requires N augmented views to be generated",
+    help="apply channel removal strategy",
 )
 parser.add_argument(
     "--siftout_poisoned_images",
@@ -569,10 +569,10 @@ def main(args):
             model.parameters(), args.lr, weight_decay=args.wd, momentum=0.9
         )
 
-    # SSL attack and KNN Evaluation
+    # SSL attack and KNN Evaluation [Poisoned Model]
     trainer.train_freq(model, optimizer, train_transform, poison)
 
-    # Linear Probe and Evaluation
+    # Linear Probe and Evaluation [Poisoned Model]
     if args.method == "mocov2":
         backbone = copy.deepcopy(model.encoder_q)
         backbone.fc = nn.Sequential()
@@ -580,7 +580,10 @@ def main(args):
         backbone = copy.deepcopy(model.backbone)
     trained_linear = trainer.linear_probing(backbone, poison)
 
-    # DEFENSE
+    """
+    DEFENSE OPTIONS
+    """
+
     """
     IDEA 1: Use SSL-CLeanse (ECCV 2024 paper)
     """
@@ -669,7 +672,7 @@ def main(args):
     """
     IDEA 3: Channel Removal Strategy
     """
-    if args.detect_trigger_channels:
+    if args.use_trigger_channel_removal:
         trainer.trigger_channel_removal(model, poison, trained_linear)
 
     """

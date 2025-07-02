@@ -65,7 +65,7 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "apply frequency detector to SD42 [Rerun with view=64]" \
-    --trigger_path "20241030_124001_82_31_trigger_estimation_byol_cifar100_htba" \
+    --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_124001_82_31_trigger_estimation_byol_cifar100_htba" \
     --num_clusters 100 \
 
 

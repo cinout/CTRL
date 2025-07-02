@@ -47,7 +47,7 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 1 \
+    --num_views 64 \
     \
     --use_trigger_channel_removal \
     --channel_num 40 \
@@ -61,7 +61,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "apply frequency detector to SD42" \
+    --note "apply frequency detector to SD42 [Rerun with view=64]" \
     --trigger_path "20241030_075005_50_75_trigger_estimation_byol_cifar100_ftrojan" \
     --num_clusters 100 \
 

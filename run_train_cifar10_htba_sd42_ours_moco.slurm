@@ -49,7 +49,7 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 1 \
+    --num_views 64 \
     \
     --use_trigger_channel_removal \
     --channel_num 40 \
@@ -63,7 +63,7 @@ python -u main_train.py \
     --normalize_backbone_features none \
     --in_n_detectors 1 \
     \
-    --note "apply frequency detector to SD42" \
+    --note "apply frequency detector to SD42 [Rerun with view=64]" \
     --trigger_path "20241030_090810_82_13_trigger_estimation_mocov2_cifar10_htba" \
     --num_clusters 10 \
 

@@ -240,6 +240,7 @@ parser.add_argument(
     action="store_true",
     help="allow re-training the linear classifier after the encoder is channel removed",
 )
+
 parser.add_argument(
     "--full_dataset_svd",
     action="store_true",
@@ -601,6 +602,7 @@ def main(args):
         cleansed_backbone = trigger_mitigation(args, backbone, trainset_data)
 
         new_trainer = CLTrainer(args)
+
         clean_acc, back_acc = new_trainer.knn_monitor_fre(
             cleansed_backbone,
             poison.memory_loader,
@@ -612,6 +614,8 @@ def main(args):
         print(
             f">>>> With SSL-cleanse model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
         )
+
+        # TODO: Whole model finetuning for SSL-Cleanse should happen here
         _ = new_trainer.linear_probing(cleansed_backbone, poison, force_training=True)
 
     """

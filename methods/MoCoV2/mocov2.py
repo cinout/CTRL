@@ -160,14 +160,14 @@ class MoCo(nn.Module):
         idx_shuffle = torch.randperm(batch_size_all).to(device)
 
         # broadcast to all gpus
-        # TODO:[Later]
+        # FIXME:
         # torch.distributed.broadcast(idx_shuffle, src=0)
 
         # index for restoring
         idx_unshuffle = torch.argsort(idx_shuffle)
 
         # shuffled index for this gpu
-        # TODO:[Later]
+        # FIXME:
         gpu_idx = 0
         # gpu_idx = torch.distributed.get_rank()
         idx_this = idx_shuffle.view(num_gpus, -1)[gpu_idx]
@@ -188,7 +188,7 @@ class MoCo(nn.Module):
         num_gpus = batch_size_all // batch_size_this
 
         # restored index for this gpu
-        # TODO:[Later]
+        # FIXME:
         gpu_idx = 0
         # gpu_idx = torch.distributed.get_rank()
         idx_this = idx_unshuffle.view(num_gpus, -1)[gpu_idx]

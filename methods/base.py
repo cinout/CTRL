@@ -309,7 +309,7 @@ def get_ss_statistics(
 
             dist_threshold = np.percentile(
                 distances, q=percentage * 100
-            )  # TODO:[Later] change to max rate change
+            )  # FIXME: change to max rate change
             dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
             # dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
 
@@ -1933,6 +1933,7 @@ class CLTrainer:
     """
 
     def trigger_channel_removal(self, model, poison, trained_linear):
+        # TODO: Whole model finetuning for our model should happen here
         ######## Prepare backbone and linear
 
         trained_linear.eval()

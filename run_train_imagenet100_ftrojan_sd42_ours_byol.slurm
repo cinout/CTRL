@@ -66,10 +66,9 @@ python -u main_train.py \
     --note "apply frequency detector to SD42" \
     --trigger_path "20241030_103835_79_99_trigger_estimation_byol_imagenet100_ftrojan" \
     --num_clusters 100 \
-##    --retrain_linear_after_channel_removal \
-## \
-##    --find_and_ignore_probe_channels \
-##    --ignore_probe_channel_num 30 \
+
+
+
 
     
 

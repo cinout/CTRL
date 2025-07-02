@@ -1390,8 +1390,6 @@ class CLTrainer:
     [Experiment] Retrain the linear classifier after the SSL trigger channels are moved.
 
     Called in CLTrainer class's function trigger_channel_removal(), which is only called if args.use_trigger_channel_removal == True.
-
-    TODO: check if this conflicts with linear_probing() function
     """
 
     def retrain_linear_with_channel_removed_encoder(

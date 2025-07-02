@@ -67,10 +67,9 @@ python -u main_train.py \
     --note "apply frequency detector to SD42" \
     --trigger_path "20241030_171908_82_49_trigger_estimation_mocov2_cifar100_htba" \
     --num_clusters 100 \
-##    --retrain_linear_after_channel_removal \
-## \
-##    --find_and_ignore_probe_channels \
-##    --ignore_probe_channel_num 30 \
+
+
+
 
 
 ##Log this job's resource usage stats###

@@ -67,10 +67,9 @@ python -u main_train.py \
     --note "apply frequency detector to SD42" \
     --trigger_path "20241030_183556_16_93_trigger_estimation_simclr_imagenet100_htba" \
     --num_clusters 100 \
-##    --retrain_linear_after_channel_removal \
-## \
-##    --find_and_ignore_probe_channels \
-##    --ignore_probe_channel_num 30 \
+
+
+
 
     
 

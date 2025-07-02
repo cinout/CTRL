@@ -195,6 +195,7 @@ def evaluate_trigger_during_inversion(
 def trigger_inversion(args, backbone, poison, feat_dim):
 
     backbone = backbone.eval()
+    # poisoned encoder f is frozen
     for param in backbone.parameters():
         param.requires_grad = False
 

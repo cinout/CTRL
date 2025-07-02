@@ -693,7 +693,7 @@ if __name__ == "__main__":
         f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_linear_{args.linear_probe_normalize}_sd{args.seed}_[RAW]"
     )
 
-    # Defense Baseline: SSL Cleanse generated triggers
+    # Defense Baseline: SSL-Cleanse generated triggers
     if args.trigger_path == "":
         args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}"
 

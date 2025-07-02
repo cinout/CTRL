@@ -46,6 +46,10 @@ import matplotlib.pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+"""
+Helper function to calculate average KNN distance
+"""
+
 
 def avearge_knn_distance(matrix, k):
 
@@ -62,6 +66,12 @@ def avearge_knn_distance(matrix, k):
     avg_distances = np.mean(k_nearest_distances, axis=1)
 
     return avg_distances  # [#samples, ]
+
+
+"""
+If use frequency detector, store the detection scores in bd_detector_scores dictionary.
+Called separate from function get_detection_scores(), because frequency detector needs the original image input rather than processed vision feature.
+"""
 
 
 def get_freq_detection_scores(images, freq_detector_ensemble, bd_detector_scores, args):
@@ -88,6 +98,11 @@ def get_freq_detection_scores(images, freq_detector_ensemble, bd_detector_scores
             bd_detector_scores[f"frequency_ensemble_{ensemble_id}"].extend(output)
 
 
+"""
+Helper function for computing LID
+"""
+
+
 def lid_mle(data, reference, k=20, compute_mode="use_mm_for_euclid_dist_if_necessary"):
     b = data.shape[0]
     k = min(k, b - 2)
@@ -99,6 +114,11 @@ def lid_mle(data, reference, k=20, compute_mode="use_mm_for_euclid_dist_if_neces
     a, idx = torch.sort(r, dim=1)
     lids = -k / torch.sum(torch.log(a[:, 1:k] / a[:, k].view(-1, 1) + 1.0e-4), dim=1)
     return lids
+
+
+"""
+Helper function for computing K-Distance
+"""
 
 
 def get_pairwise_distance(
@@ -116,6 +136,13 @@ def get_pairwise_distance(
     return r  # [b, b-1]
 
 
+"""
+Store the detection scores for each detector. Used in function find_trigger_channels().
+Results are stored in the bd_detector_scores dictionary, which is initialised in function find_trigger_channels().
+"""
+# TODO: if the detector does not use spectral signature (corrs & max_indices_at_channel), we don't need to compute it using get_ss_statistics() to improve computation time.
+
+
 def get_detection_scores(
     vision_features,
     corrs,
@@ -124,6 +151,7 @@ def get_detection_scores(
     args,
     from_predictor=False,
 ):
+    # Voting Entropy (Need to use spectral signature results)
     if "entropy" in args.bd_detectors:
         for votes in max_indices_at_channel:  # for each original image
             votes_counter = Counter(votes).most_common()
@@ -136,6 +164,7 @@ def get_detection_scores(
             # else:
             bd_detector_scores["entropy"].append(entropy)
 
+    # Use spectral signature result directly
     if "ss_score" in args.bd_detectors:
         corrs = np.abs(corrs)
         corrs = corrs.reshape(-1, args.num_views)  #  [bs,n_views]
@@ -145,6 +174,7 @@ def get_detection_scores(
         # else:
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
+    # Use LID. Only need ot use "vision_features".
     if "lid" in args.bd_detectors:
         lids = lid_mle(
             data=vision_features.detach(), reference=vision_features.detach()
@@ -157,6 +187,7 @@ def get_detection_scores(
         # else:
         bd_detector_scores["lid"].extend(lids.cpu().numpy())
 
+    # Use K-Distance. Only need to use "vision_features".
     if "kdist" in args.bd_detectors:
         d = get_pairwise_distance(
             vision_features.detach(),
@@ -192,6 +223,10 @@ def get_detection_scores(
 #         args,
 #         from_predictor=True,
 #     )
+
+"""
+The core function for calculating spectral signature outcome, used in get_ss_statistics()
+"""
 
 
 def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
@@ -234,6 +269,12 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     return corrs, max_indices_at_channel
 
 
+"""
+A WRAPPER for getting Spectral Signature results, used in function find_trigger_channels(). 
+The actual calculation is performed in another function ss_statistics()
+"""
+
+
 def get_ss_statistics(
     visual_features, bs, feat_dim, args, probe_set=False, is_poisoned=None
 ):
@@ -247,7 +288,7 @@ def get_ss_statistics(
 
             # train set
             neighbors = 30
-            percentage = 0.004  # TODO: changed in each experiment
+            percentage = 0.004  # change in each experiment
             gt = torch.cat(is_poisoned)
             gt = np.array(gt.cpu())  # [#dataset]
 
@@ -266,7 +307,7 @@ def get_ss_statistics(
 
             dist_threshold = np.percentile(
                 distances, q=percentage * 100
-            )  # TODO: change to max rate change
+            )  # TODO:[Later] change to max rate change
             dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
             # dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
 
@@ -330,7 +371,7 @@ def get_ss_statistics(
 
         densest_cluster = None
         densest_value = np.inf
-        for cluster_id in set(labels):  # FIXME: update
+        for cluster_id in set(labels):  # TODO: update
             matching_indices = labels == cluster_id  # An array of True and False
 
             if is_poisoned:
@@ -373,6 +414,11 @@ def get_ss_statistics(
         return ss_statistics(visual_features, bs, feat_dim, args, probe_set)
 
 
+"""
+To augment image into N views, used in function find_trigger_channels()
+"""
+
+
 def generate_view_tensors(input, ss_transform):
     # input.shape: [total, 3, 32, 32]; value range: [0, 1]
     input = torch.permute(input, (0, 2, 3, 1))
@@ -407,9 +453,14 @@ def generate_view_tensors(input, ss_transform):
     return view_tensors
 
 
+"""
+Locate the trigger channels, called by CLTrainer class
+"""
+
+
 def find_trigger_channels(
     args,
-    data_loader,  # train dataset with poisoned images
+    data_loader,
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
@@ -417,11 +468,18 @@ def find_trigger_channels(
     # linear,
     ss_transform,
 ):
+    """
+    image tensor transform
+    """
     transform = T.Compose(
         [
             T.Normalize(args.mean, args.std),
         ]
     )
+
+    """
+    set up a dictionary to store each detector's prediction scores
+    """
     bd_detector_scores = dict()
     for detector in args.bd_detectors:
         if detector == "frequency_ensemble":
@@ -437,8 +495,13 @@ def find_trigger_channels(
             # if args.compare_backbone_predictor:
             #     bd_detector_scores[f"{name}_pred"] = []
 
+    """
+    set up arrays to store information
+    """
     all_votes = []  # for all images in the dataset
     is_poisoned = []  # for all images in the dataset (GT)
+
+    # if use input filtering, record the indices of estimated poisoned images
     if args.siftout_poisoned_images:
         trainset_file_indices = []
 
@@ -476,7 +539,9 @@ def find_trigger_channels(
     #     unlearnt_backbone.eval()
     #     unlearnt_linear.eval()
 
-    # to train frequency detectors
+    """
+    if use frequency detector(s), train them here
+    """
     if "frequency_ensemble" in args.bd_detectors:
         freq_detector_ensemble = []
         for ensemble_id in range(args.frequency_ensemble_size):
@@ -564,6 +629,9 @@ def find_trigger_channels(
                 freq_detector.load_state_dict(pretrained_state_dict, strict=True)
             freq_detector_ensemble.append(freq_detector)
 
+    """
+    if we want to perform Spectral Signature on the whole set at once
+    """
     if args.full_dataset_svd:
         h5py_filename = (
             f"{args.timestamp}_{args.dataset}_{args.trigger_type}_features.hdf5"
@@ -576,7 +644,7 @@ def find_trigger_channels(
             _, feat_dim = model_dict[args.arch]
 
     """
-    # called if we want to ignore some clean channels voted by train_probe dataset
+    # if we want to ignore some clean channels voted by train_probe dataset
     """
     if args.find_and_ignore_probe_channels:
         all_probe_votes = []
@@ -663,7 +731,7 @@ def find_trigger_channels(
                 all_probe_votes.append(max_indices_at_channel)
 
     """
-    Actual train loader with 1% poisoned images
+    Extract backboone features from input images, and potentially calculate spectral signature using get_ss_statistics()
     """
 
     if args.full_dataset_svd:
@@ -741,7 +809,6 @@ def find_trigger_channels(
         )
 
         all_votes.append(max_indices_at_channel)
-
     else:
 
         # if args.tap_trigger:
@@ -843,6 +910,7 @@ def find_trigger_channels(
                 is_batch_poisoned = is_batch_poisoned.to(device)
 
             images = images.to(device)
+
             if args.siftout_poisoned_images:
                 trainset_file_indices.append(file_index)
 
@@ -894,6 +962,9 @@ def find_trigger_channels(
             all_votes.append(max_indices_at_channel)
             is_poisoned.append(is_batch_poisoned)
 
+    """
+    Print the final detection performances
+    """
     # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
@@ -939,7 +1010,6 @@ def find_trigger_channels(
     #         minority_indices.extend(minority_indices_local.tolist())
     # else:
 
-    # make changes here
     if False:
         # get the real poisoned indices from train set
         minority_indices = np.nonzero(is_poisoned == 1)[0]
@@ -947,14 +1017,15 @@ def find_trigger_channels(
         for detector, values in bd_detector_scores.items():
             bd_scores = np.array(values)
 
+            # calculate AUC score from each detector
             if not args.ideal_case and not args.tap_trigger:
                 auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
                 print(
                     f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
                 )
 
+            # get the indices of the minority (estimated poisoned images)
             bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
-
             if minority_lb > 0:
                 minority_indices_local = bd_indices[
                     -minority_ub:-minority_lb
@@ -963,6 +1034,7 @@ def find_trigger_channels(
                 minority_indices_local = bd_indices[-minority_ub:]
             minority_indices.extend(minority_indices_local.tolist())
 
+        # choose the indices that appear "count" times in all detectors
         minority_indices_counter = Counter(minority_indices)
         minority_indices = [
             idx
@@ -973,23 +1045,30 @@ def find_trigger_channels(
     print(f"all_votes.shape: {all_votes.shape}")
     print(f"len(minority_indices): {len(minority_indices)}")
 
-    all_votes = all_votes[
-        minority_indices
-    ]  # votes by minority, [minority_num, n_view*take_channel]
+    # get the votes from minority_indices, shape: [minority_num, n_view*take_channel]
+    all_votes = all_votes[minority_indices]
 
+    """
+    print the precision of poisoned image estimation
+    """
     is_poisoned = is_poisoned[minority_indices]
     poisoned_found = is_poisoned.sum()
-
     print(
         f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
     )
 
+    """
+    If use input filtering method, return the indices of the estimated poisoned images, and exit this function
+    """
     if args.siftout_poisoned_images:
         trainset_file_indices = torch.cat(trainset_file_indices)
         trainset_file_indices = np.array(trainset_file_indices.cpu())  # [#dataset]
         estimated_poisoned_file_indices = trainset_file_indices[minority_indices]
         return estimated_poisoned_file_indices  # numpy
 
+    """
+    If use trigger channel removal, return the estimated trigger channels
+    """
     if args.find_and_ignore_probe_channels:
         # REMOVE channels that appear in probe dataset
         essential_indices = Counter(all_votes.flatten()).most_common(
@@ -1019,9 +1098,16 @@ def find_trigger_channels(
             [idx for (idx, occ_count) in essential_indices]
         )
 
+    # free the disk space
     if args.full_dataset_svd:
         os.remove(h5py_filename)
+
     return essential_indices
+
+
+"""
+Output the features after images in "loader" is processed by "model"
+"""
 
 
 def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=None):
@@ -1069,6 +1155,11 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
     return feats
 
 
+"""
+Train the linear classifier
+"""
+
+
 def train_linear_classifier(
     train_loader,
     backbone,
@@ -1109,6 +1200,11 @@ def train_linear_classifier(
         optimizer.step()
 
 
+"""
+Helper function for function eval_linear_classifier()
+"""
+
+
 def produces_evaluation_results(linear, output, target, acc1_accumulator, total_count):
     output = linear(output)
     _, pred = output.topk(
@@ -1120,6 +1216,11 @@ def produces_evaluation_results(linear, output, target, acc1_accumulator, total_
     total_count += target.shape[0]
     acc1_accumulator += (pred == target).float().sum().item()
     return acc1_accumulator, total_count
+
+
+"""
+Evaluate the performance of linear probing (linear classifier)
+"""
 
 
 def eval_linear_classifier(
@@ -1194,11 +1295,17 @@ def eval_linear_classifier(
             return acc1_accumulator / total_count * 100.0
 
 
+"""
+Different normalization choices
+"""
+
+
 class Normalize(nn.Module):
     def forward(self, x):
         return x / x.norm(2, dim=1, keepdim=True)
 
 
+# ref_set, which is default option
 class FullBatchNorm(nn.Module):
     def __init__(self, var, mean):
         super(FullBatchNorm, self).__init__()
@@ -1213,6 +1320,11 @@ def cycle(iterable):
     while True:
         for x in iterable:
             yield x
+
+
+"""
+Used as the base class for BYOL and SimCLR
+"""
 
 
 class CLModel(nn.Module):
@@ -1244,7 +1356,16 @@ class CLModel(nn.Module):
         pass
 
 
+"""
+Contain all the essential functions for SSL & linear training & evaluation
+"""
+
+
 class CLTrainer:
+    """
+    Initialise Logger
+    """
+
     def __init__(self, args):
         self.args = args
         # self.tb_logger = tb_logger.Logger(logdir=args.saved_path, flush_secs=2)
@@ -1259,6 +1380,11 @@ class CLTrainer:
 
         # if self.args.detect_trigger_channels:
         #     self.contributing_indices = None
+
+    """
+    [Experiment] Retrain the linear classifier after the SSL trigger channels are moved
+    TODO: check if this conflicts with linear_probing() function
+    """
 
     def retrain_linear_with_channel_removed_encoder(
         self, poison, backbone, contributing_indices
@@ -1345,7 +1471,10 @@ class CLTrainer:
         linear.eval()
         return linear
 
-    # Linear Probe training and evalaution
+    """
+    Linear classifier training (unless args.pretrained_linear_model have value and not force_training) and evalaution
+    """
+
     def linear_probing(
         self,  # call self.args for options
         backbone,
@@ -1616,7 +1745,10 @@ class CLTrainer:
 
             return linear  # the returned linear is only used if use_ss_detector=False
 
-    # SSL attack and kNN Evaluation
+    """
+    Train the SSL encoder (unless provided with args.pretrained_ssl_model and not force_training) and then perform kNN classifier evalution
+    """
+
     def train_freq(
         self, model, optimizer, train_transform, poison, force_training=False
     ):
@@ -1754,7 +1886,10 @@ class CLTrainer:
 
         return model
 
-    # sift out poisoned images
+    """
+    # Input filtering. Only called if args.siftout_poisoned_images === True
+    """
+
     def siftout_poisoned_images(self, model, poison, trained_linear):
 
         trained_linear.eval()
@@ -1787,7 +1922,10 @@ class CLTrainer:
         )  # numpy
         return estimated_poisoned_file_indices
 
-    # Channel Voting Strategy
+    """
+    Channel Voting Strategy. Only called if args.detect_trigger_channels == True
+    """
+
     def trigger_channel_removal(self, model, poison, trained_linear):
         ######## Prepare backbone and linear
 
@@ -1951,6 +2089,11 @@ class CLTrainer:
                 print(
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
+
+    """
+    The function used for kNN classifier evaluation (label prediction).
+    It uses the helper function knn_predict()
+    """
 
     @torch.no_grad()
     def knn_monitor_fre(
@@ -2147,6 +2290,10 @@ class CLTrainer:
                 clean_val_top1 / clean_val_total_num * 100,
                 backdoor_val_top1 / backdoor_val_total_num * 100,
             )
+
+    """
+    Helper function for kNN classifier label prediction. Used in function knn_monitor_fre()
+    """
 
     def knn_predict(self, feature, feature_bank, feature_labels, classes, knn_k, knn_t):
         # feature: [bsz, dim]

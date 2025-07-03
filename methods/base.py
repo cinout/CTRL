@@ -1700,8 +1700,10 @@ class CLTrainer:
                 if self.args.retrain_whole_model_after_cleanse:
                     backbone.train()
                     optimizer = torch.optim.SGD(
-                        list(backbone.parameters()) + list(linear.parameters()),
-                        lr=0.06,
+                        [
+                            {"params": backbone.parameters(), "lr": 0.001},
+                            {"params": linear.parameters(), "lr": 0.06},
+                        ],
                         momentum=0.9,
                         weight_decay=1e-4,
                     )

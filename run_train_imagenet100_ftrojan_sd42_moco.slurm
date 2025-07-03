@@ -59,10 +59,10 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors frequency_ensemble \
+    --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "retrain whole model after Channel removal, ideal case" \
+    --note "retrain whole model after Channel removal, ideal case, detector=entropy" \
     
 
 

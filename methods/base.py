@@ -619,6 +619,7 @@ def find_trigger_channels_or_poisoned_images(
                         loss.backward()  # update params of freq_detector
                         optimizer.step()
                     print(f"> epoch is {epoch}; loss is {loss.item()}")
+
                 save_model(
                     freq_detector.state_dict(),
                     filename=os.path.join(

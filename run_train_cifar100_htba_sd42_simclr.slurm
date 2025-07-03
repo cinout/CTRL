@@ -55,7 +55,7 @@ python -u main_train.py \
     --use_trigger_channel_removal \
     --ideal_case \
     --channel_num 40 \
-    --retrain_whole_model_after_cleanse \
+    --retrain_linear_after_channel_removal \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -63,7 +63,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "retrain whole model after Channel removal, ideal case, detector=entropy" \
+    --note "retrain just linear model after Channel removal, ideal case, detector=entropy" \
     
 
 

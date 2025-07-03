@@ -15,7 +15,7 @@ CONSISTENCY = 1.4826
 
 def outlier(l1_norm_list, combined=False):
     ##### (Option 1) return all indices
-    # return list(range(len(l1_norm_list)))
+    return list(range(len(l1_norm_list)))
 
     median = torch.median(l1_norm_list)  # median of the list
     median_dist_to_median = CONSISTENCY * torch.median(torch.abs(l1_norm_list - median))

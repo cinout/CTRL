@@ -238,9 +238,13 @@ parser.add_argument(
 parser.add_argument(
     "--retrain_linear_after_channel_removal",
     action="store_true",
-    help="allow re-training the linear classifier after the encoder is channel removed",
+    help="allow re-training the linear classifier after the encoder is channel removed, using the 1 per cent ref set",
 )
-
+parser.add_argument(
+    "--retrain_whole_model_after_cleanse",
+    action="store_true",
+    help="after cleanse method is applied, retrain the whole model (backbone+linear) using the 1 per cent ref set",
+)
 parser.add_argument(
     "--full_dataset_svd",
     action="store_true",
@@ -311,7 +315,7 @@ parser.add_argument(
     "--num_views",
     type=int,
     default=1,
-    help="how many views are generated for each image",
+    help="how many views are generated for each image. Ultimately used by generate_view_tensors() function",
 )
 parser.add_argument(
     "--rrc_scale_min",
@@ -429,10 +433,10 @@ parser.add_argument(
 parser.add_argument(
     "--mitigate_epochs",
     type=int,
-    default=500,
+    default=5,
 )
 parser.add_argument(
-    "--draw_local_trigger_by", type=str, choices=["global", "local"], default="local"
+    "--draw_local_trigger_by", type=str, choices=["global", "local"], default="global"
 )
 parser.add_argument(
     "--drop",
@@ -461,6 +465,8 @@ parser.add_argument("--crop_r1", default=(4 / 3), help="crop ratio to")
 parser.add_argument("--hf_p", default=0.5, help="horizontal flip probability")
 parser.add_argument("--trigger_width", type=int, default=6)
 parser.add_argument("--trigger_location", type=float, default=0.9)
+
+# FIXME: the following two can be removed
 parser.add_argument(
     "--triggers_combined",
     action="store_true",
@@ -615,7 +621,6 @@ def main(args):
             f">>>> With SSL-cleanse model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
         )
 
-        # TODO: Whole model finetuning for SSL-Cleanse should happen here
         _ = new_trainer.linear_probing(cleansed_backbone, poison, force_training=True)
 
     """

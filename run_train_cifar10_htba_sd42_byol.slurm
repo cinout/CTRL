@@ -49,21 +49,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 64 \
+    --num_views 1 \
     \
-    --use_trigger_channel_removal \
-    --channel_num 40 \
-    --find_and_ignore_probe_channels \
-    --ignore_probe_channel_num 30 \
+    --use_ssl_cleanse \
     \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
-    \
-    --bd_detectors frequency_ensemble \
-    --normalize_backbone_features none \
-    --in_n_detectors 1 \
-    \
-    --note "apply frequency detector to SD42 [Rerun with view=64]" \
+    --note "Use ssl-cleanse" \
     --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_084839_67_65_trigger_estimation_byol_cifar10_htba" \
     --num_clusters 10 \
 

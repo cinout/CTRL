@@ -1174,7 +1174,12 @@ def train_linear_classifier(
     use_ss_detector=False,
     contributing_indices=None,
 ):
-    backbone.eval()
+    if args.retrain_whole_model_after_cleanse:
+        backbone.train()
+        pass
+    else:
+        backbone.eval()
+
     linear.train()
     transform = T.Compose(
         [
@@ -1190,11 +1195,18 @@ def train_linear_classifier(
         target = target.to(device)
 
         # compute output
-        with torch.no_grad():
+        if args.retrain_whole_model_after_cleanse:
+            # same as below, but use grad backpropagation
             output = backbone(images)
             if args.use_trigger_channel_removal and use_ss_detector:
                 indices_toremove = contributing_indices[0 : max(args.channel_num)]
                 output[:, indices_toremove] = 0.0
+        else:
+            with torch.no_grad():
+                output = backbone(images)
+                if args.use_trigger_channel_removal and use_ss_detector:
+                    indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                    output[:, indices_toremove] = 0.0
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -1631,6 +1643,7 @@ class CLTrainer:
 
         else:
             # NOT USING MASK PRUNING
+
             backbone.eval()
 
             if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
@@ -1683,12 +1696,23 @@ class CLTrainer:
             linear = linear.to(device)
 
             if self.args.pretrained_linear_model == "" or force_training:
-                optimizer = torch.optim.SGD(
-                    linear.parameters(),
-                    lr=0.06,
-                    momentum=0.9,
-                    weight_decay=1e-4,
-                )
+
+                if self.args.retrain_whole_model_after_cleanse:
+                    backbone.train()
+                    optimizer = torch.optim.SGD(
+                        list(backbone.parameters()) + list(linear.parameters()),
+                        lr=0.06,
+                        momentum=0.9,
+                        weight_decay=1e-4,
+                    )
+                else:
+                    optimizer = torch.optim.SGD(
+                        linear.parameters(),
+                        lr=0.06,
+                        momentum=0.9,
+                        weight_decay=1e-4,
+                    )
+
                 sched = [15, 30, 40]
                 lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
                     optimizer, milestones=sched

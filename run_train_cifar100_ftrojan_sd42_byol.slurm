@@ -50,8 +50,9 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
+    --retrain_whole_model_after_cleanse \
     \
-    --note "Use ssl-cleanse" \
+    --note "Use ssl-cleanse, retrain_whole_model_after_cleanse" \
     --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_075005_50_75_trigger_estimation_byol_cifar100_ftrojan" \
     --num_clusters 100 \
 

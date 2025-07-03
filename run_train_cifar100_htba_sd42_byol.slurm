@@ -53,8 +53,9 @@ python -u main_train.py \
     --num_views 1 \
     \
     --use_ssl_cleanse \
+    --retrain_whole_model_after_cleanse \
     \
-    --note "Use ssl-cleanse" \
+    --note "Use ssl-cleanse, retrain_whole_model_after_cleanse" \
     --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_124001_82_31_trigger_estimation_byol_cifar100_htba" \
     --num_clusters 100 \
 

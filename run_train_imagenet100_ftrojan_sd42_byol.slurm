@@ -49,14 +49,21 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 1 \
+    --num_views 64 \
     \
-    --use_ssl_cleanse \
+    --use_trigger_channel_removal \
+    --ideal_case \
+    --channel_num 40 \
     --retrain_whole_model_after_cleanse \
     \
-    --note "Use ssl-cleanse, retrain_whole_model_after_cleanse" \
-    --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_103835_79_99_trigger_estimation_byol_imagenet100_ftrojan" \
-    --num_clusters 100 \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 0.010 \
+    \
+    --bd_detectors frequency_ensemble \
+    --in_n_detectors 1 \
+    \
+    --note "retrain whole model after Channel removal, ideal case" \
+    
 
 
 

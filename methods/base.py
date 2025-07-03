@@ -651,7 +651,7 @@ def find_trigger_channels_or_poisoned_images(
     """
     # if we want to ignore some clean channels voted by train_probe dataset
     """
-    if args.find_and_ignore_probe_channels:
+    if args.find_and_ignore_probe_channels and not args.ideal_case:
         all_probe_votes = []
 
         if args.full_dataset_svd:
@@ -1074,7 +1074,7 @@ def find_trigger_channels_or_poisoned_images(
     """
     If use trigger channel removal, return the estimated trigger channels
     """
-    if args.find_and_ignore_probe_channels:
+    if args.find_and_ignore_probe_channels and not args.ideal_case:
         # REMOVE channels that appear in probe dataset
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.channel_num) + args.ignore_probe_channel_num
@@ -1176,7 +1176,6 @@ def train_linear_classifier(
 ):
     if args.retrain_whole_model_after_cleanse:
         backbone.train()
-        pass
     else:
         backbone.eval()
 
@@ -1404,7 +1403,7 @@ class CLTrainer:
     Called in CLTrainer class's function trigger_channel_removal(), which is only called if args.use_trigger_channel_removal == True.
     """
 
-    def retrain_linear_with_channel_removed_encoder(
+    def retrain_model_with_channel_removed_encoder(
         self, poison, backbone, contributing_indices
     ):
         # training linear
@@ -1448,14 +1447,26 @@ class CLTrainer:
                 Normalize(),  # L2 norm
                 nn.Linear(feat_dim, self.args.num_classes),
             )
+
         linear = linear.to(device)
 
-        optimizer = torch.optim.SGD(
-            linear.parameters(),
-            lr=0.06,
-            momentum=0.9,
-            weight_decay=1e-4,
-        )
+        if self.args.retrain_whole_model_after_cleanse:
+            backbone.train()
+            optimizer = torch.optim.SGD(
+                [
+                    {"params": backbone.parameters(), "lr": 0.001},
+                    {"params": linear.parameters(), "lr": 0.06},
+                ],
+                momentum=0.9,
+                weight_decay=1e-4,
+            )
+        else:
+            optimizer = torch.optim.SGD(
+                linear.parameters(),
+                lr=0.06,
+                momentum=0.9,
+                weight_decay=1e-4,
+            )
         sched = [15, 30, 40]
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=sched)
 
@@ -1486,8 +1497,9 @@ class CLTrainer:
         #         filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
         #     )
 
+        backbone.eval()
         linear.eval()
-        return linear
+        return backbone, linear
 
     """
     Linear classifier training (unless args.pretrained_linear_model have value and not force_training) and evalaution
@@ -1696,7 +1708,6 @@ class CLTrainer:
             linear = linear.to(device)
 
             if self.args.pretrained_linear_model == "" or force_training:
-
                 if self.args.retrain_whole_model_after_cleanse:
                     backbone.train()
                     optimizer = torch.optim.SGD(
@@ -1959,11 +1970,7 @@ class CLTrainer:
     """
 
     def trigger_channel_removal(self, model, poison, trained_linear):
-        # TODO: Whole model finetuning for our model should happen here
         ######## Prepare backbone and linear
-
-        trained_linear.eval()
-        model.eval()
 
         if self.args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
@@ -1978,6 +1985,7 @@ class CLTrainer:
 
         backbone.eval()
         projector.eval()
+        trained_linear.eval()
 
         if self.args.ideal_case:
             # Get the estimated trigger indices
@@ -2026,15 +2034,28 @@ class CLTrainer:
                 )
 
             ########### Linear Probe
-            if self.args.retrain_linear_after_channel_removal:
-                # if need to retrain linear classifier
-                trained_linear = self.retrain_linear_with_channel_removed_encoder(
-                    poison, backbone, clean_val_contributing_indices
+            # Clean Validation Set
+            if (
+                self.args.retrain_linear_after_channel_removal
+                or self.args.retrain_whole_model_after_cleanse
+            ):
+                # if need to retrain
+                backbone_clean_val, trained_linear = (
+                    self.retrain_model_with_channel_removed_encoder(
+                        poison, copy.deepcopy(backbone), clean_val_contributing_indices
+                    )
                 )
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
             clean_acc1 = eval_linear_classifier(
                 poison.test_clean_loader,
-                backbone,
+                (
+                    backbone_clean_val
+                    if (
+                        self.args.retrain_linear_after_channel_removal
+                        or self.args.retrain_whole_model_after_cleanse
+                    )
+                    else backbone
+                ),
                 trained_linear,
                 self.args,
                 val_mode="clean",
@@ -2042,14 +2063,27 @@ class CLTrainer:
                 contributing_indices=clean_val_contributing_indices,
             )
 
-            if self.args.retrain_linear_after_channel_removal:
-                trained_linear = self.retrain_linear_with_channel_removed_encoder(
-                    poison, backbone, poi_val_contributing_indices
+            # Poisoned Validation Set
+            if (
+                self.args.retrain_linear_after_channel_removal
+                or self.args.retrain_whole_model_after_cleanse
+            ):
+                backbone_poi_val, trained_linear = (
+                    self.retrain_model_with_channel_removed_encoder(
+                        poison, copy.deepcopy(backbone), poi_val_contributing_indices
+                    )
                 )
             print(f"<<<<<<<<< evaluating linear on POISON val")
             poison_acc1 = eval_linear_classifier(
                 poison.test_pos_loader,
-                backbone,
+                (
+                    backbone_poi_val
+                    if (
+                        self.args.retrain_linear_after_channel_removal
+                        or self.args.retrain_whole_model_after_cleanse
+                    )
+                    else backbone
+                ),
                 trained_linear,
                 self.args,
                 val_mode="poison",
@@ -2093,9 +2127,14 @@ class CLTrainer:
                 )
 
             ########### Linear Probe
-            if self.args.retrain_linear_after_channel_removal:
-                trained_linear = self.retrain_linear_with_channel_removed_encoder(
-                    poison, backbone, contributing_indices
+            if (
+                self.args.retrain_linear_after_channel_removal
+                or self.args.retrain_whole_model_after_cleanse
+            ):
+                backbone, trained_linear = (
+                    self.retrain_model_with_channel_removed_encoder(
+                        poison, backbone, contributing_indices
+                    )
                 )
 
             print(f"<<<<<<<<< evaluating linear on CLEAN val")

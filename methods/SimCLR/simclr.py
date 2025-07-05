@@ -72,6 +72,7 @@ class SimCLRModel(CLModel):
     """
 
     def supConLoss(self, features, labels=None, mask=None, mean=True):
+        # features.shape [bs, 2, C]
         temperature = self.args.temp
         contrast_mode = "all"
         base_temperature = 0.07
@@ -92,7 +93,7 @@ class SimCLRModel(CLModel):
             raise ValueError("Cannot define both `labels` and `mask`")
         elif labels is None and mask is None:
             # arrive here
-            mask = torch.eye(batch_size, dtype=torch.float32).to(device)
+            mask = torch.eye(batch_size, dtype=torch.float32).to(device)  # [bs, bs]
         elif labels is not None:
             labels = labels.contiguous().view(-1, 1)
             if labels.shape[0] != batch_size:
@@ -101,21 +102,16 @@ class SimCLRModel(CLModel):
         else:
             mask = mask.float().to(device)
 
-        # TODO: remove them
-        print("features.shape", features.shape)
-        print("mask.shape", mask.shape)
-
-        contrast_count = features.shape[1]
-        contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
-
-        print("contrast_feature.shape", contrast_feature.shape)
+        contrast_count = features.shape[1]  # 2
+        contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)  # [bs*2, C]
 
         if contrast_mode == "one":
             anchor_feature = features[:, 0]
             anchor_count = 1
         elif contrast_mode == "all":
-            anchor_feature = contrast_feature
-            anchor_count = contrast_count
+            # arrive here
+            anchor_feature = contrast_feature  # [bs*2, C]
+            anchor_count = contrast_count  # 2
         else:
             raise ValueError("Unknown mode: {}".format(contrast_mode))
 
@@ -136,9 +132,7 @@ class SimCLRModel(CLModel):
             torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
             0,
         )
-        mask = mask * logits_mask
-
-        print("mask.shape", mask.shape)
+        mask = mask * logits_mask  # [2bs, 2bs]
 
         # compute log_prob
         exp_logits = torch.exp(logits) * logits_mask
@@ -149,9 +143,8 @@ class SimCLRModel(CLModel):
 
         # loss
         loss = -(temperature / base_temperature) * mean_log_prob_pos
-        loss = loss.view(anchor_count, batch_size)
+        loss = loss.view(anchor_count, batch_size)  # [2, bs]
 
-        print("loss.shape", loss.shape)
         # log_pos = -(temperature / base_temperature) * logits[mask.bool()].view(
         #     logits.shape[0], -1
         # )
@@ -163,8 +156,38 @@ class SimCLRModel(CLModel):
         # loss_neg = log_neg.view(anchor_count, batch_size)
 
         if mean:
-            # TODO: add regularisation here
-            return loss.mean()
+            standard_simclr_loss = loss.mean()
+
+            if self.args.ssl_covariance_loss:
+                # TODO: add regularisation here
+                f1 = features[:, 0, :]  # [bs, C]
+                f2 = features[:, 1, :]
+                N, C = f1.shape
+                off_diag_mask = ~torch.eye(C, dtype=bool)
+
+                # f1
+                f1 = f1 - f1.mean(dim=0)
+                cov_f1 = (f1.T @ f1) / N  # C*C
+                cov_f1_off_diagonal_elements = cov_f1[off_diag_mask]
+                loss_f1 = torch.pow(cov_f1_off_diagonal_elements, 2).sum() / C
+
+                # f2
+                f2 = f2 - f2.mean(dim=0)
+                cov_f2 = (f2.T @ f2) / N  # C*C
+                cov_f2_off_diagonal_elements = cov_f2[off_diag_mask]
+                loss_f2 = torch.pow(cov_f2_off_diagonal_elements, 2).sum() / C
+
+                loss_covariance = loss_f1 + loss_f2
+
+                print("f1.shape", f1.shape, loss_covariance)
+
+                return (
+                    standard_simclr_loss
+                    + self.args.ssl_covariance_loss_w * loss_covariance
+                )
+
+            else:
+                return standard_simclr_loss
             # return loss.mean(), loss_pos.mean(), loss_neg.mean()
         else:
             # NOT CALLED

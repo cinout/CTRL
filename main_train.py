@@ -479,6 +479,17 @@ parser.add_argument(
 )
 
 
+# TODO: add to slumr files
+"""
+SSL Training Loss
+"""
+parser.add_argument(
+    "--ssl_covariance_loss",
+    action="store_true",
+    help="add covariance loss regulariser for SSL training, idea from VICReg ICLR 2022 paper",
+)
+
+
 """
 Others (Hopefully can be removed later)
 """
@@ -504,8 +515,10 @@ def main(args):
     Create Model
     """
     print("=> creating cnn model '{}'".format(args.arch))
+
     # this is where model like simclr, byol is determined
     model = set_model(args)
+
     if args.pretrained_ssl_model != "":
         pretrained_state_dict = torch.load(
             args.pretrained_ssl_model, map_location=device

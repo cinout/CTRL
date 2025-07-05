@@ -393,7 +393,8 @@ def set_aug_diff(args):
     #         x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
     #         return x
 
-    if "cifar" in args.dataset or args.dataset == "imagenet100":
+    # if "cifar" in args.dataset or args.dataset == "imagenet100":
+    if True:
         # this is applied during training, not during poison generation
 
         #  use different train_transform for different SSL methods

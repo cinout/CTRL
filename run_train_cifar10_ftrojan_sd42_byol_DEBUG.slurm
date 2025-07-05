@@ -2,19 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_f"
+#SBATCH --job-name="c10_f_DB"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
-### TODO: update time to 2 days
+#SBATCH --time=0-01:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -43,28 +42,12 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
     --num_views 64 \
     \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --channel_num 40 \
-    --retrain_linear_after_channel_removal \
-    \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
-    \
-    --bd_detectors entropy \
-    --in_n_detectors 1 \
-    \
-    --note "retrain just linear model after Channel removal, ideal case, detector=entropy" \
-
-
-
+    --note "debug, train SSL with covariance regularisation" \
 
 
 ##Log this job's resource usage stats###

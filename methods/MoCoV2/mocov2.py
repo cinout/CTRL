@@ -204,6 +204,8 @@ class MoCo(nn.Module):
             MoCoLosses object containing the loss terms (and logits if contrastive loss is used)
         """
 
+        # TODO: update here
+
         # compute query features
         q = self.encoder_q(im_q)  # queries: NxC
         q = F.normalize(q, dim=1)

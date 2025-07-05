@@ -12,7 +12,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 class SimCLRModel(CLModel):
     def __init__(self, args):
         super().__init__(args)
+
+        # TODO: add regularisation here
         self.criterion = SupConLoss(args.temp).to(device)
+
         self.proj_dim = 128
 
         if self.mlp_layers == 2:

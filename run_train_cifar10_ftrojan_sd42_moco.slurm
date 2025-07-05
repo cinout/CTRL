@@ -52,7 +52,8 @@ python -u main_train.py \
     --use_trigger_channel_removal \
     --ideal_case \
     --channel_num 40 \
-    --retrain_linear_after_channel_removal \
+    --ssl_covariance_loss \
+    --ssl_covariance_loss_w 10.0 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -60,7 +61,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "train SSL with covariance regularisation \
+    --note "train SSL with covariance regularisation, w=10.0" \
     
 
 

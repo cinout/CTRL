@@ -48,6 +48,7 @@ python -u main_train.py \
     --num_views 64 \
     \
     --ssl_covariance_loss \
+    --ssl_covariance_loss_w 10.0 \
     --note "debug, train SSL with covariance regularisation, w=0.04" \
 
 

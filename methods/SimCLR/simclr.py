@@ -159,7 +159,6 @@ class SimCLRModel(CLModel):
             standard_simclr_loss = loss.mean()
 
             if self.args.ssl_covariance_loss:
-                # TODO: add regularisation here [DONE]
                 f1 = features[:, 0, :]  # [bs, C]
                 f2 = features[:, 1, :]
                 N, C = f1.shape

@@ -288,7 +288,6 @@ class MoCo(nn.Module):
             logits, self.scalar_label.expand(logits.shape[0])
         )
 
-        # TODO: [Done]
         if self.args.ssl_covariance_loss:
             N, C = q.shape
             off_diag_mask = ~torch.eye(C, dtype=bool)
@@ -298,8 +297,6 @@ class MoCo(nn.Module):
             cov_q = (q.T @ q) / N  # C*C
             cov_q_off_diagonal_elements = cov_q[off_diag_mask]
             loss_q = torch.pow(cov_q_off_diagonal_elements, 2).sum() / C
-
-            print("loss_q", loss_q)
 
             return standard_mocov2_loss + self.args.ssl_covariance_loss_w * loss_q
 

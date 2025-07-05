@@ -101,7 +101,6 @@ class BYOL(CLModel):
                 + F.cosine_similarity(p2, z1.detach(), dim=-1).mean()
             )
             if self.args.ssl_covariance_loss:
-                # TODO: add regularisation loss (DONE)
                 N, C = p1.shape
                 off_diag_mask = ~torch.eye(C, dtype=bool)
 

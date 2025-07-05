@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=1-20:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -60,7 +60,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "retrain just linear model after Channel removal, ideal case, detector=entropy" \
+    --note "train SSL with covariance regularisation \
     
 
 

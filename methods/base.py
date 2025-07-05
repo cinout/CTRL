@@ -1856,7 +1856,6 @@ class CLTrainer:
                         features = model(v1, v2)
                         loss = model.negcos(*features)
                     elif self.args.method == "mocov2":
-                        # TODO:
                         loss = model(im_q=v1, im_k=v2)
                         # loss = moco_losses.combine(
                         #     contr_w=1,

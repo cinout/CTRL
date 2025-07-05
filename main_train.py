@@ -479,7 +479,6 @@ parser.add_argument(
 )
 
 
-# TODO: add to slumr files
 """
 SSL Training Loss
 """

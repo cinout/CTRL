@@ -100,6 +100,7 @@ class BYOL(CLModel):
         print("p2.shape", p2.shape)
         print("z1.shape", z1.shape)
         print("z2.shape", z2.shape)
+
         if mean:
             # NOT USED
             return -0.5 * (

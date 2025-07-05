@@ -159,7 +159,7 @@ class SimCLRModel(CLModel):
             standard_simclr_loss = loss.mean()
 
             if self.args.ssl_covariance_loss:
-                # TODO: add regularisation here
+                # TODO: add regularisation here [DONE]
                 f1 = features[:, 0, :]  # [bs, C]
                 f2 = features[:, 1, :]
                 N, C = f1.shape
@@ -178,8 +178,6 @@ class SimCLRModel(CLModel):
                 loss_f2 = torch.pow(cov_f2_off_diagonal_elements, 2).sum() / C
 
                 loss_covariance = loss_f1 + loss_f2
-
-                print("f1.shape", f1.shape, loss_covariance)
 
                 return (
                     standard_simclr_loss

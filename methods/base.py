@@ -1849,7 +1849,6 @@ class CLTrainer:
                     v1 = train_transform(images)
                     v2 = train_transform(images)
 
-                    # TODO: update the loss functions for each of them (except simsiam)
                     if self.args.method == "simclr":
                         features = model(v1, v2)
                         loss = model.supConLoss(features)
@@ -1857,12 +1856,13 @@ class CLTrainer:
                         features = model(v1, v2)
                         loss = model.negcos(*features)
                     elif self.args.method == "mocov2":
-                        moco_losses = model(im_q=v1, im_k=v2)
-                        loss = moco_losses.combine(
-                            contr_w=1,
-                            align_w=0,
-                            unif_w=0,
-                        )
+                        # TODO:
+                        loss = model(im_q=v1, im_k=v2)
+                        # loss = moco_losses.combine(
+                        #     contr_w=1,
+                        #     align_w=0,
+                        #     unif_w=0,
+                        # )
                     # elif self.args.method == "simsiam":
                     #     features = model(v1, v2)
                     #     loss = model.criterion(*features)

@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method mocov2 \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \

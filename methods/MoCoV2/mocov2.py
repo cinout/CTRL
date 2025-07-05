@@ -18,18 +18,19 @@ class MoCoLosses(typing.NamedTuple):
     def combine(
         self, contr_w: float = 1, align_w: float = 1, unif_w: float = 1
     ) -> torch.Tensor:
-        assert not contr_w == align_w == unif_w == 0
-        l = 0
-        if contr_w != 0:
-            assert self.loss_contr is not None
-            l += contr_w * self.loss_contr
-        if align_w != 0:
-            assert self.loss_align is not None
-            l += align_w * self.loss_align
-        if unif_w != 0:
-            assert self.loss_unif is not None
-            l += unif_w * self.loss_unif
-        return l
+        # assert not contr_w == align_w == unif_w == 0
+        # l = 0
+        # if contr_w != 0:
+        #     assert self.loss_contr is not None
+        #     l += contr_w * self.loss_contr
+        # if align_w != 0:
+        #     assert self.loss_align is not None
+        #     l += align_w * self.loss_align
+        # if unif_w != 0:
+        #     assert self.loss_unif is not None
+        #     l += unif_w * self.loss_unif
+        # return l
+        return self.loss_contr
 
 
 class MoCo(nn.Module):
@@ -41,6 +42,7 @@ class MoCo(nn.Module):
     def __init__(
         self,
         base_encoder,
+        args,
         dim=128,
         K=65536,
         m=0.999,
@@ -57,6 +59,7 @@ class MoCo(nn.Module):
         T: softmax temperature (default: 0.07)
         """
         super(MoCo, self).__init__()
+        self.args = args
 
         self.feat_dim = dim
 
@@ -204,8 +207,6 @@ class MoCo(nn.Module):
             MoCoLosses object containing the loss terms (and logits if contrastive loss is used)
         """
 
-        # TODO: update here
-
         # compute query features
         q = self.encoder_q(im_q)  # queries: NxC
         q = F.normalize(q, dim=1)
@@ -223,7 +224,7 @@ class MoCo(nn.Module):
             # undo shuffle
             k = self._batch_unshuffle_ddp(k, idx_unshuffle)
 
-        moco_loss_ctor_dict = {}
+        # moco_loss_ctor_dict = {}
 
         # lazyily computed & cached!
         def get_q_bdot_k():
@@ -254,35 +255,57 @@ class MoCo(nn.Module):
             # apply temperature
             logits /= self.contr_tau
 
-            moco_loss_ctor_dict["logits_contr"] = logits
-            moco_loss_ctor_dict["loss_contr"] = F.cross_entropy(
-                logits, self.scalar_label.expand(logits.shape[0])
-            )
+            # moco_loss_ctor_dict["logits_contr"] = logits
+            # moco_loss_ctor_dict["loss_contr"] = F.cross_entropy(
+            #     logits, self.scalar_label.expand(logits.shape[0])
+            # )
 
-        # l_align
-        if self.align_alpha is not None:
-            if self.align_alpha == 2:
-                moco_loss_ctor_dict["loss_align"] = 2 - 2 * get_q_bdot_k().mean()
-            elif self.align_alpha == 1:
-                moco_loss_ctor_dict["loss_align"] = (q - k).norm(dim=1, p=2).mean()
-            else:
-                moco_loss_ctor_dict["loss_align"] = (
-                    (2 - 2 * get_q_bdot_k()).pow(self.align_alpha / 2).mean()
-                )
+        # # l_align
+        # if self.align_alpha is not None:
+        #     if self.align_alpha == 2:
+        #         moco_loss_ctor_dict["loss_align"] = 2 - 2 * get_q_bdot_k().mean()
+        #     elif self.align_alpha == 1:
+        #         moco_loss_ctor_dict["loss_align"] = (q - k).norm(dim=1, p=2).mean()
+        #     else:
+        #         moco_loss_ctor_dict["loss_align"] = (
+        #             (2 - 2 * get_q_bdot_k()).pow(self.align_alpha / 2).mean()
+        #         )
 
-        # l_uniform
-        if self.unif_t is not None:
-            sq_dists = (2 - 2 * get_q_dot_queue()).flatten()
-            if self.unif_intra_batch:
-                sq_dists = torch.cat([sq_dists, torch.pdist(q, p=2).pow(2)])
-            moco_loss_ctor_dict["loss_unif"] = (
-                sq_dists.mul(-self.unif_t).exp().mean().log()
-            )
+        # # l_uniform
+        # if self.unif_t is not None:
+        #     sq_dists = (2 - 2 * get_q_dot_queue()).flatten()
+        #     if self.unif_intra_batch:
+        #         sq_dists = torch.cat([sq_dists, torch.pdist(q, p=2).pow(2)])
+        #     moco_loss_ctor_dict["loss_unif"] = (
+        #         sq_dists.mul(-self.unif_t).exp().mean().log()
+        #     )
 
         # dequeue and enqueue
         self._dequeue_and_enqueue(k)
 
-        return MoCoLosses(**moco_loss_ctor_dict)
+        # return MoCoLosses(**moco_loss_ctor_dict)
+        standard_mocov2_loss = F.cross_entropy(
+            logits, self.scalar_label.expand(logits.shape[0])
+        )
+
+        # TODO: [Done]
+        if self.args.ssl_covariance_loss:
+            N, C = q.shape
+            off_diag_mask = ~torch.eye(C, dtype=bool)
+
+            # p1
+            q = q - q.mean(dim=0)
+            cov_q = (q.T @ q) / N  # C*C
+            cov_q_off_diagonal_elements = cov_q[off_diag_mask]
+            loss_q = torch.pow(cov_q_off_diagonal_elements, 2).sum() / C
+
+            print("loss_q", loss_q)
+
+            return standard_mocov2_loss + self.args.ssl_covariance_loss_w * loss_q
+
+        else:
+
+            return standard_mocov2_loss
 
 
 # utils

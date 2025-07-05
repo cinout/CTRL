@@ -45,12 +45,17 @@ class SimCLRModel(CLModel):
             param_k.data = param_k.data * m + param_q.data * (1.0 - m)
 
     def forward(self, v1, v2):
+        print("v1.shape", v1.shape)
+        print("v2.shape", v2.shape)
+
         x = torch.cat([v1, v2], dim=0)
         x = self.backbone(x)
         reps = F.normalize(self.proj_head(x), dim=1)
 
         bsz = reps.shape[0] // 2
         f1, f2 = torch.split(reps, [bsz, bsz], dim=0)
+        print("f1.shape", f1.shape)
         features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
 
+        print("features.shape", features.shape)
         return features

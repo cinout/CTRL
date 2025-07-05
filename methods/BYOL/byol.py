@@ -95,12 +95,6 @@ class BYOL(CLModel):
         z1 = F.normalize(z1, dim=1)
         z2 = F.normalize(z2, dim=1)
 
-        # TODO: remove these
-        print("p1.shape", p1.shape)
-        print("p2.shape", p2.shape)
-        print("z1.shape", z1.shape)
-        print("z2.shape", z2.shape)
-
         if mean:
             # NOT USED
             return -0.5 * (
@@ -114,9 +108,40 @@ class BYOL(CLModel):
             )
 
             if self.args.ssl_covariance_loss:
-                # TODO: add regularisation loss
+                # TODO: add regularisation loss (DONE)
+                N, C = p1.shape
+                off_diag_mask = ~torch.eye(C, dtype=bool)
 
-                pass
+                # p1
+                p1 = p1 - p1.mean(dim=0)
+                cov_p1 = (p1.T @ p1) / N  # C*C
+                cov_p1_off_diagonal_elements = cov_p1[off_diag_mask]
+                loss_p1 = torch.pow(cov_p1_off_diagonal_elements, 2).sum() / C
+
+                # p2
+                p2 = p2 - p2.mean(dim=0)
+                cov_p2 = (p2.T @ p2) / N  # C*C
+                cov_p2_off_diagonal_elements = cov_p2[off_diag_mask]
+                loss_p2 = torch.pow(cov_p2_off_diagonal_elements, 2).sum() / C
+
+                # z1
+                z1 = z1.detach() - z1.detach().mean(dim=0)
+                cov_z1 = (z1.T @ z1) / N  # C*C
+                cov_z1_off_diagonal_elements = cov_z1[off_diag_mask]
+                loss_z1 = torch.pow(cov_z1_off_diagonal_elements, 2).sum() / C
+
+                # z2
+                z2 = z2.detach() - z2.detach().mean(dim=0)
+                cov_z2 = (z2.T @ z2) / N  # C*C
+                cov_z2_off_diagonal_elements = cov_z2[off_diag_mask]
+                loss_z2 = torch.pow(cov_z2_off_diagonal_elements, 2).sum() / C
+
+                loss_covariance = loss_p1 + loss_p2 + loss_z1 + loss_z2
+
+                return (
+                    standard_byol_loss
+                    + self.args.ssl_covariance_loss_w * loss_covariance
+                )
             else:
 
                 return standard_byol_loss

@@ -47,7 +47,8 @@ python -u main_train.py \
     --seed 42 \
     --num_views 64 \
     \
-    --note "debug, train SSL with covariance regularisation" \
+    --ssl_covariance_loss \
+    --note "debug, train SSL with covariance regularisation, w=0.04" \
 
 
 ##Log this job's resource usage stats###

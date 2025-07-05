@@ -488,6 +488,9 @@ parser.add_argument(
     action="store_true",
     help="add covariance loss regulariser for SSL training, idea from VICReg ICLR 2022 paper",
 )
+parser.add_argument(
+    "--ssl_covariance_loss_w", type=float, default=0.04, help="coefficient of the loss"
+)
 
 
 """

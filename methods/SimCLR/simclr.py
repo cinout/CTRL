@@ -11,7 +11,6 @@ class SimCLRModel(CLModel):
     def __init__(self, args):
         super().__init__(args)
 
-        # self.criterion = SupConLoss(args.temp).to(device)
         self.args = args
 
         self.proj_dim = 128  # C
@@ -88,9 +87,11 @@ class SimCLRModel(CLModel):
             features = features.view(features.shape[0], features.shape[1], -1)
 
         batch_size = features.shape[0]
+
         if labels is not None and mask is not None:
             raise ValueError("Cannot define both `labels` and `mask`")
         elif labels is None and mask is None:
+            # arrive here
             mask = torch.eye(batch_size, dtype=torch.float32).to(device)
         elif labels is not None:
             labels = labels.contiguous().view(-1, 1)
@@ -100,8 +101,15 @@ class SimCLRModel(CLModel):
         else:
             mask = mask.float().to(device)
 
+        # TODO: remove them
+        print("features.shape", features.shape)
+        print("mask.shape", mask.shape)
+
         contrast_count = features.shape[1]
         contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
+
+        print("contrast_feature.shape", contrast_feature.shape)
+
         if contrast_mode == "one":
             anchor_feature = features[:, 0]
             anchor_count = 1
@@ -130,6 +138,8 @@ class SimCLRModel(CLModel):
         )
         mask = mask * logits_mask
 
+        print("mask.shape", mask.shape)
+
         # compute log_prob
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
@@ -141,19 +151,22 @@ class SimCLRModel(CLModel):
         loss = -(temperature / base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size)
 
-        log_pos = -(temperature / base_temperature) * logits[mask.bool()].view(
-            logits.shape[0], -1
-        )
-        log_neg = (temperature / base_temperature) * torch.log(
-            exp_logits.sum(1, keepdim=True)
-        )
+        print("loss.shape", loss.shape)
+        # log_pos = -(temperature / base_temperature) * logits[mask.bool()].view(
+        #     logits.shape[0], -1
+        # )
+        # log_neg = (temperature / base_temperature) * torch.log(
+        #     exp_logits.sum(1, keepdim=True)
+        # )
 
-        loss_pos = log_pos.view(anchor_count, batch_size)
-        loss_neg = log_neg.view(anchor_count, batch_size)
+        # loss_pos = log_pos.view(anchor_count, batch_size)
+        # loss_neg = log_neg.view(anchor_count, batch_size)
 
         if mean:
             # TODO: add regularisation here
-            return loss.mean(), loss_pos.mean(), loss_neg.mean()
+            return loss.mean()
+            # return loss.mean(), loss_pos.mean(), loss_neg.mean()
         else:
             # NOT CALLED
-            return loss, loss_pos, loss_neg
+            return loss
+            # return loss, loss_pos, loss_neg

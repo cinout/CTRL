@@ -1852,7 +1852,7 @@ class CLTrainer:
                     # TODO: update the loss functions for each of them (except simsiam)
                     if self.args.method == "simclr":
                         features = model(v1, v2)
-                        loss, _, _ = model.supConLoss(features)
+                        loss = model.supConLoss(features)
                     elif self.args.method == "byol":
                         features = model(v1, v2)
                         loss = model.negcos(*features)

@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-
 from methods.base import CLModel
-from .losses import SupConLoss
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

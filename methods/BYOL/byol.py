@@ -96,17 +96,10 @@ class BYOL(CLModel):
         z2 = F.normalize(z2, dim=1)
 
         if mean:
-            # NOT USED
-            return -0.5 * (
+            standard_byol_loss = -0.5 * (
                 F.cosine_similarity(p1, z2.detach(), dim=-1).mean()
                 + F.cosine_similarity(p2, z1.detach(), dim=-1).mean()
             )
-        else:
-            standard_byol_loss = -0.5 * (
-                F.cosine_similarity(p1, z2.detach(), dim=-1)
-                + F.cosine_similarity(p2, z1.detach(), dim=-1)
-            )
-
             if self.args.ssl_covariance_loss:
                 # TODO: add regularisation loss (DONE)
                 N, C = p1.shape
@@ -138,10 +131,18 @@ class BYOL(CLModel):
 
                 loss_covariance = loss_p1 + loss_p2 + loss_z1 + loss_z2
 
+                # TODO: remove
+                print("loss_covariance", loss_covariance)
+
                 return (
                     standard_byol_loss
                     + self.args.ssl_covariance_loss_w * loss_covariance
                 )
             else:
-
                 return standard_byol_loss
+        else:
+            # NOT USED
+            return -0.5 * (
+                F.cosine_similarity(p1, z2.detach(), dim=-1)
+                + F.cosine_similarity(p2, z1.detach(), dim=-1)
+            )

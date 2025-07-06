@@ -294,7 +294,7 @@ class MoCo(nn.Module):
 
             # p1
             q = q - q.mean(dim=0)
-            cov_q = (q.T @ q) / N  # C*C
+            cov_q = (q.T @ q) / (N - 1)  # C*C
             cov_q_off_diagonal_elements = cov_q[off_diag_mask]
             loss_q = torch.pow(cov_q_off_diagonal_elements, 2).sum() / C
 

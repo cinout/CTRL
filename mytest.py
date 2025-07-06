@@ -44,12 +44,12 @@ p2 = copy.deepcopy(p1)
 
 N, C = p1.shape
 off_diag_mask = ~torch.eye(C, dtype=bool)
+print(off_diag_mask)
 
 p1 = p1 - p1.mean(dim=0)
 cov_p1 = (p1.T @ p1) / N  # C*C
 cov_p1_off_diagonal_elements = cov_p1[off_diag_mask]
-loss_p1 = torch.pow(cov_p1_off_diagonal_elements, 2).sum()
-print(loss_p1)
+print(cov_p1_off_diagonal_elements)
 
 
 # arr = np.random.randint(0, 100, size=(10,))

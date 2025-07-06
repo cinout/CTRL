@@ -166,13 +166,13 @@ class SimCLRModel(CLModel):
 
                 # f1
                 f1 = f1 - f1.mean(dim=0)
-                cov_f1 = (f1.T @ f1) / N  # C*C
+                cov_f1 = (f1.T @ f1) / (N - 1)  # C*C
                 cov_f1_off_diagonal_elements = cov_f1[off_diag_mask]
                 loss_f1 = torch.pow(cov_f1_off_diagonal_elements, 2).sum() / C
 
                 # f2
                 f2 = f2 - f2.mean(dim=0)
-                cov_f2 = (f2.T @ f2) / N  # C*C
+                cov_f2 = (f2.T @ f2) / (N - 1)  # C*C
                 cov_f2_off_diagonal_elements = cov_f2[off_diag_mask]
                 loss_f2 = torch.pow(cov_f2_off_diagonal_elements, 2).sum() / C
 

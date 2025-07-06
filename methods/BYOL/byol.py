@@ -106,25 +106,25 @@ class BYOL(CLModel):
 
                 # p1
                 p1 = p1 - p1.mean(dim=0)
-                cov_p1 = (p1.T @ p1) / N  # C*C
+                cov_p1 = (p1.T @ p1) / (N - 1)  # C*C
                 cov_p1_off_diagonal_elements = cov_p1[off_diag_mask]
                 loss_p1 = torch.pow(cov_p1_off_diagonal_elements, 2).sum() / C
 
                 # p2
                 p2 = p2 - p2.mean(dim=0)
-                cov_p2 = (p2.T @ p2) / N  # C*C
+                cov_p2 = (p2.T @ p2) / (N - 1)  # C*C
                 cov_p2_off_diagonal_elements = cov_p2[off_diag_mask]
                 loss_p2 = torch.pow(cov_p2_off_diagonal_elements, 2).sum() / C
 
                 # # z1
                 # z1 = z1.detach() - z1.detach().mean(dim=0)
-                # cov_z1 = (z1.T @ z1) / N  # C*C
+                # cov_z1 = (z1.T @ z1) / (N-1)  # C*C
                 # cov_z1_off_diagonal_elements = cov_z1[off_diag_mask]
                 # loss_z1 = torch.pow(cov_z1_off_diagonal_elements, 2).sum() / C
 
                 # # z2
                 # z2 = z2.detach() - z2.detach().mean(dim=0)
-                # cov_z2 = (z2.T @ z2) / N  # C*C
+                # cov_z2 = (z2.T @ z2) / (N-1)  # C*C
                 # cov_z2_off_diagonal_elements = cov_z2[off_diag_mask]
                 # loss_z2 = torch.pow(cov_z2_off_diagonal_elements, 2).sum() / C
 

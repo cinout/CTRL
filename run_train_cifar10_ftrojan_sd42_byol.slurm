@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=1-20:00:00
+#SBATCH --time=0-12:00:00
 ### TODO: update time to 2 days
 
 #SBATCH --nodes=1

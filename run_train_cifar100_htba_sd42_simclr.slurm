@@ -62,7 +62,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "train SSL with covariance regularisation, w=1.0" \
+    --note "train SSL with covariance regularisation, w=1.0, cov N-1 issue fixed" \
     
 
 

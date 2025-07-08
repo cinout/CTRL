@@ -7,7 +7,9 @@ from torch.utils.data import DataLoader, TensorDataset
 import copy
 from collections import Counter
 from functools import reduce
-from ideal_case_found_channels import ideal_case_channels
+
+# from ideal_case_found_channels import ideal_case_channels
+from ideal_case_found_channels_with_covariance_w_10 import ideal_case_channels
 
 
 for dataset in ideal_case_channels.keys():

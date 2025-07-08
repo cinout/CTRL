@@ -54,7 +54,7 @@ python -u main_train.py \
     --ideal_case \
     --channel_num 40 \
     --ssl_covariance_loss \
-    --ssl_covariance_loss_w -10.0 \
+    --ssl_covariance_loss_w -1.0 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -62,7 +62,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "train SSL with covariance regularisation, w=-10.0, cov N-1 issue fixed" \
+    --note "train SSL with covariance regularisation, w=-1.0, cov N-1 issue fixed" \
     
 
     # --pretrained_ssl_model "./Experiments/imagenet100_htba_moco_ref_set_sd42/last.pth.tar" \

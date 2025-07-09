@@ -9,7 +9,7 @@ from collections import Counter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-folder_name = "analyze_data"
+folder_name = "analyse_raw_features_data"
 prefix_options = ["dataset_htba_imagenet100"]
 # prefix_options = [
 #     "dataset_cifar10",

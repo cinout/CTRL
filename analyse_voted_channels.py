@@ -9,7 +9,7 @@ from collections import Counter
 from functools import reduce
 
 # from ideal_case_found_channels import ideal_case_channels
-from analyse_voted_channels_data.ideal_case_found_channels_with_covariance_w_neg_10 import (
+from analyse_voted_channels_data.ideal_case_found_channels_with_covariance_w_neg_1 import (
     ideal_case_channels,
 )
 

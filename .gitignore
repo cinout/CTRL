@@ -23,6 +23,7 @@ eggs/
 *.npy
 *.t
 *.pth
+*.out
 lib/
 lib64/
 parts/

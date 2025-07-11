@@ -22,33 +22,33 @@ def to_dict(d):
 
 
 # match two float numbers from string
-def match_two_float_numbers(pattern, file_content, error_message):
+def match_two_float_numbers(pattern, file_content, file_path, error_message):
     match_pattern = re.search(pattern, file_content)
     if match_pattern:
         result_1 = float(match_pattern.group(1))
         result_2 = float(match_pattern.group(2))
         return result_1, result_2
     else:
-        raise Exception(error_message)
+        raise Exception(error_message + f"in file {file_path}")
 
 
 # match basic information such as trigger type
-def match_basic_info(pattern, file_content, error_message):
+def match_basic_info(pattern, file_content, file_path, error_message):
     match_pattern = re.search(pattern, file_content)
     if match_pattern:
         return match_pattern.group(1)
     else:
-        raise Exception(error_message)
+        raise Exception(error_message + f"in file {file_path}")
 
 
 # match voted channels
-def match_voted_channels(pattern, file_content, error_message):
+def match_voted_channels(pattern, file_content, file_path, error_message):
     match_pattern = re.search(pattern, file_content)
     if match_pattern:
         array_content = match_pattern.group(1)
         return [int(num) for num in re.findall(r"\d+", array_content)]
     else:
-        raise Exception(error_message)
+        raise Exception(error_message + f"in file {file_path}")
 
 
 """
@@ -112,10 +112,14 @@ for file_path in all_input_file_paths:
         """
         Basic Information
         """
-        dataset = match_basic_info(pattern_dataset, file_content, "no matching dataset")
-        trigger = match_basic_info(pattern_trigger, file_content, "no matching trigger")
+        dataset = match_basic_info(
+            pattern_dataset, file_content, file_path, "no matching dataset"
+        )
+        trigger = match_basic_info(
+            pattern_trigger, file_content, file_path, "no matching trigger"
+        )
         ssl_method = match_basic_info(
-            pattern_ssl_method, file_content, "no matching ssl_method"
+            pattern_ssl_method, file_content, file_path, "no matching ssl_method"
         )
 
         """
@@ -124,11 +128,13 @@ for file_path in all_input_file_paths:
         ideal_case_clean_channels = match_voted_channels(
             pattern_ideal_case_clean_channels,
             file_content,
+            file_path,
             "no matching ideal case voted clean channels",
         )
         ideal_case_poison_channels = match_voted_channels(
             pattern_ideal_case_poison_channels,
             file_content,
+            file_path,
             "no matching ideal case voted poison channels",
         )
         #  add to dictionary
@@ -144,24 +150,34 @@ for file_path in all_input_file_paths:
         """
         # Uncleansed kNN
         uncleansed_knn_acc, uncleansed_knn_asr = match_two_float_numbers(
-            pattern_uncleansed_model_knn, file_content, "no matching uncleansed kNN"
+            pattern_uncleansed_model_knn,
+            file_content,
+            file_path,
+            "no matching uncleansed kNN",
         )
 
         # Uncleansed Linear
         uncleansed_linear_acc, uncleansed_linear_asr = match_two_float_numbers(
             pattern_uncleansed_model_linear,
             file_content,
+            file_path,
             "no matching uncleansed linear",
         )
 
         # Cleansed kNN
         cleansed_knn_acc, cleansed_knn_asr = match_two_float_numbers(
-            pattern_cleansed_model_knn, file_content, "no matching cleansed kNN"
+            pattern_cleansed_model_knn,
+            file_content,
+            file_path,
+            "no matching cleansed kNN",
         )
 
         # Cleansed Linear
         cleansed_linear_acc, cleansed_linear_asr = match_two_float_numbers(
-            pattern_cleansed_model_linear, file_content, "no matching cleansed linear"
+            pattern_cleansed_model_linear,
+            file_content,
+            file_path,
+            "no matching cleansed linear",
         )
 
         """

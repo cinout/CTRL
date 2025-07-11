@@ -171,10 +171,10 @@ for file_path in all_input_file_paths:
             f"------------\n{dataset:<10}\t{trigger:<10}\t{ssl_method:<10}\n------------\n"
         )
         output_acc_asr_file_handle.write(
-            f"{"Uncleansed:":<15} kNN: {uncleansed_knn_acc:<5} {uncleansed_knn_asr:<5} Linear: {uncleansed_linear_acc:<5} {uncleansed_linear_asr:<5}\n"
+            f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc:<5} {uncleansed_knn_asr:<5} Linear: {uncleansed_linear_acc:<5} {uncleansed_linear_asr:<5}\n"
         )
         output_acc_asr_file_handle.write(
-            f"{"Cleansed:":<15} kNN: {cleansed_knn_acc:<5} {cleansed_knn_asr:<5} Linear: {cleansed_linear_acc:<5} {cleansed_linear_asr:<5}\n"
+            f"{'Cleansed:':<15} kNN: {cleansed_knn_acc:<5} {cleansed_knn_asr:<5} Linear: {cleansed_linear_acc:<5} {cleansed_linear_asr:<5}\n"
         )
 
 # Convert to regular dict if printing or saving

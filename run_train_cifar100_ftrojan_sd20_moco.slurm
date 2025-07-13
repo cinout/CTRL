@@ -46,7 +46,7 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/cifar100_ftrojan_moco_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 20 \
+    --seed 30 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -58,7 +58,7 @@ python -u main_train.py \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --note "seed=20, ideal case" \
+    --note "seed=30, ideal case" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

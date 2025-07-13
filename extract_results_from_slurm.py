@@ -184,13 +184,13 @@ for file_path in all_input_file_paths:
         Write ACC and ASR results to txt file
         """
         output_acc_asr_file_handle.write(
-            f"------------\n{dataset:<6}\t{trigger:<6}\t{ssl_method:<6}\n------------\n"
+            f"------------\n{dataset:<10}{trigger:<10}{ssl_method:<10}\n------------\n"
         )
         output_acc_asr_file_handle.write(
-            f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc:<5} {uncleansed_knn_asr:<5} Linear: {uncleansed_linear_acc:<5} {uncleansed_linear_asr:<5}\n"
+            f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc}\t{uncleansed_knn_asr}\tLinear: {uncleansed_linear_acc}\t{uncleansed_linear_asr}\n"
         )
         output_acc_asr_file_handle.write(
-            f"{'Cleansed:':<15} kNN: {cleansed_knn_acc:<5} {cleansed_knn_asr:<5} Linear: {cleansed_linear_acc:<5} {cleansed_linear_asr:<5}\n"
+            f"{'Cleansed:':<15} kNN: {cleansed_knn_acc}\t{cleansed_knn_asr}\tLinear: {cleansed_linear_acc}\t{cleansed_linear_asr}\t\n"
         )
 
 # Convert to regular dict if printing or saving

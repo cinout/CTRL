@@ -49,7 +49,7 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/imagenet100_htba_moco_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 30 \
+    --seed 20 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -61,7 +61,7 @@ python -u main_train.py \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --note "seed=30, ideal case" \
+    --note "seed=20, ideal case" \
 
     
 

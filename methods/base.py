@@ -638,16 +638,16 @@ def find_trigger_channels_or_poisoned_images(
     """
     if we want to perform Spectral Signature on the whole set at once
     """
-    if args.full_dataset_svd:
-        h5py_filename = (
-            f"{args.timestamp}_{args.dataset}_{args.trigger_type}_features.hdf5"
-        )
-        h5py_handler = h5py.File(h5py_filename, "w")
+    # if args.full_dataset_svd:
+    #     h5py_filename = (
+    #         f"{args.timestamp}_{args.dataset}_{args.trigger_type}_features.hdf5"
+    #     )
+    #     h5py_handler = h5py.File(h5py_filename, "w")
 
-        if "cifar" in args.dataset or "gtsrb" in args.dataset:
-            _, feat_dim = model_dict_cifar[args.arch]
-        else:
-            _, feat_dim = model_dict[args.arch]
+    #     if "cifar" in args.dataset or "gtsrb" in args.dataset:
+    #         _, feat_dim = model_dict_cifar[args.arch]
+    #     else:
+    #         _, feat_dim = model_dict[args.arch]
 
     """
     # if we want to ignore some clean channels voted by train_probe dataset
@@ -655,205 +655,16 @@ def find_trigger_channels_or_poisoned_images(
     if args.find_and_ignore_probe_channels and not args.ideal_case:
         all_probe_votes = []
 
-        if args.full_dataset_svd:
-            train_probe_set_features = h5py_handler.create_dataset(
-                "train_probe_set_features",
-                (len(train_probe_loader.dataset) * args.num_views, feat_dim),
-            )
-            start_pos = 0
-            for i, content in enumerate(train_probe_loader):
-                (images, _, _) = content
-
-                images = images.to(device)
-
-                if args.num_views == 1:
-                    views = images.clone()
-                    views = views.unsqueeze(1)
-                else:
-                    views = generate_view_tensors(images, ss_transform)
-
-                views = views.to(device)
-
-                bs, n_views, c, h, w = views.shape
-                views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-                views = transform(views)
-
-                with torch.no_grad():
-                    vision_features = backbone(views)  # [bs*n_views, 512]
-
-                if args.normalize_backbone_features == "l2":
-                    vision_features = F.normalize(vision_features, dim=-1)
-                _, C = vision_features.shape
-
-                vision_features = vision_features.detach().cpu().numpy()
-
-                train_probe_set_features[
-                    start_pos : start_pos + vision_features.shape[0]
-                ] = vision_features
-                start_pos = start_pos + vision_features.shape[0]
-
-            # print(f"train_probe_set_features.shape: {train_probe_set_features.shape}")
-            corrs, max_indices_at_channel = get_ss_statistics(
-                train_probe_set_features,
-                int(train_probe_set_features.shape[0] / args.num_views),
-                train_probe_set_features.shape[1],
-                args,
-                probe_set=True,
-            )
-            all_probe_votes.append(max_indices_at_channel)
-        else:
-            # batch by batch, for probe dataset
-            for i, content in enumerate(train_probe_loader):
-                (images, _, _) = content
-
-                images = images.to(device)
-
-                if args.num_views == 1:
-                    views = images.clone()
-                    views = views.unsqueeze(1)
-                else:
-                    views = generate_view_tensors(images, ss_transform)
-
-                views = views.to(device)
-
-                bs, n_views, c, h, w = views.shape
-                views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-
-                views = transform(views)
-                with torch.no_grad():
-                    # if args.unlearn_before_finding_trigger_channels:
-                    #     vision_features = unlearnt_backbone(views)
-                    # else:
-                    vision_features = backbone(views)  # [bs*n_views, 512]
-
-                if args.normalize_backbone_features == "l2":
-                    vision_features = F.normalize(vision_features, dim=-1)
-                _, C = vision_features.shape
-                vision_features = vision_features.detach().cpu().numpy()
-
-                corrs, max_indices_at_channel = get_ss_statistics(
-                    vision_features, bs, C, args, probe_set=True
-                )
-                all_probe_votes.append(max_indices_at_channel)
-
-    """
-    Extract backboone features from input images, and potentially calculate spectral signature using get_ss_statistics()
-    """
-
-    if args.full_dataset_svd:
-        trainset_features = h5py_handler.create_dataset(
-            "trainset_features", (len(data_loader.dataset) * args.num_views, feat_dim)
-        )
-        start_pos = 0
-        for i, content in tqdm(enumerate(data_loader)):
-            if args.ideal_case:
-                images = content[0]
-                is_batch_poisoned = torch.ones(size=(images.shape[0],))
-                is_batch_poisoned = is_batch_poisoned.to(device)
-            else:
-                (images, is_batch_poisoned, _, file_index) = content
-                is_batch_poisoned = is_batch_poisoned.to(device)
-
-            images = images.to(device)
-            if args.siftout_poisoned_images:
-                trainset_file_indices.append(file_index)
-
-            if args.num_views == 1:
-                views = images.clone()
-                views = views.unsqueeze(1)
-            else:
-                views = generate_view_tensors(images, ss_transform)
-
-            views = views.to(device)
-            bs, n_views, c, h, w = views.shape
-            views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-            views = transform(views)
-
-            with torch.no_grad():
-                vision_features = backbone(views)  # [bs*n_views, 512]
-
-            if args.normalize_backbone_features == "l2":
-                vision_features = F.normalize(vision_features, dim=-1)
-            _, C = vision_features.shape
-
-            vision_features = vision_features.detach().cpu().numpy()
-            trainset_features[start_pos : start_pos + vision_features.shape[0]] = (
-                vision_features
-            )
-            start_pos = start_pos + vision_features.shape[0]
-            is_poisoned.append(is_batch_poisoned)
-
-            if "frequency_ensemble" in args.bd_detectors:
-                get_freq_detection_scores(
-                    images, freq_detector_ensemble, bd_detector_scores, args
-                )
-
-        # print(f"trainset_features.shape: {trainset_features.shape}")
-        corrs, max_indices_at_channel = get_ss_statistics(
-            trainset_features,
-            int(trainset_features.shape[0] / args.num_views),
-            trainset_features.shape[1],
-            args,
-            is_poisoned=is_poisoned,
-        )
-        # if args.only_detect_projector_features:
-        #     get_detection_scores_from_projector(
-        #         trainset_features,
-        #         projector,
-        #         int(trainset_features.shape[0] / args.num_views),
-        #         bd_detector_scores,
-        #         args,
+        # if args.full_dataset_svd:
+        #     train_probe_set_features = h5py_handler.create_dataset(
+        #         "train_probe_set_features",
+        #         (len(train_probe_loader.dataset) * args.num_views, feat_dim),
         #     )
-        #     pass
-        # else:
-        get_detection_scores(
-            trainset_features,
-            corrs,
-            max_indices_at_channel,
-            bd_detector_scores,
-            args,
-        )
-
-        all_votes.append(max_indices_at_channel)
-    else:
-
-        # if args.tap_trigger:
-        #     trigger_masks1, trigger_deltas1, trigger_regs1 = [], [], []
-        #     trigger_masks2, trigger_deltas2, trigger_regs2 = [], [], []
-
-        #     for target in range(args.num_clusters):
-        #         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
-        #         trigger = torch.load(trigger_path, map_location=device)
-
-        #         trigger_masks1.append(trigger["mask1"].detach())
-        #         trigger_deltas1.append(trigger["delta1"].detach())
-        #         trigger_regs1.append(trigger["reg1"])
-        #         trigger_masks2.append(trigger["mask2"].detach())
-        #         trigger_deltas2.append(trigger["delta2"].detach())
-        #         trigger_regs2.append(trigger["reg2"])
-
-        #     trigger_masks1 = torch.cat(
-        #         trigger_masks1, dim=0
-        #     )  # [#clusters, 1, imgsize, imgsize]
-        #     trigger_deltas1 = torch.cat(
-        #         trigger_deltas1, dim=0
-        #     )  # [#clusters, 3, imgsize, imgsize]
-        #     trigger_masks2 = torch.cat(trigger_masks2, dim=0)
-        #     trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
-
-        #     trigger_regs1 = torch.tensor(trigger_regs1)  # [#clusters,]
-        #     trigger_regs2 = torch.tensor(trigger_regs2)
-
-        #     trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
-        #     trigger2_top_indices = outlier(trigger_regs2)  # global
-
+        #     start_pos = 0
         #     for i, content in enumerate(train_probe_loader):
         #         (images, _, _) = content
 
         #         images = images.to(device)
-
-        #         is_batch_poisoned = torch.ones(size=(images.shape[0],))
-        #         is_batch_poisoned = is_batch_poisoned.to(device)
 
         #         if args.num_views == 1:
         #             views = images.clone()
@@ -865,21 +676,7 @@ def find_trigger_channels_or_poisoned_images(
 
         #         bs, n_views, c, h, w = views.shape
         #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-
         #         views = transform(views)
-
-        #         # # : add trigger to views
-        #         # use_local_trigger = random.random() < 0.5
-        #         # if use_local_trigger:
-        #         #     trigger_index = random.choice(trigger1_top_indices)
-        #         #     mask = trigger_masks1[trigger_index].unsqueeze(0)
-        #         #     delta = trigger_deltas1[trigger_index].unsqueeze(0)
-        #         #     views = draw_global(views, args.mean, args.std, mask, delta)
-        #         # else:
-        #         trigger_index = random.choice(trigger2_top_indices)
-        #         mask = trigger_masks2[trigger_index].unsqueeze(0)
-        #         delta = trigger_deltas2[trigger_index].unsqueeze(0)
-        #         views = draw_global(views, args.mean, args.std, mask, delta)
 
         #         with torch.no_grad():
         #             vision_features = backbone(views)  # [bs*n_views, 512]
@@ -888,37 +685,29 @@ def find_trigger_channels_or_poisoned_images(
         #             vision_features = F.normalize(vision_features, dim=-1)
         #         _, C = vision_features.shape
 
-        #         corrs, max_indices_at_channel = get_ss_statistics(
-        #             vision_features.detach().cpu().numpy(), bs, C, args
-        #         )
+        #         vision_features = vision_features.detach().cpu().numpy()
 
-        #         get_detection_scores(
-        #             vision_features,
-        #             corrs,
-        #             max_indices_at_channel,
-        #             bd_detector_scores,
-        #             args,
-        #         )
+        #         train_probe_set_features[
+        #             start_pos : start_pos + vision_features.shape[0]
+        #         ] = vision_features
+        #         start_pos = start_pos + vision_features.shape[0]
 
-        #         is_poisoned.append(is_batch_poisoned)
-        #         all_votes.append(max_indices_at_channel)
-
+        #     # print(f"train_probe_set_features.shape: {train_probe_set_features.shape}")
+        #     corrs, max_indices_at_channel = get_ss_statistics(
+        #         train_probe_set_features,
+        #         int(train_probe_set_features.shape[0] / args.num_views),
+        #         train_probe_set_features.shape[1],
+        #         args,
+        #         probe_set=True,
+        #     )
+        #     all_probe_votes.append(max_indices_at_channel)
         # else:
 
-        # batch by batch (default)
-        for i, content in tqdm(enumerate(data_loader)):
-            if args.ideal_case:
-                images = content[0]
-                is_batch_poisoned = torch.ones(size=(images.shape[0],))
-                is_batch_poisoned = is_batch_poisoned.to(device)
-            else:
-                (images, is_batch_poisoned, _, file_index) = content
-                is_batch_poisoned = is_batch_poisoned.to(device)
+        # batch by batch, for probe dataset
+        for i, content in enumerate(train_probe_loader):
+            (images, _, _) = content
 
             images = images.to(device)
-
-            if args.siftout_poisoned_images:
-                trainset_file_indices.append(file_index)
 
             if args.num_views == 1:
                 views = images.clone()
@@ -927,46 +716,258 @@ def find_trigger_channels_or_poisoned_images(
                 views = generate_view_tensors(images, ss_transform)
 
             views = views.to(device)
+
             bs, n_views, c, h, w = views.shape
             views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-            views = transform(views)
 
+            views = transform(views)
             with torch.no_grad():
                 # if args.unlearn_before_finding_trigger_channels:
                 #     vision_features = unlearnt_backbone(views)
                 # else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
 
-            if "frequency_ensemble" in args.bd_detectors:
-                get_freq_detection_scores(
-                    images, freq_detector_ensemble, bd_detector_scores, args
-                )
-
-            # if args.compare_backbone_predictor or args.only_detect_projector_features:
-            #     get_detection_scores_from_projector(
-            #         vision_features, projector, bs, bd_detector_scores, args
-            #     )
-
-            # if not args.only_detect_projector_features:
             if args.normalize_backbone_features == "l2":
                 vision_features = F.normalize(vision_features, dim=-1)
             _, C = vision_features.shape
+            vision_features = vision_features.detach().cpu().numpy()
 
             corrs, max_indices_at_channel = get_ss_statistics(
-                vision_features.detach().cpu().numpy(), bs, C, args
+                vision_features, bs, C, args, probe_set=True
+            )
+            all_probe_votes.append(max_indices_at_channel)
+
+    """
+    Extract backboone features from input images, and potentially calculate spectral signature using get_ss_statistics()
+    """
+
+    # if args.full_dataset_svd:
+    #     trainset_features = h5py_handler.create_dataset(
+    #         "trainset_features", (len(data_loader.dataset) * args.num_views, feat_dim)
+    #     )
+    #     start_pos = 0
+    #     for i, content in tqdm(enumerate(data_loader)):
+    #         if args.ideal_case:
+    #             images = content[0]
+    #             is_batch_poisoned = torch.ones(size=(images.shape[0],))
+    #             is_batch_poisoned = is_batch_poisoned.to(device)
+    #         else:
+    #             (images, is_batch_poisoned, _, file_index) = content
+    #             is_batch_poisoned = is_batch_poisoned.to(device)
+
+    #         images = images.to(device)
+    #         if args.siftout_poisoned_images:
+    #             trainset_file_indices.append(file_index)
+
+    #         if args.num_views == 1:
+    #             views = images.clone()
+    #             views = views.unsqueeze(1)
+    #         else:
+    #             views = generate_view_tensors(images, ss_transform)
+
+    #         views = views.to(device)
+    #         bs, n_views, c, h, w = views.shape
+    #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+    #         views = transform(views)
+
+    #         with torch.no_grad():
+    #             vision_features = backbone(views)  # [bs*n_views, 512]
+
+    #         if args.normalize_backbone_features == "l2":
+    #             vision_features = F.normalize(vision_features, dim=-1)
+    #         _, C = vision_features.shape
+
+    #         vision_features = vision_features.detach().cpu().numpy()
+    #         trainset_features[start_pos : start_pos + vision_features.shape[0]] = (
+    #             vision_features
+    #         )
+    #         start_pos = start_pos + vision_features.shape[0]
+    #         is_poisoned.append(is_batch_poisoned)
+
+    #         if "frequency_ensemble" in args.bd_detectors:
+    #             get_freq_detection_scores(
+    #                 images, freq_detector_ensemble, bd_detector_scores, args
+    #             )
+
+    #     # print(f"trainset_features.shape: {trainset_features.shape}")
+    #     corrs, max_indices_at_channel = get_ss_statistics(
+    #         trainset_features,
+    #         int(trainset_features.shape[0] / args.num_views),
+    #         trainset_features.shape[1],
+    #         args,
+    #         is_poisoned=is_poisoned,
+    #     )
+    #     # if args.only_detect_projector_features:
+    #     #     get_detection_scores_from_projector(
+    #     #         trainset_features,
+    #     #         projector,
+    #     #         int(trainset_features.shape[0] / args.num_views),
+    #     #         bd_detector_scores,
+    #     #         args,
+    #     #     )
+    #     #     pass
+    #     # else:
+    #     get_detection_scores(
+    #         trainset_features,
+    #         corrs,
+    #         max_indices_at_channel,
+    #         bd_detector_scores,
+    #         args,
+    #     )
+
+    #     all_votes.append(max_indices_at_channel)
+    # else:
+
+    # if args.tap_trigger:
+    #     trigger_masks1, trigger_deltas1, trigger_regs1 = [], [], []
+    #     trigger_masks2, trigger_deltas2, trigger_regs2 = [], [], []
+
+    #     for target in range(args.num_clusters):
+    #         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
+    #         trigger = torch.load(trigger_path, map_location=device)
+
+    #         trigger_masks1.append(trigger["mask1"].detach())
+    #         trigger_deltas1.append(trigger["delta1"].detach())
+    #         trigger_regs1.append(trigger["reg1"])
+    #         trigger_masks2.append(trigger["mask2"].detach())
+    #         trigger_deltas2.append(trigger["delta2"].detach())
+    #         trigger_regs2.append(trigger["reg2"])
+
+    #     trigger_masks1 = torch.cat(
+    #         trigger_masks1, dim=0
+    #     )  # [#clusters, 1, imgsize, imgsize]
+    #     trigger_deltas1 = torch.cat(
+    #         trigger_deltas1, dim=0
+    #     )  # [#clusters, 3, imgsize, imgsize]
+    #     trigger_masks2 = torch.cat(trigger_masks2, dim=0)
+    #     trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
+
+    #     trigger_regs1 = torch.tensor(trigger_regs1)  # [#clusters,]
+    #     trigger_regs2 = torch.tensor(trigger_regs2)
+
+    #     trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
+    #     trigger2_top_indices = outlier(trigger_regs2)  # global
+
+    #     for i, content in enumerate(train_probe_loader):
+    #         (images, _, _) = content
+
+    #         images = images.to(device)
+
+    #         is_batch_poisoned = torch.ones(size=(images.shape[0],))
+    #         is_batch_poisoned = is_batch_poisoned.to(device)
+
+    #         if args.num_views == 1:
+    #             views = images.clone()
+    #             views = views.unsqueeze(1)
+    #         else:
+    #             views = generate_view_tensors(images, ss_transform)
+
+    #         views = views.to(device)
+
+    #         bs, n_views, c, h, w = views.shape
+    #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+
+    #         views = transform(views)
+
+    #         # # : add trigger to views
+    #         # use_local_trigger = random.random() < 0.5
+    #         # if use_local_trigger:
+    #         #     trigger_index = random.choice(trigger1_top_indices)
+    #         #     mask = trigger_masks1[trigger_index].unsqueeze(0)
+    #         #     delta = trigger_deltas1[trigger_index].unsqueeze(0)
+    #         #     views = draw_global(views, args.mean, args.std, mask, delta)
+    #         # else:
+    #         trigger_index = random.choice(trigger2_top_indices)
+    #         mask = trigger_masks2[trigger_index].unsqueeze(0)
+    #         delta = trigger_deltas2[trigger_index].unsqueeze(0)
+    #         views = draw_global(views, args.mean, args.std, mask, delta)
+
+    #         with torch.no_grad():
+    #             vision_features = backbone(views)  # [bs*n_views, 512]
+
+    #         if args.normalize_backbone_features == "l2":
+    #             vision_features = F.normalize(vision_features, dim=-1)
+    #         _, C = vision_features.shape
+
+    #         corrs, max_indices_at_channel = get_ss_statistics(
+    #             vision_features.detach().cpu().numpy(), bs, C, args
+    #         )
+
+    #         get_detection_scores(
+    #             vision_features,
+    #             corrs,
+    #             max_indices_at_channel,
+    #             bd_detector_scores,
+    #             args,
+    #         )
+
+    #         is_poisoned.append(is_batch_poisoned)
+    #         all_votes.append(max_indices_at_channel)
+
+    # else:
+
+    # batch by batch (default)
+    for i, content in tqdm(enumerate(data_loader)):
+        if args.ideal_case:
+            images = content[0]
+            is_batch_poisoned = torch.ones(size=(images.shape[0],))
+            is_batch_poisoned = is_batch_poisoned.to(device)
+        else:
+            (images, is_batch_poisoned, _, file_index) = content
+            is_batch_poisoned = is_batch_poisoned.to(device)
+
+        images = images.to(device)
+
+        if args.siftout_poisoned_images:
+            trainset_file_indices.append(file_index)
+
+        if args.num_views == 1:
+            views = images.clone()
+            views = views.unsqueeze(1)
+        else:
+            views = generate_view_tensors(images, ss_transform)
+
+        views = views.to(device)
+        bs, n_views, c, h, w = views.shape
+        views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+        views = transform(views)
+
+        with torch.no_grad():
+            # if args.unlearn_before_finding_trigger_channels:
+            #     vision_features = unlearnt_backbone(views)
+            # else:
+            vision_features = backbone(views)  # [bs*n_views, 512]
+
+        if "frequency_ensemble" in args.bd_detectors:
+            get_freq_detection_scores(
+                images, freq_detector_ensemble, bd_detector_scores, args
             )
 
-            # if not args.only_detect_projector_features:
-            get_detection_scores(
-                vision_features,
-                corrs,
-                max_indices_at_channel,
-                bd_detector_scores,
-                args,
-            )
+        # if args.compare_backbone_predictor or args.only_detect_projector_features:
+        #     get_detection_scores_from_projector(
+        #         vision_features, projector, bs, bd_detector_scores, args
+        #     )
 
-            all_votes.append(max_indices_at_channel)
-            is_poisoned.append(is_batch_poisoned)
+        # if not args.only_detect_projector_features:
+        if args.normalize_backbone_features == "l2":
+            vision_features = F.normalize(vision_features, dim=-1)
+        _, C = vision_features.shape
+
+        corrs, max_indices_at_channel = get_ss_statistics(
+            vision_features.detach().cpu().numpy(), bs, C, args
+        )
+
+        # if not args.only_detect_projector_features:
+        get_detection_scores(
+            vision_features,
+            corrs,
+            max_indices_at_channel,
+            bd_detector_scores,
+            args,
+        )
+
+        all_votes.append(max_indices_at_channel)
+        is_poisoned.append(is_batch_poisoned)
 
     """
     Print the final detection performances
@@ -1104,9 +1105,9 @@ def find_trigger_channels_or_poisoned_images(
             [idx for (idx, occ_count) in essential_indices]
         )
 
-    # free the disk space
-    if args.full_dataset_svd:
-        os.remove(h5py_filename)
+    # # free the disk space
+    # if args.full_dataset_svd:
+    #     os.remove(h5py_filename)
 
     return essential_indices
 
@@ -1989,7 +1990,7 @@ class CLTrainer:
             # Get the estimated trigger indices
             clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
-                poison.test_clean_loader,  # poisoned training set
+                poison.test_clean_loader,  # poisoned training set TODO: update this
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
@@ -2002,7 +2003,7 @@ class CLTrainer:
             )
             poi_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
-                poison.test_pos_loader,  # poisoned training set
+                poison.test_pos_loader,  # poisoned training set TODO: update this
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,

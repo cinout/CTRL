@@ -44,12 +44,12 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --seed 30 \
+    --seed 42 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --channel_num 40 \
+    --channel_num 4 8 12 16 20 30 40 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -57,7 +57,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=30" \
+    --note "ideal case, sd=42" \
     
 
     # --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/last.pth.tar" \

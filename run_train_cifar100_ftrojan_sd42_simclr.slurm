@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=0-03:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -58,11 +58,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "ideal case, sd=42" \
-    
-
-
-    # --pretrained_ssl_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
-    # --pretrained_linear_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
 
 
 ##Log this job's resource usage stats###

@@ -59,8 +59,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "ideal case, sd=30" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_moco_ref_set_sd30/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_moco_ref_set_sd30/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/linear.pth.tar" \
 
 
 

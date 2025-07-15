@@ -42,8 +42,8 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_moco_ref_set_sd20/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar100_ftrojan_moco_ref_set_sd20/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_mocov2_ref_set_sd20/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar100_ftrojan_mocov2_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 20 \

@@ -45,8 +45,7 @@ python -u main_train.py \
     --target_class 26 \
     \
     --linear_probe_normalize ref_set \
-    \
-    --seed 42 \
+    --seed 30 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -59,9 +58,9 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=42" \
-    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
+    --note "ideal case, sd=30" \
+    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd30/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd30/linear.pth.tar" \
     
 
 ##Log this job's resource usage stats###

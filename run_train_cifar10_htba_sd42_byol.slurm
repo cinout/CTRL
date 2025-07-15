@@ -36,7 +36,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
+    --method byol \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
@@ -45,7 +45,8 @@ python -u main_train.py \
     --target_class 0 \
     \
     --linear_probe_normalize ref_set \
-    --seed 30 \
+    \
+    --seed 42 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -58,11 +59,9 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=30" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/linear.pth.tar" \
-
-
+    --note "ideal case, sd=42" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_byol_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd42/linear.pth.tar" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

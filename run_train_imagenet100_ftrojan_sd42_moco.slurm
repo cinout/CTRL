@@ -9,9 +9,9 @@
 
 #SBATCH --partition=deeplearn
 #SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c10_h"
+#SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-02:00:00
 
@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=80G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -29,23 +29,24 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
-    --trigger_type htba \
+    --method mocov2 \
     \
-    --magnitude_train 50.0 \
-    --magnitude_val 100.0 \
-    --dataset cifar10 \
-    --target_class 0 \
+    --image_size 64 \
+    \
+    --magnitude_train 300.0 \
+    --magnitude_val 300.0 \
+    --dataset imagenet100 \
+    --target_class 26 \
     \
     --linear_probe_normalize ref_set \
-    --seed 30 \
+    \
+    --seed 42 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -58,11 +59,11 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=30" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/linear.pth.tar" \
+    --note "ideal case, sd=42" \
+    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_moco_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_moco_ref_set_sd42/linear.pth.tar" \
 
-
+    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

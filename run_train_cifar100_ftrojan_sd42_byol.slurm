@@ -11,7 +11,7 @@
 #SBATCH --qos=gpgpudeeplearn
 #SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="c10_h"
+#SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
 #SBATCH --time=0-02:00:00
 
@@ -29,23 +29,22 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
-
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method simclr \
-    --trigger_type htba \
+    --method byol \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
-    --dataset cifar10 \
+    --dataset cifar100 \
     --target_class 0 \
     \
     --linear_probe_normalize ref_set \
-    --seed 30 \
+    \
+    --seed 42 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -58,9 +57,9 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=30" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_simclr_ref_set_sd30/linear.pth.tar" \
+    --note "ideal case, sd=42" \
+    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
 
 
 

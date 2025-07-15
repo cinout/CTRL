@@ -100,8 +100,10 @@ pattern_uncleansed_model_knn = (
     r"\[800-epoch\].*?clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 )
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
-pattern_cleansed_model_knn = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
-pattern_cleansed_model_linear = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn = r"In kNN classification, by replacing top-40 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear = r"In linear probe, by replacing 40 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+# pattern_cleansed_model_knn = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+# pattern_cleansed_model_linear = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w")
 

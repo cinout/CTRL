@@ -253,11 +253,11 @@ for file_path in all_input_file_paths:
         output_acc_asr_file_handle.write("Cleansed\n")
         output_acc_asr_file_handle.write("kNN\n")
         for value in cleansed_knn_asr_list:
-            output_acc_asr_file_handle.wirte(f"{value}\n")
+            output_acc_asr_file_handle.write(f"{value}\n")
 
         output_acc_asr_file_handle.write("Linear\n")
         for value in cleansed_linear_asr_list:
-            output_acc_asr_file_handle.wirte(f"{value}\n")
+            output_acc_asr_file_handle.write(f"{value}\n")
 
 
 # Convert to regular dict if printing or saving

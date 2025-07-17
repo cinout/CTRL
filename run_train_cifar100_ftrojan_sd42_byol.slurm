@@ -49,7 +49,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --channel_num 140 160 180 200 220 240 260 280 300 \
+    --channel_num 4 8 12 16 20 30 40 60 70 80 90 100 110 120 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \

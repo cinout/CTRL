@@ -218,12 +218,19 @@ parser.add_argument(
     default="zero",
     help="determines what values to replace the old value at the trigger channels",
 )
+# TODO: set these two separately
 parser.add_argument(
-    "--channel_num",
+    "--removed_channel_num",
     nargs="+",
     type=int,
     default=[2],
-    help="determine k channels of EACH SAMPLE",
+    help="remove k channels",
+)
+parser.add_argument(
+    "--voted_channel_num",
+    type=int,
+    default=4,
+    help="vote for k channels of EACH SAMPLE",
 )
 parser.add_argument(
     "--find_and_ignore_probe_channels",
@@ -231,7 +238,7 @@ parser.add_argument(
     help="ignore channels from clean probe dataset",
 )
 parser.add_argument(
-    "--ignore_probe_channel_num",
+    "--ignore_probe_removed_channel_num",
     type=int,
     help="ignore those appear in the probe dataset's voted channels",
 )

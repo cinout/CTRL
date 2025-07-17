@@ -257,9 +257,9 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     max_indices = max_indices.reshape(bs, args.num_views, feat_dim)  # [bs, n_view, C]
 
     if probe_set:
-        take_channel = args.ignore_probe_channel_num
+        take_channel = args.ignore_probe_removed_channel_num
     else:
-        take_channel = max(args.channel_num)
+        take_channel = args.voted_channel_num
 
     max_indices_at_channel = max_indices[
         :, :, -take_channel:
@@ -364,9 +364,9 @@ def get_ss_statistics(
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
         if probe_set:
-            take_channel = args.ignore_probe_channel_num
+            take_channel = args.ignore_probe_removed_channel_num
         else:
-            take_channel = max(args.channel_num)
+            take_channel = args.voted_channel_num
         max_indices_at_channel_total = np.zeros(
             shape=(bs, take_channel), dtype=np.int64
         )
@@ -1079,7 +1079,7 @@ def find_trigger_channels_or_poisoned_images(
     if args.find_and_ignore_probe_channels and not args.ideal_case:
         # REMOVE channels that appear in probe dataset
         essential_indices = Counter(all_votes.flatten()).most_common(
-            max(args.channel_num) + args.ignore_probe_channel_num
+            max(args.removed_channel_num) + args.ignore_probe_removed_channel_num
         )
         essential_indices = [idx for (idx, occ_count) in essential_indices]
 
@@ -1087,7 +1087,7 @@ def find_trigger_channels_or_poisoned_images(
             all_probe_votes, axis=0
         )  # [#dataset, n_view*take_channel]
         probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
-            args.ignore_probe_channel_num
+            args.ignore_probe_removed_channel_num
         )
         probe_essential_indices = [
             idx for (idx, occ_count) in probe_essential_indices
@@ -1096,10 +1096,12 @@ def find_trigger_channels_or_poisoned_images(
         essential_indices = [
             item for item in essential_indices if item not in probe_essential_indices
         ]
-        essential_indices = torch.tensor(essential_indices[: max(args.channel_num)])
+        essential_indices = torch.tensor(
+            essential_indices[: max(args.removed_channel_num)]
+        )
     else:
         essential_indices = Counter(all_votes.flatten()).most_common(
-            max(args.channel_num)
+            max(args.removed_channel_num)
         )
         essential_indices = torch.tensor(
             [idx for (idx, occ_count) in essential_indices]
@@ -1141,7 +1143,9 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
             output = model(images)
 
             if args.use_trigger_channel_removal and use_ss_detector:
-                indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                indices_toremove = contributing_indices[
+                    0 : max(args.removed_channel_num)
+                ]
                 output[:, indices_toremove] = 0.0
 
             cur_feats = F.normalize(output, dim=1).cpu()  # default: L2 norm
@@ -1200,13 +1204,17 @@ def train_linear_classifier(
             # same as below, but use grad backpropagation
             output = backbone(images)
             if args.use_trigger_channel_removal and use_ss_detector:
-                indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                indices_toremove = contributing_indices[
+                    0 : max(args.removed_channel_num)
+                ]
                 output[:, indices_toremove] = 0.0
         else:
             with torch.no_grad():
                 output = backbone(images)
                 if args.use_trigger_channel_removal and use_ss_detector:
-                    indices_toremove = contributing_indices[0 : max(args.channel_num)]
+                    indices_toremove = contributing_indices[
+                        0 : max(args.removed_channel_num)
+                    ]
                     output[:, indices_toremove] = 0.0
 
         output = linear(output)
@@ -1253,7 +1261,7 @@ def eval_linear_classifier(
         if args.use_trigger_channel_removal and use_ss_detector:
             acc1_accumulator_dict = {}
             total_count_dict = {}
-            for k in args.channel_num:
+            for k in args.removed_channel_num:
                 acc1_accumulator_dict[k] = 0.0
                 total_count_dict[k] = 0
         else:
@@ -1285,7 +1293,7 @@ def eval_linear_classifier(
             # compute output
             output = backbone(images)
             if args.use_trigger_channel_removal and use_ss_detector:
-                for k in args.channel_num:
+                for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
                     output[:, indices_toremove] = 0.0
 
@@ -1306,7 +1314,7 @@ def eval_linear_classifier(
 
         if args.use_trigger_channel_removal and use_ss_detector:
             results_dict = {}
-            for k in args.channel_num:
+            for k in args.removed_channel_num:
                 results_dict[k] = acc1_accumulator_dict[k] / total_count_dict[k] * 100.0
             return results_dict
         else:
@@ -2027,7 +2035,7 @@ class CLTrainer:
                 clean_val_contributing_indices=clean_val_contributing_indices,
                 poi_val_contributing_indices=poi_val_contributing_indices,
             )
-            for k in self.args.channel_num:
+            for k in self.args.removed_channel_num:
                 print(
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                 )
@@ -2090,7 +2098,7 @@ class CLTrainer:
                 contributing_indices=poi_val_contributing_indices,
             )
 
-            for k in self.args.channel_num:
+            for k in self.args.removed_channel_num:
                 print(
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
@@ -2120,7 +2128,7 @@ class CLTrainer:
                 contributing_indices=contributing_indices,
             )
 
-            for k in self.args.channel_num:
+            for k in self.args.removed_channel_num:
                 print(
                     f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
                 )
@@ -2157,7 +2165,7 @@ class CLTrainer:
                 use_ss_detector=True,
                 contributing_indices=contributing_indices,
             )
-            for k in self.args.channel_num:
+            for k in self.args.removed_channel_num:
                 print(
                     f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
                 )
@@ -2227,7 +2235,7 @@ class CLTrainer:
         if use_SS_detector:
             clean_val_top1_dict = {}
             clean_val_total_num_dict = {}
-            for k in args.channel_num:
+            for k in args.removed_channel_num:
                 clean_val_top1_dict[k] = 0.0
                 clean_val_total_num_dict[k] = 0
         else:
@@ -2245,7 +2253,7 @@ class CLTrainer:
                 feature = net(data)
 
             if use_SS_detector:
-                for k in args.channel_num:
+                for k in args.removed_channel_num:
 
                     indices_toremove = (
                         clean_val_contributing_indices[0:k]
@@ -2284,7 +2292,7 @@ class CLTrainer:
         if use_SS_detector:
             backdoor_val_top1_dict = {}
             backdoor_val_total_num_dict = {}
-            for k in args.channel_num:
+            for k in args.removed_channel_num:
                 backdoor_val_top1_dict[k] = 0.0
                 backdoor_val_total_num_dict[k] = 0
         else:
@@ -2315,7 +2323,7 @@ class CLTrainer:
                 feature = net(data)
 
             if use_SS_detector:
-                for k in args.channel_num:
+                for k in args.removed_channel_num:
                     indices_toremove = (
                         poi_val_contributing_indices[0:k]
                         if args.ideal_case
@@ -2348,7 +2356,7 @@ class CLTrainer:
         if use_SS_detector:
             clean_results_dict = {}
             backdoor_results_dict = {}
-            for k in args.channel_num:
+            for k in args.removed_channel_num:
                 clean_results_dict[k] = (
                     clean_val_top1_dict[k] / clean_val_total_num_dict[k] * 100.0
                 )

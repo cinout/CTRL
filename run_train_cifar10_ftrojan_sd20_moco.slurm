@@ -51,7 +51,8 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --channel_num 1 2 3 4 5 6 \
+    --voted_channel_num 4 \
+    --removed_channel_num 1 2 3 4 5 6 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -59,7 +60,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     --note "seed=20, ideal case" \
-##    --ignore_probe_channel_num 30 \
+##    --ignore_probe_removed_channel_num 30 \
 
 
 ##Log this job's resource usage stats###

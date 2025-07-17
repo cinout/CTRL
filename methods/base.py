@@ -2209,6 +2209,7 @@ class CLTrainer:
             disable=hide_progress,
         ):
             data = data.to(device)
+
             data = transform(data)
 
             with torch.no_grad():

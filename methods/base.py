@@ -2210,9 +2210,9 @@ class CLTrainer:
         ):
             data = data.to(device)
 
-            # TODO: remove them
-            print("transform", transform)
-            print("args.std", args.std)
+            # # TODO: remove them
+            # print("transform", transform)
+            # print("args.std", args.std)
 
             data = transform(data)
 

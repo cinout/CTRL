@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-12889462.out",
-    "slurm-12889463.out",
-    "slurm-12889464.out",
-    "slurm-12889465.out",
-    "slurm-12889466.out",
-    "slurm-12889467.out",
-    "slurm-12889468.out",
-    "slurm-12889469.out",
-    "slurm-12889470.out",
-    "slurm-12889471.out",
-    "slurm-12889472.out",
-    "slurm-12889473.out",
-    "slurm-12889474.out",
-    "slurm-12889475.out",
-    "slurm-12889476.out",
-    "slurm-12889477.out",
-    "slurm-12889478.out",
-    "slurm-12889479.out",
+    "slurm-12984147-[ST:vote4_rm4-40_sd20].out",
+    "slurm-12984148.out",
+    "slurm-12984149.out",
+    "slurm-12984150.out",
+    "slurm-12984151.out",
+    "slurm-12984152_end_cifar100.out",
+    "slurm-12984153.out",
+    "slurm-12984154.out",
+    "slurm-12984155.out",
+    "slurm-12984156.out",
+    "slurm-12984157.out",
+    "slurm-12984158_end_cifar10.out",
+    "slurm-12984159.out",
+    "slurm-12984160.out",
+    "slurm-12984161.out",
+    "slurm-12984162.out",
+    "slurm-12984163.out",
+    "slurm-12984164.out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sd30_again_"  # FIXME: change
+title = "vote4_rm4-40_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -89,21 +89,44 @@ ideal_case_channels = nested_dict()
 
 """
 Regex Patterns
+# [\d.]+ matches a number that may include a decimal point.
 """
 pattern_dataset = r"dataset: (.*)"
 pattern_trigger = r"trigger_type: (.*)"
 pattern_ssl_method = r"method: (.*)"
-# [\d.]+ matches a number that may include a decimal point.
+
+# Channels
 pattern_ideal_case_clean_channels = r"\[IDEAL CASE\]\s+\[CLEAN VAL SET\] predicted trigger channels are: tensor\(\[([\s\d,]+)\]\)"
 pattern_ideal_case_poison_channels = r"\[IDEAL CASE\]\s+\[POISON VAL SET\] predicted trigger channels are: tensor\(\[([\s\d,]+)\]\)"
+
+# Uncleansed
 pattern_uncleansed_model_knn = (
     r"\[800-epoch\].*?clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 )
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
-pattern_cleansed_model_knn = r"In kNN classification, by replacing top-40 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
-pattern_cleansed_model_linear = r"In linear probe, by replacing 40 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+
+# Cleansed
 # pattern_cleansed_model_knn = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 # pattern_cleansed_model_linear = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+
+
+pattern_cleansed_model_knn_remove_4 = r"In kNN classification, by replacing top-4 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_4 = r"In linear probe, by replacing 4 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_6 = r"In kNN classification, by replacing top-6 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_6 = r"In linear probe, by replacing 6 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_8 = r"In kNN classification, by replacing top-8 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_8 = r"In linear probe, by replacing 8 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_12 = r"In kNN classification, by replacing top-12 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_12 = r"In linear probe, by replacing 12 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_16 = r"In kNN classification, by replacing top-16 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_16 = r"In linear probe, by replacing 16 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_20 = r"In kNN classification, by replacing top-20 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_20 = r"In linear probe, by replacing 20 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_30 = r"In kNN classification, by replacing top-30 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_30 = r"In linear probe, by replacing 30 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_40 = r"In kNN classification, by replacing top-40 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_40 = r"In linear probe, by replacing 40 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w")
 
@@ -148,7 +171,7 @@ for file_path in all_input_file_paths:
         ] = ideal_case_poison_channels
 
         """
-        ACC and ASR
+        ACC and ASR - Uncleanse
         """
         # Uncleansed kNN
         uncleansed_knn_acc, uncleansed_knn_asr = match_two_float_numbers(
@@ -166,34 +189,76 @@ for file_path in all_input_file_paths:
             "no matching uncleansed linear",
         )
 
-        # Cleansed kNN
-        cleansed_knn_acc, cleansed_knn_asr = match_two_float_numbers(
-            pattern_cleansed_model_knn,
-            file_content,
-            file_path,
-            "no matching cleansed kNN",
-        )
+        """
+        ACC and ASR - Cleanse
+        """
+        pattern_knn_list = [
+            pattern_cleansed_model_knn_remove_4,
+            pattern_cleansed_model_knn_remove_6,
+            pattern_cleansed_model_knn_remove_8,
+            pattern_cleansed_model_knn_remove_12,
+            pattern_cleansed_model_knn_remove_16,
+            pattern_cleansed_model_knn_remove_20,
+            pattern_cleansed_model_knn_remove_30,
+            pattern_cleansed_model_knn_remove_40,
+        ]
+        pattern_linear_list = [
+            pattern_cleansed_model_linear_remove_4,
+            pattern_cleansed_model_linear_remove_6,
+            pattern_cleansed_model_linear_remove_8,
+            pattern_cleansed_model_linear_remove_12,
+            pattern_cleansed_model_linear_remove_16,
+            pattern_cleansed_model_linear_remove_20,
+            pattern_cleansed_model_linear_remove_30,
+            pattern_cleansed_model_linear_remove_40,
+        ]
+        cleansed_knn_asr_list = (
+            []
+        )  # store cleansed knn results by removing different number of channels
+        cleansed_linear_asr_list = []
 
-        # Cleansed Linear
-        cleansed_linear_acc, cleansed_linear_asr = match_two_float_numbers(
-            pattern_cleansed_model_linear,
-            file_content,
-            file_path,
-            "no matching cleansed linear",
-        )
+        for pattern_knn, pattern_linear in zip(pattern_knn_list, pattern_linear_list):
+
+            # Cleansed kNN
+            cleansed_knn_acc, cleansed_knn_asr = match_two_float_numbers(
+                pattern_knn,
+                file_content,
+                file_path,
+                "no matching cleansed kNN",
+            )
+
+            # Cleansed Linear
+            cleansed_linear_acc, cleansed_linear_asr = match_two_float_numbers(
+                pattern_linear,
+                file_content,
+                file_path,
+                "no matching cleansed linear",
+            )
+
+            cleansed_knn_asr_list.append(cleansed_knn_asr)
+            cleansed_linear_asr_list.append(cleansed_linear_asr)
 
         """
         Write ACC and ASR results to txt file
         """
         output_acc_asr_file_handle.write(
-            f"------------\n{dataset:<10}{trigger:<10}{ssl_method:<10}\n------------\n"
+            f"-------------------------------------\n{dataset:<10}{trigger:<10}{ssl_method:<10}\n------------\n"
         )
         output_acc_asr_file_handle.write(
             f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc}\t{uncleansed_knn_asr}\tLinear: {uncleansed_linear_acc}\t{uncleansed_linear_asr}\n"
         )
-        output_acc_asr_file_handle.write(
-            f"{'Cleansed:':<15} kNN: {cleansed_knn_acc}\t{cleansed_knn_asr}\tLinear: {cleansed_linear_acc}\t{cleansed_linear_asr}\t\n"
-        )
+        # output_acc_asr_file_handle.write(
+        #     f"{'Cleansed:':<15} kNN: {cleansed_knn_acc}\t{cleansed_knn_asr}\tLinear: {cleansed_linear_acc}\t{cleansed_linear_asr}\t\n"
+        # )
+        output_acc_asr_file_handle.write("Cleansed\n")
+        output_acc_asr_file_handle.write("kNN\n")
+        for value in cleansed_knn_asr_list:
+            output_acc_asr_file_handle.wirte(f"{value}\n")
+
+        output_acc_asr_file_handle.write("Linear\n")
+        for value in cleansed_linear_asr_list:
+            output_acc_asr_file_handle.wirte(f"{value}\n")
+
 
 # Convert to regular dict if printing or saving
 ideal_case_channels = to_dict(ideal_case_channels)

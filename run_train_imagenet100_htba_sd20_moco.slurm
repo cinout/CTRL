@@ -54,8 +54,8 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --voted_channel_num 4 \
-    --removed_channel_num 30 40 60 80 100 120 \
+    --voted_channel_num 8 \
+    --removed_channel_num 8 12 20 40 60 80 100 120 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \

@@ -2209,11 +2209,6 @@ class CLTrainer:
             disable=hide_progress,
         ):
             data = data.to(device)
-
-            # # TODO: remove them
-            # print("transform", transform)
-            # print("args.std", args.std)
-
             data = transform(data)
 
             with torch.no_grad():

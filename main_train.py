@@ -218,7 +218,6 @@ parser.add_argument(
     default="zero",
     help="determines what values to replace the old value at the trigger channels",
 )
-# TODO: set these two separately
 parser.add_argument(
     "--removed_channel_num",
     nargs="+",

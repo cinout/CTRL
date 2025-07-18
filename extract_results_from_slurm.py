@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-12984383-[ST:vote4_rm4-40_sd30].out",
-    "slurm-12984384.out",
-    "slurm-12984385.out",
-    "slurm-12984386.out",
-    "slurm-12984387.out",
-    "slurm-12984388.out",
-    "slurm-12984389.out",
-    "slurm-12984390.out",
-    "slurm-12984391.out",
-    "slurm-12984392.out",
-    "slurm-12984393.out",
-    "slurm-12984394.out",
-    "slurm-12984395.out",
-    "slurm-12984396.out",
-    "slurm-12984397.out",
-    "slurm-12984398.out",
-    "slurm-12984399.out",
-    "slurm-12984400-[END:vote4_rm4-40_sd30].out",
+    "slurm-12992393-[ST:vote4_rm30-120_sd20].out",
+    "slurm-12992394.out",
+    "slurm-12992395.out",
+    "slurm-12992396.out",
+    "slurm-12992397.out",
+    "slurm-12992398.out",
+    "slurm-12992399.out",
+    "slurm-12992400.out",
+    "slurm-12992401.out",
+    "slurm-12992402.out",
+    "slurm-12992403.out",
+    "slurm-12992404.out",
+    "slurm-12992405.out",
+    "slurm-12992406.out",
+    "slurm-12992407.out",
+    "slurm-12992408.out",
+    "slurm-12992409.out",
+    "slurm-12992410-[END:vote4_rm30-120_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm4-40_sd30_"  # FIXME: change
+title = "vote4_rm30-120_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -126,6 +126,14 @@ pattern_cleansed_model_knn_remove_30 = r"In kNN classification, by replacing top
 pattern_cleansed_model_linear_remove_30 = r"In linear probe, by replacing 30 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 pattern_cleansed_model_knn_remove_40 = r"In kNN classification, by replacing top-40 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 pattern_cleansed_model_linear_remove_40 = r"In linear probe, by replacing 40 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_60 = r"In kNN classification, by replacing top-60 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_60 = r"In linear probe, by replacing 60 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_80 = r"In kNN classification, by replacing top-80 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_80 = r"In linear probe, by replacing 80 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_100 = r"In kNN classification, by replacing top-100 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_100 = r"In linear probe, by replacing 100 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_remove_120 = r"In kNN classification, by replacing top-120 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_remove_120 = r"In linear probe, by replacing 120 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w")
@@ -193,24 +201,16 @@ for file_path in all_input_file_paths:
         ACC and ASR - Cleanse
         """
         pattern_knn_list = [
-            pattern_cleansed_model_knn_remove_4,
-            pattern_cleansed_model_knn_remove_6,
-            pattern_cleansed_model_knn_remove_8,
-            pattern_cleansed_model_knn_remove_12,
-            pattern_cleansed_model_knn_remove_16,
-            pattern_cleansed_model_knn_remove_20,
-            pattern_cleansed_model_knn_remove_30,
-            pattern_cleansed_model_knn_remove_40,
+            pattern_cleansed_model_knn_remove_60,
+            pattern_cleansed_model_knn_remove_80,
+            pattern_cleansed_model_knn_remove_100,
+            pattern_cleansed_model_knn_remove_120,
         ]
         pattern_linear_list = [
-            pattern_cleansed_model_linear_remove_4,
-            pattern_cleansed_model_linear_remove_6,
-            pattern_cleansed_model_linear_remove_8,
-            pattern_cleansed_model_linear_remove_12,
-            pattern_cleansed_model_linear_remove_16,
-            pattern_cleansed_model_linear_remove_20,
-            pattern_cleansed_model_linear_remove_30,
-            pattern_cleansed_model_linear_remove_40,
+            pattern_cleansed_model_linear_remove_60,
+            pattern_cleansed_model_linear_remove_80,
+            pattern_cleansed_model_linear_remove_100,
+            pattern_cleansed_model_linear_remove_120,
         ]
         cleansed_knn_asr_list = (
             []

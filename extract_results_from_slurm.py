@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13016303-[ST:vote4_rm30-120_sd42].out",
-    "slurm-13016304.out",
-    "slurm-13016305.out",
-    "slurm-13016306.out",
-    "slurm-13016307.out",
-    "slurm-13016308.out",
-    "slurm-13016309.out",
-    "slurm-13016310.out",
-    "slurm-13016311.out",
-    "slurm-13016312.out",
-    "slurm-13016313.out",
-    "slurm-13016314.out",
-    "slurm-13016315.out",
-    "slurm-13016316.out",
-    "slurm-13016317.out",
-    "slurm-13016318.out",
-    "slurm-13016319.out",
-    "slurm-13016320-[END:vote4_rm30-120_sd42].out",
+    "slurm-13060332-[ST:vote8_rm8-120_sd20].out",
+    "slurm-13060333.out",
+    "slurm-13060334.out",
+    "slurm-13060335.out",
+    "slurm-13060336.out",
+    "slurm-13060337.out",
+    "slurm-13060338.out",
+    "slurm-13060339.out",
+    "slurm-13060340.out",
+    "slurm-13060341.out",
+    "slurm-13060342.out",
+    "slurm-13060343.out",
+    "slurm-13060344.out",
+    "slurm-13060345.out",
+    "slurm-13060346.out",
+    "slurm-13060347.out",
+    "slurm-13060348.out",
+    "slurm-13060349-[END:vote8_rm8-120_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm30-120_sd42_"  # FIXME: change
+title = "vote8_rm8-120_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -201,12 +201,20 @@ for file_path in all_input_file_paths:
         ACC and ASR - Cleanse
         """
         pattern_knn_list = [
+            pattern_cleansed_model_knn_remove_8,
+            pattern_cleansed_model_knn_remove_12,
+            pattern_cleansed_model_knn_remove_20,
+            pattern_cleansed_model_knn_remove_40,
             pattern_cleansed_model_knn_remove_60,
             pattern_cleansed_model_knn_remove_80,
             pattern_cleansed_model_knn_remove_100,
             pattern_cleansed_model_knn_remove_120,
         ]
         pattern_linear_list = [
+            pattern_cleansed_model_linear_remove_8,
+            pattern_cleansed_model_linear_remove_12,
+            pattern_cleansed_model_linear_remove_20,
+            pattern_cleansed_model_linear_remove_40,
             pattern_cleansed_model_linear_remove_60,
             pattern_cleansed_model_linear_remove_80,
             pattern_cleansed_model_linear_remove_100,

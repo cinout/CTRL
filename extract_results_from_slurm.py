@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-12984979-[ST:vote4_rm4-40_sd42].out",
-    "_previous_slurms/slurm-12984980.out",
-    "_previous_slurms/slurm-12984981.out",
-    "_previous_slurms/slurm-12984982.out",
-    "_previous_slurms/slurm-12984983.out",
-    "_previous_slurms/slurm-12984984.out",
-    "_previous_slurms/slurm-12984985.out",
-    "_previous_slurms/slurm-12984986.out",
-    "_previous_slurms/slurm-12984987.out",
-    "_previous_slurms/slurm-12984988.out",
-    "_previous_slurms/slurm-12984989.out",
-    "_previous_slurms/slurm-12984990.out",
-    "_previous_slurms/slurm-12984991.out",
-    "_previous_slurms/slurm-12984992.out",
-    "_previous_slurms/slurm-12984993.out",
-    "_previous_slurms/slurm-12984994.out",
-    "_previous_slurms/slurm-12984995.out",
-    "_previous_slurms/slurm-12984996-[END:vote4_rm4-40_sd42].out",
+    "_previous_slurms/slurm-13060332-[ST:vote8_rm8-120_sd20].out",
+    "_previous_slurms/slurm-13060333.out",
+    "_previous_slurms/slurm-13060334.out",
+    "_previous_slurms/slurm-13060335.out",
+    "_previous_slurms/slurm-13060336.out",
+    "_previous_slurms/slurm-13060337.out",
+    "_previous_slurms/slurm-13060338.out",
+    "_previous_slurms/slurm-13060339.out",
+    "_previous_slurms/slurm-13060340.out",
+    "_previous_slurms/slurm-13060341.out",
+    "_previous_slurms/slurm-13060342.out",
+    "_previous_slurms/slurm-13060343.out",
+    "_previous_slurms/slurm-13060344.out",
+    "_previous_slurms/slurm-13060345.out",
+    "_previous_slurms/slurm-13060346.out",
+    "_previous_slurms/slurm-13060347.out",
+    "_previous_slurms/slurm-13060348.out",
+    "_previous_slurms/slurm-13060349-[END:vote8_rm8-120_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm4-40_sd42_acc_"  # FIXME: change
+title = "vote8_rm8-120_sd20_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -205,11 +205,21 @@ for file_path in all_input_file_paths:
             pattern_cleansed_model_knn_remove_8,
             pattern_cleansed_model_knn_remove_12,
             pattern_cleansed_model_knn_remove_20,
+            pattern_cleansed_model_knn_remove_40,
+            pattern_cleansed_model_knn_remove_60,
+            pattern_cleansed_model_knn_remove_80,
+            pattern_cleansed_model_knn_remove_100,
+            pattern_cleansed_model_knn_remove_120,
         ]
         pattern_linear_list = [
             pattern_cleansed_model_linear_remove_8,
             pattern_cleansed_model_linear_remove_12,
             pattern_cleansed_model_linear_remove_20,
+            pattern_cleansed_model_linear_remove_40,
+            pattern_cleansed_model_linear_remove_60,
+            pattern_cleansed_model_linear_remove_80,
+            pattern_cleansed_model_linear_remove_100,
+            pattern_cleansed_model_linear_remove_120,
         ]
         cleansed_knn_asr_list = (
             []

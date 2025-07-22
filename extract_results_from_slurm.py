@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-13015371-[ST:vote4_rm30-120_sd30].out",
-    "_previous_slurms/slurm-13015372.out",
-    "_previous_slurms/slurm-13015373.out",
-    "_previous_slurms/slurm-13015374.out",
-    "_previous_slurms/slurm-13015375.out",
-    "_previous_slurms/slurm-13015376.out",
-    "_previous_slurms/slurm-13015377.out",
-    "_previous_slurms/slurm-13015378.out",
-    "_previous_slurms/slurm-13015379.out",
-    "_previous_slurms/slurm-13015380.out",
-    "_previous_slurms/slurm-13015381.out",
-    "_previous_slurms/slurm-13015382.out",
-    "_previous_slurms/slurm-13015383.out",
-    "_previous_slurms/slurm-13015384.out",
-    "_previous_slurms/slurm-13015385.out",
-    "_previous_slurms/slurm-13015386.out",
-    "_previous_slurms/slurm-13015387.out",
-    "_previous_slurms/slurm-13015388-[END:vote4_rm30-120_sd30].out",
+    "_previous_slurms/slurm-13016303-[ST:vote4_rm30-120_sd42].out",
+    "_previous_slurms/slurm-13016304",
+    "_previous_slurms/slurm-13016305",
+    "_previous_slurms/slurm-13016306",
+    "_previous_slurms/slurm-13016307",
+    "_previous_slurms/slurm-13016308",
+    "_previous_slurms/slurm-13016309",
+    "_previous_slurms/slurm-13016310",
+    "_previous_slurms/slurm-13016311",
+    "_previous_slurms/slurm-13016312",
+    "_previous_slurms/slurm-13016313",
+    "_previous_slurms/slurm-13016314",
+    "_previous_slurms/slurm-13016315",
+    "_previous_slurms/slurm-13016316",
+    "_previous_slurms/slurm-13016317",
+    "_previous_slurms/slurm-13016318",
+    "_previous_slurms/slurm-13016319",
+    "_previous_slurms/slurm-13016320-[END:vote4_rm30-120_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm30-120_sd30_acc_"  # FIXME: change
+title = "vote4_rm30-120_sd42_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

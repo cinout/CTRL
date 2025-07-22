@@ -80,7 +80,7 @@ all_input_file_paths = [
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote16_test_"  # FIXME: change
+title = "vote8_rm8-120_sd30_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -300,6 +300,7 @@ for method in ssl_methods:
         for classifier in classifiers:
             for trigger in triggers:
                 for dataset in datasets:
+                    # FIXME: change content
                     acc_value = ideal_case_acc_asr_table[dataset][trigger][method][
                         classifier
                     ]["acc"][channel_count]

@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13060885-[ST:vote8_rm8-120_sd42].out",
-    "slurm-13060886.out",
-    "slurm-13060887.out",
-    "slurm-13060888.out",
-    "slurm-13060889.out",
-    "slurm-13060890.out",
-    "slurm-13060891.out",
-    "slurm-13060892.out",
-    "slurm-13060893.out",
-    "slurm-13060894.out",
-    "slurm-13060895.out",
-    "slurm-13060896.out",
-    "slurm-13060897.out",
-    "slurm-13060898.out",
-    "slurm-13060899.out",
-    "slurm-13060900.out",
-    "slurm-13060901.out",
-    "slurm-13060902-[END:vote8_rm8-120_sd42].out",
+    "_previous_slurms/slurm-12992393-[ST:vote4_rm30-120_sd20].out",
+    "_previous_slurms/slurm-12992394.out",
+    "_previous_slurms/slurm-12992395.out",
+    "_previous_slurms/slurm-12992396.out",
+    "_previous_slurms/slurm-12992397.out",
+    "_previous_slurms/slurm-12992398.out",
+    "_previous_slurms/slurm-12992399.out",
+    "_previous_slurms/slurm-12992400.out",
+    "_previous_slurms/slurm-12992401.out",
+    "_previous_slurms/slurm-12992402.out",
+    "_previous_slurms/slurm-12992403.out",
+    "_previous_slurms/slurm-12992404.out",
+    "_previous_slurms/slurm-12992405.out",
+    "_previous_slurms/slurm-12992406.out",
+    "_previous_slurms/slurm-12992407.out",
+    "_previous_slurms/slurm-12992408.out",
+    "_previous_slurms/slurm-12992409.out",
+    "_previous_slurms/slurm-12992410-[END:vote4_rm30-120_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote8_rm8-120_sd42_"  # FIXME: change
+title = "vote4_rm30-120_sd20_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -243,8 +243,9 @@ for file_path in all_input_file_paths:
                 "no matching cleansed linear",
             )
 
-            cleansed_knn_asr_list.append(cleansed_knn_asr)
-            cleansed_linear_asr_list.append(cleansed_linear_asr)
+            # FIXME: change output content
+            cleansed_knn_asr_list.append(cleansed_knn_acc)
+            cleansed_linear_asr_list.append(cleansed_linear_acc)
 
         """
         Write ACC and ASR results to txt file

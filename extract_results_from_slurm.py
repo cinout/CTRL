@@ -82,7 +82,7 @@ Output File Paths
 prefix = "zz_results_"
 title = "vote8_rm8-120_sd30_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
-output_file_acc_asr = prefix + title + "acc_asr_results.txt"
+output_file_acc_asr = prefix + title + "acc_asr_results.tsv"
 
 ideal_case_channels = nested_dict()
 ideal_case_acc_asr_table = nested_dict()
@@ -137,7 +137,7 @@ pattern_cleansed_model_knn_remove_120 = r"In kNN classification, by replacing to
 pattern_cleansed_model_linear_remove_120 = r"In linear probe, by replacing 120 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 
 
-output_acc_asr_file_handle = open(output_file_acc_asr, "w")
+output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 # FIXME: update # channels removed
 pattern_knn_list = [

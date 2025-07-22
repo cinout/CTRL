@@ -56,35 +56,36 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-13060332-[ST:vote8_rm8-120_sd20].out",
-    "_previous_slurms/slurm-13060333.out",
-    "_previous_slurms/slurm-13060334.out",
-    "_previous_slurms/slurm-13060335.out",
-    "_previous_slurms/slurm-13060336.out",
-    "_previous_slurms/slurm-13060337.out",
-    "_previous_slurms/slurm-13060338.out",
-    "_previous_slurms/slurm-13060339.out",
-    "_previous_slurms/slurm-13060340.out",
-    "_previous_slurms/slurm-13060341.out",
-    "_previous_slurms/slurm-13060342.out",
-    "_previous_slurms/slurm-13060343.out",
-    "_previous_slurms/slurm-13060344.out",
-    "_previous_slurms/slurm-13060345.out",
-    "_previous_slurms/slurm-13060346.out",
-    "_previous_slurms/slurm-13060347.out",
-    "_previous_slurms/slurm-13060348.out",
-    "_previous_slurms/slurm-13060349-[END:vote8_rm8-120_sd20].out",
+    "_previous_slurms/slurm-13060572-[ST:vote8_rm8-120_sd30].out",
+    "_previous_slurms/slurm-13060573.out",
+    "_previous_slurms/slurm-13060574.out",
+    "_previous_slurms/slurm-13060575.out",
+    "_previous_slurms/slurm-13060576.out",
+    "_previous_slurms/slurm-13060577.out",
+    "_previous_slurms/slurm-13060578.out",
+    "_previous_slurms/slurm-13060579.out",
+    "_previous_slurms/slurm-13060580.out",
+    "_previous_slurms/slurm-13060581.out",
+    "_previous_slurms/slurm-13060582.out",
+    "_previous_slurms/slurm-13060583.out",
+    "_previous_slurms/slurm-13060584.out",
+    "_previous_slurms/slurm-13060585.out",
+    "_previous_slurms/slurm-13060586.out",
+    "_previous_slurms/slurm-13060587.out",
+    "_previous_slurms/slurm-13060588.out",
+    "_previous_slurms/slurm-13060589-[END:vote8_rm8-120_sd30].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote8_rm8-120_sd20_acc_"  # FIXME: change
+title = "vote16_test_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()
+ideal_case_acc_asr_table = nested_dict()
 
 
 """
@@ -137,6 +138,30 @@ pattern_cleansed_model_linear_remove_120 = r"In linear probe, by replacing 120 c
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w")
+
+# FIXME: update # channels removed
+pattern_knn_list = [
+    pattern_cleansed_model_knn_remove_8,
+    pattern_cleansed_model_knn_remove_12,
+    pattern_cleansed_model_knn_remove_20,
+    pattern_cleansed_model_knn_remove_40,
+    pattern_cleansed_model_knn_remove_60,
+    pattern_cleansed_model_knn_remove_80,
+    pattern_cleansed_model_knn_remove_100,
+    pattern_cleansed_model_knn_remove_120,
+]
+pattern_linear_list = [
+    pattern_cleansed_model_linear_remove_8,
+    pattern_cleansed_model_linear_remove_12,
+    pattern_cleansed_model_linear_remove_20,
+    pattern_cleansed_model_linear_remove_40,
+    pattern_cleansed_model_linear_remove_60,
+    pattern_cleansed_model_linear_remove_80,
+    pattern_cleansed_model_linear_remove_100,
+    pattern_cleansed_model_linear_remove_120,
+]
+num_removed_channels = len(pattern_knn_list)
+
 
 for file_path in all_input_file_paths:
     with open(file_path, "r") as f:
@@ -198,32 +223,13 @@ for file_path in all_input_file_paths:
         )
 
         """
-        ACC and ASR - Cleanse
+        ACC and ASR - Cleansed
         """
-        # FIXME: update # channels removed
-        pattern_knn_list = [
-            pattern_cleansed_model_knn_remove_8,
-            pattern_cleansed_model_knn_remove_12,
-            pattern_cleansed_model_knn_remove_20,
-            pattern_cleansed_model_knn_remove_40,
-            pattern_cleansed_model_knn_remove_60,
-            pattern_cleansed_model_knn_remove_80,
-            pattern_cleansed_model_knn_remove_100,
-            pattern_cleansed_model_knn_remove_120,
-        ]
-        pattern_linear_list = [
-            pattern_cleansed_model_linear_remove_8,
-            pattern_cleansed_model_linear_remove_12,
-            pattern_cleansed_model_linear_remove_20,
-            pattern_cleansed_model_linear_remove_40,
-            pattern_cleansed_model_linear_remove_60,
-            pattern_cleansed_model_linear_remove_80,
-            pattern_cleansed_model_linear_remove_100,
-            pattern_cleansed_model_linear_remove_120,
-        ]
-        cleansed_knn_asr_list = (
-            []
-        )  # store cleansed knn results by removing different number of channels
+
+        # FIXME: change output content
+        cleansed_knn_acc_list = []
+        cleansed_knn_asr_list = []
+        cleansed_linear_acc_list = []
         cleansed_linear_asr_list = []
 
         for pattern_knn, pattern_linear in zip(pattern_knn_list, pattern_linear_list):
@@ -244,32 +250,66 @@ for file_path in all_input_file_paths:
                 "no matching cleansed linear",
             )
 
-            # FIXME: change output content
-            cleansed_knn_asr_list.append(cleansed_knn_acc)
-            cleansed_linear_asr_list.append(cleansed_linear_acc)
+            cleansed_knn_acc_list.append(cleansed_knn_acc)
+            cleansed_linear_acc_list.append(cleansed_linear_acc)
+
+        """
+        Write Table -- collect data
+        """
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["knn"][
+            "acc"
+        ] = cleansed_knn_acc_list
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["linear"][
+            "acc"
+        ] = cleansed_linear_acc_list
 
         """
         Write ACC and ASR results to txt file
         """
-        output_acc_asr_file_handle.write(
-            f"-------------------------------------\n{dataset:<10}{trigger:<10}{ssl_method:<10}\n------------\n"
-        )
-        output_acc_asr_file_handle.write(
-            f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc}\t{uncleansed_knn_asr}\tLinear: {uncleansed_linear_acc}\t{uncleansed_linear_asr}\n"
-        )
         # output_acc_asr_file_handle.write(
-        #     f"{'Cleansed:':<15} kNN: {cleansed_knn_acc}\t{cleansed_knn_asr}\tLinear: {cleansed_linear_acc}\t{cleansed_linear_asr}\t\n"
+        #     f"-------------------------------------\n{dataset:<10}{trigger:<10}{ssl_method:<10}\n------------\n"
         # )
-        output_acc_asr_file_handle.write("Cleansed\n")
-        output_acc_asr_file_handle.write("kNN\n")
-        for value in cleansed_knn_asr_list:
-            output_acc_asr_file_handle.write(f"{value}\n")
+        # output_acc_asr_file_handle.write(
+        #     f"{'Uncleansed:':<15} kNN: {uncleansed_knn_acc}\t{uncleansed_knn_asr}\tLinear: {uncleansed_linear_acc}\t{uncleansed_linear_asr}\n"
+        # )
+        # # output_acc_asr_file_handle.write(
+        # #     f"{'Cleansed:':<15} kNN: {cleansed_knn_acc}\t{cleansed_knn_asr}\tLinear: {cleansed_linear_acc}\t{cleansed_linear_asr}\t\n"
+        # # )
+        # output_acc_asr_file_handle.write("Cleansed\n")
+        # output_acc_asr_file_handle.write("kNN\n")
+        # for value in cleansed_knn_asr_list:
+        #     output_acc_asr_file_handle.write(f"{value}\n")
 
-        output_acc_asr_file_handle.write("Linear\n")
-        for value in cleansed_linear_asr_list:
-            output_acc_asr_file_handle.write(f"{value}\n")
+        # output_acc_asr_file_handle.write("Linear\n")
+        # for value in cleansed_linear_asr_list:
+        #     output_acc_asr_file_handle.write(f"{value}\n")
 
 
+"""
+Write ACC ASR Table -- write data
+"""
+ssl_methods = ["byol", "mocov2", "simclr"]
+removed_channels_counts = list(range(num_removed_channels))
+datasets = ["imagenet100", "cifar10", "cifar100"]
+triggers = ["htba", "ftrojan"]
+classifiers = ["knn", "linear"]
+
+
+for method in ssl_methods:
+    for channel_count in removed_channels_counts:
+        for classifier in classifiers:
+            for trigger in triggers:
+                for dataset in datasets:
+                    acc_value = ideal_case_acc_asr_table[dataset][trigger][method][
+                        classifier
+                    ]["acc"]
+                    output_acc_asr_file_handle.write(f"{acc_value}\t")
+    output_acc_asr_file_handle.write("\n")
+
+
+"""
+Write Channels
+"""
 # Convert to regular dict if printing or saving
 ideal_case_channels = to_dict(ideal_case_channels)
 

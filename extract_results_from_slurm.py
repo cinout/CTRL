@@ -306,6 +306,7 @@ for method in ssl_methods:
                     ]["acc"][channel_count]
                     output_acc_asr_file_handle.write(f"{acc_value}\t")
         output_acc_asr_file_handle.write("\n")
+    output_acc_asr_file_handle.write("\n")
 
 
 """

@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-12992393-[ST:vote4_rm30-120_sd20].out",
-    "_previous_slurms/slurm-12992394.out",
-    "_previous_slurms/slurm-12992395.out",
-    "_previous_slurms/slurm-12992396.out",
-    "_previous_slurms/slurm-12992397.out",
-    "_previous_slurms/slurm-12992398.out",
-    "_previous_slurms/slurm-12992399.out",
-    "_previous_slurms/slurm-12992400.out",
-    "_previous_slurms/slurm-12992401.out",
-    "_previous_slurms/slurm-12992402.out",
-    "_previous_slurms/slurm-12992403.out",
-    "_previous_slurms/slurm-12992404.out",
-    "_previous_slurms/slurm-12992405.out",
-    "_previous_slurms/slurm-12992406.out",
-    "_previous_slurms/slurm-12992407.out",
-    "_previous_slurms/slurm-12992408.out",
-    "_previous_slurms/slurm-12992409.out",
-    "_previous_slurms/slurm-12992410-[END:vote4_rm30-120_sd20].out",
+    "_previous_slurms/slurm-13015371-[ST:vote4_rm30-120_sd30].out",
+    "_previous_slurms/slurm-13015372.out",
+    "_previous_slurms/slurm-13015373.out",
+    "_previous_slurms/slurm-13015374.out",
+    "_previous_slurms/slurm-13015375.out",
+    "_previous_slurms/slurm-13015376.out",
+    "_previous_slurms/slurm-13015377.out",
+    "_previous_slurms/slurm-13015378.out",
+    "_previous_slurms/slurm-13015379.out",
+    "_previous_slurms/slurm-13015380.out",
+    "_previous_slurms/slurm-13015381.out",
+    "_previous_slurms/slurm-13015382.out",
+    "_previous_slurms/slurm-13015383.out",
+    "_previous_slurms/slurm-13015384.out",
+    "_previous_slurms/slurm-13015385.out",
+    "_previous_slurms/slurm-13015386.out",
+    "_previous_slurms/slurm-13015387.out",
+    "_previous_slurms/slurm-13015388-[END:vote4_rm30-120_sd30].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm30-120_sd20_acc_"  # FIXME: change
+title = "vote4_rm30-120_sd30_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -49,7 +49,8 @@ python -u main_train.py \
     --use_trigger_channel_removal \
     --ideal_case \
     --voted_channel_num 8 \
-    --removed_channel_num 8 12 20 40 60 80 100 120 \
+    --removed_channel_num 40 \
+    --retrain_whole_model_after_cleanse \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
@@ -57,7 +58,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal case, sd=30" \
+    --note "ideal case, retrain whole model after cleanse" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd30/linear.pth.tar" \
 

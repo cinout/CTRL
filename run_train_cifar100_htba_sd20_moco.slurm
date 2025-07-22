@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -55,14 +55,15 @@ python -u main_train.py \
     --use_trigger_channel_removal \
     --ideal_case \
     --voted_channel_num 8 \
-    --removed_channel_num 8 12 20 40 60 80 100 120 \
+    --removed_channel_num 40 \
+    --retrain_whole_model_after_cleanse \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --note "seed=20, ideal case" \
+    --note "ideal case, retrain whole model after cleanse" \
 
 
 ##Log this job's resource usage stats###

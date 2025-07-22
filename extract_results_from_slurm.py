@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-12984383-[ST:vote4_rm4-40_sd30].out",
-    "_previous_slurms/slurm-12984384.out",
-    "_previous_slurms/slurm-12984385.out",
-    "_previous_slurms/slurm-12984386.out",
-    "_previous_slurms/slurm-12984387.out",
-    "_previous_slurms/slurm-12984388.out",
-    "_previous_slurms/slurm-12984389.out",
-    "_previous_slurms/slurm-12984390.out",
-    "_previous_slurms/slurm-12984391.out",
-    "_previous_slurms/slurm-12984392.out",
-    "_previous_slurms/slurm-12984393.out",
-    "_previous_slurms/slurm-12984394.out",
-    "_previous_slurms/slurm-12984395.out",
-    "_previous_slurms/slurm-12984396.out",
-    "_previous_slurms/slurm-12984397.out",
-    "_previous_slurms/slurm-12984398.out",
-    "_previous_slurms/slurm-12984399.out",
-    "_previous_slurms/slurm-12984400-[END:vote4_rm4-40_sd30].out",
+    "_previous_slurms/slurm-12984979-[ST:vote4_rm4-40_sd42].out",
+    "_previous_slurms/slurm-12984980.out",
+    "_previous_slurms/slurm-12984981.out",
+    "_previous_slurms/slurm-12984982.out",
+    "_previous_slurms/slurm-12984983.out",
+    "_previous_slurms/slurm-12984984.out",
+    "_previous_slurms/slurm-12984985.out",
+    "_previous_slurms/slurm-12984986.out",
+    "_previous_slurms/slurm-12984987.out",
+    "_previous_slurms/slurm-12984988.out",
+    "_previous_slurms/slurm-12984989.out",
+    "_previous_slurms/slurm-12984990.out",
+    "_previous_slurms/slurm-12984991.out",
+    "_previous_slurms/slurm-12984992.out",
+    "_previous_slurms/slurm-12984993.out",
+    "_previous_slurms/slurm-12984994.out",
+    "_previous_slurms/slurm-12984995.out",
+    "_previous_slurms/slurm-12984996-[END:vote4_rm4-40_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm4-40_sd30_acc_"  # FIXME: change
+title = "vote4_rm4-40_sd42_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

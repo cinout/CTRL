@@ -56,33 +56,33 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-13060572-[ST:vote8_rm8-120_sd30].out",
-    "_previous_slurms/slurm-13060573.out",
-    "_previous_slurms/slurm-13060574.out",
-    "_previous_slurms/slurm-13060575.out",
-    "_previous_slurms/slurm-13060576.out",
-    "_previous_slurms/slurm-13060577.out",
-    "_previous_slurms/slurm-13060578.out",
-    "_previous_slurms/slurm-13060579.out",
-    "_previous_slurms/slurm-13060580.out",
-    "_previous_slurms/slurm-13060581.out",
-    "_previous_slurms/slurm-13060582.out",
-    "_previous_slurms/slurm-13060583.out",
-    "_previous_slurms/slurm-13060584.out",
-    "_previous_slurms/slurm-13060585.out",
-    "_previous_slurms/slurm-13060586.out",
-    "_previous_slurms/slurm-13060587.out",
-    "_previous_slurms/slurm-13060588.out",
-    "_previous_slurms/slurm-13060589-[END:vote8_rm8-120_sd30].out",
+    "_previous_slurms/slurm-13060885-[ST:vote8_rm8-120_sd42].out",
+    "_previous_slurms/slurm-13060886.out",
+    "_previous_slurms/slurm-13060887.out",
+    "_previous_slurms/slurm-13060888.out",
+    "_previous_slurms/slurm-13060889.out",
+    "_previous_slurms/slurm-13060890.out",
+    "_previous_slurms/slurm-13060891.out",
+    "_previous_slurms/slurm-13060892.out",
+    "_previous_slurms/slurm-13060893.out",
+    "_previous_slurms/slurm-13060894.out",
+    "_previous_slurms/slurm-13060895.out",
+    "_previous_slurms/slurm-13060896.out",
+    "_previous_slurms/slurm-13060897.out",
+    "_previous_slurms/slurm-13060898.out",
+    "_previous_slurms/slurm-13060899.out",
+    "_previous_slurms/slurm-13060900.out",
+    "_previous_slurms/slurm-13060901.out",
+    "_previous_slurms/slurm-13060902-[END:vote8_rm8-120_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote8_rm8-120_sd30_acc_"  # FIXME: change
+title = "vote8_rm8-120_sd42_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
-output_file_acc_asr = prefix + title + "acc_asr_results.tsv"
+output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()
 ideal_case_acc_asr_table = nested_dict()

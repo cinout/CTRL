@@ -296,6 +296,7 @@ classifiers = ["knn", "linear"]
 
 
 for method in ssl_methods:
+    output_acc_asr_file_handle.write(f"{method}\n")
     for channel_count in removed_channels_counts:
         for classifier in classifiers:
             for trigger in triggers:

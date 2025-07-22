@@ -200,10 +200,8 @@ for file_path in all_input_file_paths:
         """
         ACC and ASR - Cleanse
         """
+        # FIXME: update # channels removed
         pattern_knn_list = [
-            pattern_cleansed_model_knn_remove_8,
-            pattern_cleansed_model_knn_remove_12,
-            pattern_cleansed_model_knn_remove_20,
             pattern_cleansed_model_knn_remove_40,
             pattern_cleansed_model_knn_remove_60,
             pattern_cleansed_model_knn_remove_80,
@@ -211,9 +209,6 @@ for file_path in all_input_file_paths:
             pattern_cleansed_model_knn_remove_120,
         ]
         pattern_linear_list = [
-            pattern_cleansed_model_linear_remove_8,
-            pattern_cleansed_model_linear_remove_12,
-            pattern_cleansed_model_linear_remove_20,
             pattern_cleansed_model_linear_remove_40,
             pattern_cleansed_model_linear_remove_60,
             pattern_cleansed_model_linear_remove_80,

@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_previous_slurms/slurm-13016303-[ST:vote4_rm30-120_sd42].out",
-    "_previous_slurms/slurm-13016304.out",
-    "_previous_slurms/slurm-13016305.out",
-    "_previous_slurms/slurm-13016306.out",
-    "_previous_slurms/slurm-13016307.out",
-    "_previous_slurms/slurm-13016308.out",
-    "_previous_slurms/slurm-13016309.out",
-    "_previous_slurms/slurm-13016310.out",
-    "_previous_slurms/slurm-13016311.out",
-    "_previous_slurms/slurm-13016312.out",
-    "_previous_slurms/slurm-13016313.out",
-    "_previous_slurms/slurm-13016314.out",
-    "_previous_slurms/slurm-13016315.out",
-    "_previous_slurms/slurm-13016316.out",
-    "_previous_slurms/slurm-13016317.out",
-    "_previous_slurms/slurm-13016318.out",
-    "_previous_slurms/slurm-13016319.out",
-    "_previous_slurms/slurm-13016320-[END:vote4_rm30-120_sd42].out",
+    "_previous_slurms/slurm-12984147-[ST:vote4_rm4-40_sd20].out",
+    "_previous_slurms/slurm-12984148.out",
+    "_previous_slurms/slurm-12984149.out",
+    "_previous_slurms/slurm-12984150.out",
+    "_previous_slurms/slurm-12984151.out",
+    "_previous_slurms/slurm-12984152.out",
+    "_previous_slurms/slurm-12984153.out",
+    "_previous_slurms/slurm-12984154.out",
+    "_previous_slurms/slurm-12984155.out",
+    "_previous_slurms/slurm-12984156.out",
+    "_previous_slurms/slurm-12984157.out",
+    "_previous_slurms/slurm-12984158.out",
+    "_previous_slurms/slurm-12984159.out",
+    "_previous_slurms/slurm-12984160.out",
+    "_previous_slurms/slurm-12984161.out",
+    "_previous_slurms/slurm-12984162.out",
+    "_previous_slurms/slurm-12984163.out",
+    "_previous_slurms/slurm-12984164-[END:vote4_rm4-40_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote4_rm30-120_sd42_acc_"  # FIXME: change
+title = "vote4_rm4-40_sd20_acc_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -202,18 +202,14 @@ for file_path in all_input_file_paths:
         """
         # FIXME: update # channels removed
         pattern_knn_list = [
-            pattern_cleansed_model_knn_remove_40,
-            pattern_cleansed_model_knn_remove_60,
-            pattern_cleansed_model_knn_remove_80,
-            pattern_cleansed_model_knn_remove_100,
-            pattern_cleansed_model_knn_remove_120,
+            pattern_cleansed_model_knn_remove_8,
+            pattern_cleansed_model_knn_remove_12,
+            pattern_cleansed_model_knn_remove_20,
         ]
         pattern_linear_list = [
-            pattern_cleansed_model_linear_remove_40,
-            pattern_cleansed_model_linear_remove_60,
-            pattern_cleansed_model_linear_remove_80,
-            pattern_cleansed_model_linear_remove_100,
-            pattern_cleansed_model_linear_remove_120,
+            pattern_cleansed_model_linear_remove_8,
+            pattern_cleansed_model_linear_remove_12,
+            pattern_cleansed_model_linear_remove_20,
         ]
         cleansed_knn_asr_list = (
             []

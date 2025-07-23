@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13221987-[ST:vote8_rm40_retrain_whole_sd30].out",
-    "slurm-13221988.out",
-    "slurm-13221989.out",
-    "slurm-13221990.out",
-    "slurm-13221991.out",
-    "slurm-13221992.out",
-    "slurm-13221993.out",
-    "slurm-13221994.out",
-    "slurm-13221995.out",
-    "slurm-13221996.out",
-    "slurm-13221997.out",
-    "slurm-13221998.out",
-    "slurm-13221999.out",
-    "slurm-13222000.out",
-    "slurm-13222001.out",
-    "slurm-13222002.out",
-    "slurm-13222003.out",
-    "slurm-13222004-[END:vote8_rm40_retrain_whole_sd30].out",
+    "slurm-13222005-[ST:vote8_rm40_retrain_whole_sd42].out",
+    "slurm-13222006.out",
+    "slurm-13222007.out",
+    "slurm-13222008.out",
+    "slurm-13222009.out",
+    "slurm-13222010.out",
+    "slurm-13222011.out",
+    "slurm-13222012.out",
+    "slurm-13222013.out",
+    "slurm-13222014.out",
+    "slurm-13222015.out",
+    "slurm-13222016.out",
+    "slurm-13222017.out",
+    "slurm-13222018.out",
+    "slurm-13222019.out",
+    "slurm-13222020.out",
+    "slurm-13222021.out",
+    "slurm-13222022-[END:vote8_rm40_retrain_whole_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote8_rm40_retrain_whole_sd30_"  # FIXME: change
+title = "vote8_rm40_retrain_whole_sd42_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

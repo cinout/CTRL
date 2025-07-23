@@ -301,26 +301,25 @@ removed_channels_counts = list(range(num_removed_channels))
 datasets = ["imagenet100", "cifar10", "cifar100"]
 triggers = ["htba", "ftrojan"]
 classifiers = ["knn", "linear"]
+metrics = ["acc", "asr"]
 
+for metric in metrics:
+    output_acc_asr_file_handle.write(f"{metric}\n")
+    for method in ssl_methods:
+        output_acc_asr_file_handle.write(f"{method}\n")
+        for channel_count in removed_channels_counts:
+            for classifier in classifiers:
+                for trigger in triggers:
+                    for dataset in datasets:
+                        # FIXME: change content
+                        metric_value = ideal_case_acc_asr_table[dataset][trigger][
+                            method
+                        ][classifier][metric][channel_count]
+                        output_acc_asr_file_handle.write(f"{metric_value}\t")
 
-for method in ssl_methods:
-    output_acc_asr_file_handle.write(f"{method}\n")
-    for channel_count in removed_channels_counts:
-        for classifier in classifiers:
-            for trigger in triggers:
-                for dataset in datasets:
-                    # FIXME: change content
-                    acc_value = ideal_case_acc_asr_table[dataset][trigger][method][
-                        classifier
-                    ]["acc"][channel_count]
-                    asr_value = ideal_case_acc_asr_table[dataset][trigger][method][
-                        classifier
-                    ]["asr"][channel_count]
-                    output_acc_asr_file_handle.write(f"{acc_value}\t")
-                    output_acc_asr_file_handle.write(f"{asr_value}\t")
+            output_acc_asr_file_handle.write("\n")
         output_acc_asr_file_handle.write("\n")
     output_acc_asr_file_handle.write("\n")
-
 
 """
 Write Channels

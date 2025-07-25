@@ -56,7 +56,7 @@ python -u main_train.py \
     --bd_detectors ss_score \
     --in_n_detectors 1 \
     \
-    --note "realistic case, no probe set channel removal" \
+    --note "realistic case, no probe set channel removal, detector=ss_score" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd30/linear.pth.tar" \
 

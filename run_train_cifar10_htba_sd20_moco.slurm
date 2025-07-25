@@ -60,7 +60,7 @@ python -u main_train.py \
     \
     --bd_detectors ss_score \
     --in_n_detectors 1 \
-    --note "realistic case, no probe set channel removal" \
+    --note "realistic case, no probe set channel removal, detector=ss_score" \
 
 
 ##Log this job's resource usage stats###

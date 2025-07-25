@@ -56,7 +56,7 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors entropy \
+    --bd_detectors ss_score \
     --in_n_detectors 1 \
     --note "realistic case, no probe set channel removal" \
 ##    --ignore_probe_removed_channel_num 30 \

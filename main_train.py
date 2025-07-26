@@ -272,7 +272,6 @@ parser.add_argument(
     default=50,
     help="number of clusters",
 )
-# TODO: add to slurm
 parser.add_argument(
     "--find_channels_from_n_few_samples",
     type=int,
@@ -713,8 +712,8 @@ def main(args):
         if args.find_channels_from_n_few_samples > 0:
             for _ in range(10):
                 trainer.trigger_channel_removal(model, poison, trained_linear)
-
-        trainer.trigger_channel_removal(model, poison, trained_linear)
+        else:
+            trainer.trigger_channel_removal(model, poison, trained_linear)
 
     """
     IDEA 4: Mask Pruning Strategy

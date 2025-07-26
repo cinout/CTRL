@@ -51,7 +51,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 1 \
+    --find_channels_from_n_few_samples 4 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
@@ -61,7 +61,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 1 image only" \
+    --note "ideal_case, use 4 images only" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_simclr_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_simclr_ref_set_sd30/linear.pth.tar" \
 

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-01:20:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -55,7 +55,7 @@ python -u main_train.py \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 0.010 \
     \
-    --bd_detectors ss_score \
+    --bd_detectors entropy \
     --in_n_detectors 1 \
     \
     --note "ideal_case, use 1 image only" \

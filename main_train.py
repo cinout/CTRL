@@ -272,6 +272,13 @@ parser.add_argument(
     default=50,
     help="number of clusters",
 )
+# TODO: add to slurm
+parser.add_argument(
+    "--find_channels_from_n_few_samples",
+    type=int,
+    default=0,
+    help="If >0, sample from limited number of images for trigger channel",
+)
 
 # Frequency Detector
 parser.add_argument(
@@ -703,6 +710,10 @@ def main(args):
     IDEA 3: Channel Removal Strategy
     """
     if args.use_trigger_channel_removal:
+        if args.find_channels_from_n_few_samples > 0:
+            for _ in range(10):
+                trainer.trigger_channel_removal(model, poison, trained_linear)
+
         trainer.trigger_channel_removal(model, poison, trained_linear)
 
     """

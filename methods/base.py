@@ -33,6 +33,7 @@ from methods.maskprune import (
     train_step_recovering,
     train_step_unlearning,
 )
+from torch.utils.data import Subset, DataLoader
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
@@ -907,6 +908,20 @@ def find_trigger_channels_or_poisoned_images(
     # else:
 
     # batch by batch (default)
+
+    if (
+        args.use_trigger_channel_removal == True
+        and args.find_channels_from_n_few_samples > 0
+    ):
+        total_samples = len(data_loader.dataset)
+        random_indices = random.sample(
+            range(total_samples), args.find_channels_from_n_few_samples
+        )
+        subset = Subset(data_loader.dataset, random_indices)
+        data_loader = DataLoader(
+            subset, batch_size=args.linear_probe_batch_size, shuffle=False
+        )
+
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:
             images = content[0]
@@ -1998,7 +2013,7 @@ class CLTrainer:
             # Get the estimated trigger indices
             clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
-                poison.test_clean_loader,  # poisoned training set TODO: update this
+                poison.test_clean_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,
@@ -2011,7 +2026,7 @@ class CLTrainer:
             )
             poi_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
-                poison.test_pos_loader,  # poisoned training set TODO: update this
+                poison.test_pos_loader,  # poisoned training set
                 poison.train_probe_loader,  # 1% clean train probe dataset
                 poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
                 backbone,

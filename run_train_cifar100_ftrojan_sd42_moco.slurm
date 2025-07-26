@@ -48,6 +48,8 @@ python -u main_train.py \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
+    --ideal_case \
+    --find_channels_from_n_few_samples 1 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
@@ -57,7 +59,7 @@ python -u main_train.py \
     --bd_detectors ss_score \
     --in_n_detectors 1 \
     \
-    --note "realistic case, no probe set channel removal, detector=ss_score" \
+    --note "ideal_case, use 1 image only" \
     --pretrained_ssl_model "./Experiments/cifar100_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

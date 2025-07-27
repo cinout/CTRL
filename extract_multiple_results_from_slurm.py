@@ -71,31 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13377185-[ST:sample_1_sd20].out",
-    "slurm-13377186.out",
-    "slurm-13377187.out",
-    "slurm-13377188.out",
-    "slurm-13377189.out",
-    "slurm-13377190.out",
-    "slurm-13377191.out",
-    "slurm-13377192.out",
-    "slurm-13377193.out",
-    "slurm-13377194.out",
-    "slurm-13377195.out",
-    "slurm-13377196.out",
-    "slurm-13377197.out",
-    "slurm-13377198.out",
-    "slurm-13377199.out",
-    "slurm-13377200.out",
-    "slurm-13377201.out",
-    "slurm-13377202-[END:sample_1_sd20].out",
+    "slurm-13377817-[ST:sample_4_sd20].out",
+    "slurm-13377818.out",
+    "slurm-13377819.out",
+    "slurm-13377820.out",
+    "slurm-13377821.out",
+    "slurm-13377822.out",
+    "slurm-13377823.out",
+    "slurm-13377824.out",
+    "slurm-13377825.out",
+    "slurm-13377826.out",
+    "slurm-13377827.out",
+    "slurm-13377828.out",
+    "slurm-13377829.out",
+    "slurm-13377830.out",
+    "slurm-13377831.out",
+    "slurm-13377832.out",
+    "slurm-13377833.out",
+    "slurm-13377834-[END:sample_4_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sample_1_sd20_"  # FIXME: change
+title = "sample_4_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

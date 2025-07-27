@@ -366,7 +366,9 @@ for metric in metrics:
                             classifier
                         ][metric]["std"][channel_count]
 
-                        output_acc_asr_file_handle.write(f"{mean_val}±{std_val}\t")
+                        output_acc_asr_file_handle.write(
+                            f"{mean_val:.1f}±{std_val:.1f}\t"
+                        )
 
             output_acc_asr_file_handle.write("\n")
         output_acc_asr_file_handle.write("\n")

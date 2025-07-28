@@ -71,24 +71,25 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13377817-[ST:sample_4_sd20].out",
-    "slurm-13377818.out",
-    "slurm-13377819.out",
-    "slurm-13377820.out",
-    "slurm-13377821.out",
-    "slurm-13377822.out",
-    "slurm-13377823.out",
-    "slurm-13377824.out",
-    "slurm-13377825.out",
-    "slurm-13377826.out",
-    "slurm-13377827.out",
-    "slurm-13377828.out",
-    "slurm-13377829.out",
-    "slurm-13377830.out",
-    "slurm-13377831.out",
-    "slurm-13377832.out",
-    "slurm-13377833.out",
-    "slurm-13377834-[END:sample_4_sd20].out",
+    "slurm-13408269-[ST:sample_6_sd20].out",
+    "slurm-13408270.out",
+    "slurm-13408271.out",
+    "slurm-13408272.out",
+    "slurm-13408273.out",
+    "slurm-13408274.out",
+    "slurm-13408275.out",
+    "slurm-13408276.out",
+    # "slurm-13408277.out",
+    "slurm-13408278.out",
+    "slurm-13408279.out",
+    "slurm-13408280.out",
+    "slurm-13408281.out",
+    "slurm-13408282.out",
+    "slurm-13408283.out",
+    "slurm-13408284.out",
+    "slurm-13408285.out",
+    "slurm-13408286.out",
+    "slurm-13408287-[END:sample_6_sd20].out",
 ]
 
 """
@@ -273,6 +274,9 @@ for file_path in all_input_file_paths:
                     "no matching cleansed linear",
                 )
             )
+
+            print(cleansed_linear_asr)
+            print(np.mean(cleansed_linear_asr), np.std(cleansed_linear_asr))
 
             cleansed_knn_acc_mean_list.append(np.mean(cleansed_knn_acc))
             cleansed_knn_acc_std_list.append(np.std(cleansed_knn_acc))

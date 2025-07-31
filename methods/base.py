@@ -161,7 +161,9 @@ def get_detection_scores(
             counts = np.array([c for (name, c) in votes_counter])
             p = counts / counts.sum()
             h = -np.sum(p * np.log(p))
-            entropy = -1 * np.exp(h)
+            entropy = -1 * np.exp(
+                h
+            )  # here we changed sign, which actually means "- entropy". Poisoned sample -> lower entropy -> higher "-entropy"
             # if from_predictor and args.compare_backbone_predictor:
             #     bd_detector_scores["entropy_pred"].append(entropy)
             # else:
@@ -243,7 +245,6 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
 
     # adjust direction (sign)
     corrs = np.matmul(eig_for_indexing, np.transpose(visual_features))  # [1, bs*n_view]
-
     coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
     coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
     elementwise = (
@@ -994,6 +995,10 @@ def find_trigger_channels_or_poisoned_images(
     total_images = len(data_loader.dataset)
     minority_lb = int(total_images * args.minority_lower_bound)  # index of lower bound
     minority_ub = int(total_images * args.minority_upper_bound)  # index of upper bound
+    # # TODO: check here
+    # print("total images count: ", total_images)
+    # print("minority_lb: ", minority_lb)
+    # print("minority_ub: ", minority_ub)
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
@@ -1047,6 +1052,7 @@ def find_trigger_channels_or_poisoned_images(
                 )
 
             # get the indices of the minority (estimated poisoned images)
+            # higher bd_scores indicates higher chance of being a poisoned image
             bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
             if minority_lb > 0:
                 minority_indices_local = bd_indices[

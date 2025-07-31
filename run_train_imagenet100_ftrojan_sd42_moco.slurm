@@ -47,21 +47,21 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 64 \
+    --num_views 128 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 6 \
+    --find_channels_from_n_few_samples 1 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
     --minority_lower_bound 0.000 \
-    --minority_upper_bound 0.010 \
+    --minority_upper_bound 1.000 \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 6 images only" \
+    --note "ideal_case, use 1 images only, n_view=128" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

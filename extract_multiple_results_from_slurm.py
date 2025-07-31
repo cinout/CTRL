@@ -275,9 +275,6 @@ for file_path in all_input_file_paths:
                 )
             )
 
-            print(cleansed_linear_asr)
-            print(np.mean(cleansed_linear_asr), np.std(cleansed_linear_asr))
-
             cleansed_knn_acc_mean_list.append(np.mean(cleansed_knn_acc))
             cleansed_knn_acc_std_list.append(np.std(cleansed_knn_acc))
 

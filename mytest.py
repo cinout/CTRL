@@ -3,8 +3,12 @@ from collections import Counter
 import torch
 
 
-mylist = torch.tensor([2, 2, 2, 1, 1, 9])
+lb = int(3 * 0)
+ub = int(3 * 1)
+print(ub)
 
-indices = mylist[0:2]
+content = ["yes", "no", "maybe"]
 
-print(indices)
+
+print(content[-ub:])
+print(content[0:])

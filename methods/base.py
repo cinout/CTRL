@@ -1001,24 +1001,26 @@ def find_trigger_channels_or_poisoned_images(
         chn_std = torch.std(variance_by_channel, dim=0)
 
         # decide number of channels to take
-        take_percent = 0.1
-        take_num = int(take_percent * chn_mean.shape[0])
+        # TODO: update these two values, when using union or intersection option
+        take_mean_percent = 0.12
+        take_mean_num = int(take_mean_percent * chn_mean.shape[0])
+        take_std_percent = 0.06
+        take_std_num = int(take_std_percent * chn_std.shape[0])
 
         # sort
         _, indices_mean = torch.sort(chn_mean, descending=True)  # sort from max to min
         _, indices_std = torch.sort(chn_std, descending=False)  # sort from min to max
 
         # take
-        indices_taken_by_mean = indices_mean[:take_num]
-        indices_taken_by_std = indices_std[:take_num]
+        indices_taken_by_mean = indices_mean[:take_mean_num]
+        indices_std_in_mean = indices_std[
+            torch.isin(indices_std, indices_taken_by_mean)
+        ]  # keep items that appear in indices_taken_by_mean
+        indices_taken_by_mean_and_std = indices_std_in_mean[
+            :take_std_num
+        ]  # take the lowest std ones
 
         print("indices_taken_by_mean.shape: ", indices_taken_by_mean.shape)
-        print("indices_taken_by_std.shape: ", indices_taken_by_std.shape)
-
-        # choose the channels that appear in both tensors (high mean, and low std)
-        indices_taken_by_mean_and_std = indices_taken_by_mean[
-            torch.isin(indices_taken_by_mean, indices_taken_by_std)
-        ]
         print(
             "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
         )
@@ -1160,9 +1162,9 @@ def find_trigger_channels_or_poisoned_images(
         )
 
         if args.use_channel_var:
-
             print("indices_taken_by_mean_and_std: ", indices_taken_by_mean_and_std)
             print("essential_indices [BEFORE]: ", essential_indices)
+            print("essential_indices.shape [BEFORE]: ", essential_indices.shape)
             # merge the two tensors
             essential_indices = torch.unique(
                 torch.cat(
@@ -1173,6 +1175,7 @@ def find_trigger_channels_or_poisoned_images(
                 )
             )
             print("essential_indices [AFTER]: ", essential_indices)
+            print("essential_indices.shape [AFTER]: ", essential_indices.shape)
 
     # # free the disk space
     # if args.full_dataset_svd:

@@ -49,11 +49,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --seed 20 \
-    --num_views 128 \
+    --num_views 64 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 1 \
+    --find_channels_from_n_few_samples 4 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
@@ -63,7 +63,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     --use_complex_ss_aug \
-    --note "ideal_case, use 1 images only, n_view=128, use complex augmentation" \
+    --note "ideal_case, use 4 images only, n_view=64, use complex augmentation" \
 
     
 

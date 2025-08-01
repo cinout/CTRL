@@ -46,11 +46,11 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     --seed 30 \
-    --num_views 128 \
+    --num_views 64 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 1 \
+    --find_channels_from_n_few_samples 4 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \

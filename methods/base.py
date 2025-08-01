@@ -957,7 +957,6 @@ def find_trigger_channels_or_poisoned_images(
             # else:
             vision_features = backbone(views)  # [bs*n_views, 512]
 
-            # TODO: add to slurm
             if args.use_channel_var:
                 variance_by_channel.append(vision_features)
 
@@ -997,12 +996,26 @@ def find_trigger_channels_or_poisoned_images(
     """
     if args.use_channel_var:
         variance_by_channel = torch.cat(variance_by_channel, dim=0)
-        # TODO: remove prints and exit()
-        print("variance_by_channel.shape: ", variance_by_channel.shape)
-        chn_mean = torch.mean(variance_by_channel, dim=0)
+
+        chn_mean = torch.mean(variance_by_channel, dim=0)  # shape: [512, ]
         chn_std = torch.std(variance_by_channel, dim=0)
-        print("chn_mean: ", chn_mean)
-        print("chn_std: ", chn_std)
+
+        # decide number of channels to take
+        take_percent = 0.1
+        take_num = int(take_percent * chn_mean.shape[0])
+
+        # sort
+        _, indices_mean = torch.sort(chn_mean, descending=True)  # sort from max to min
+        _, indices_std = torch.sort(chn_std, descending=False)  # sort from min to max
+
+        # take
+        indices_taken_by_mean = indices_mean[:take_num]
+        indices_taken_by_std = indices_std[:take_num]
+
+        # choose the channels that appear in both tensors (high mean, and low std)
+        indices_taken_by_mean_and_std = indices_taken_by_mean[
+            torch.isin(indices_taken_by_mean, indices_taken_by_std)
+        ]
 
     # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
@@ -1133,13 +1146,18 @@ def find_trigger_channels_or_poisoned_images(
             essential_indices[: max(args.removed_channel_num)]
         )
     else:
-        # TODO: this is where to update
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.removed_channel_num)
         )
         essential_indices = torch.tensor(
             [idx for (idx, occ_count) in essential_indices]
         )
+
+        if args.use_channel_var:
+            # merge the two tensors
+            essential_indices = torch.unique(
+                torch.cat([essential_indices, indices_taken_by_mean_and_std])
+            )
 
     # # free the disk space
     # if args.full_dataset_svd:

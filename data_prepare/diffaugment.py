@@ -108,10 +108,10 @@ class PoisonAgent:
                     ),
                     p=0.8,
                 ),
-                RandomApply(
-                    transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)), p=0.2
-                ),
-                RandomApply(transforms.RandomSolarize(threshold=128), p=0.2),
+                # RandomApply(
+                #     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)), p=0.2
+                # ),
+                # RandomApply(transforms.RandomSolarize(threshold=128), p=0.2),
                 transforms.RandomGrayscale(p=0.2),
                 transforms.RandomHorizontalFlip(p=0.5),
                 # aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.2),

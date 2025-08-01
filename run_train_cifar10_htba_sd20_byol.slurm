@@ -64,7 +64,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     --use_channel_var \
     --use_channel_var_option intersect \
-    --note "ideal_case, use 4 images only, n_view=64, use_channel_var, intersect" \
+    --use_complex_ss_aug \
+    --note "ideal_case, use 4 images only, n_view=64, use_complex_ss_aug, use_channel_var, intersect" \
 
 
 ##Log this job's resource usage stats###

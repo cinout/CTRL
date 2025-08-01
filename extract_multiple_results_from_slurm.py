@@ -95,7 +95,7 @@ all_input_file_paths = [
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sample_1_view_128_aug+_sd20_"  # FIXME: change
+title = "sample_4_view_64_aug+_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

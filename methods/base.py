@@ -1156,7 +1156,12 @@ def find_trigger_channels_or_poisoned_images(
         if args.use_channel_var:
             # merge the two tensors
             essential_indices = torch.unique(
-                torch.cat([essential_indices, indices_taken_by_mean_and_std])
+                torch.cat(
+                    [
+                        essential_indices,
+                        indices_taken_by_mean_and_std.to(essential_indices.device),
+                    ]
+                )
             )
 
     # # free the disk space

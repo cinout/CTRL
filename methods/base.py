@@ -1001,10 +1001,15 @@ def find_trigger_channels_or_poisoned_images(
         chn_std = torch.std(variance_by_channel, dim=0)
 
         # decide number of channels to take
-        # TODO: update these two values, when using union or intersection option
-        take_mean_percent = 0.12
+        if args.use_channel_var_option == "intersect":
+            # intersect
+            take_mean_percent = 0.25
+            take_std_percent = 0.2
+        else:
+            # union
+            take_mean_percent = 0.12
+            take_std_percent = 0.06
         take_mean_num = int(take_mean_percent * chn_mean.shape[0])
-        take_std_percent = 0.06
         take_std_num = int(take_std_percent * chn_std.shape[0])
 
         # sort
@@ -1165,15 +1170,25 @@ def find_trigger_channels_or_poisoned_images(
             print("indices_taken_by_mean_and_std: ", indices_taken_by_mean_and_std)
             print("essential_indices [BEFORE]: ", essential_indices)
             print("essential_indices.shape [BEFORE]: ", essential_indices.shape)
-            # merge the two tensors
-            essential_indices = torch.unique(
-                torch.cat(
-                    [
+
+            if args.use_channel_var_option == "intersect":
+                # intersect
+                essential_indices = essential_indices[
+                    torch.isin(
                         essential_indices,
                         indices_taken_by_mean_and_std.to(essential_indices.device),
-                    ]
+                    )
+                ]
+            else:
+                # union
+                essential_indices = torch.unique(
+                    torch.cat(
+                        [
+                            essential_indices,
+                            indices_taken_by_mean_and_std.to(essential_indices.device),
+                        ]
+                    )
                 )
-            )
             print("essential_indices [AFTER]: ", essential_indices)
             print("essential_indices.shape [AFTER]: ", essential_indices.shape)
 

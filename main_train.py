@@ -290,6 +290,13 @@ parser.add_argument(
     action="store_true",
     help="use the channel's output variance as an indicator for backdoored channel",
 )
+parser.add_argument(
+    "--use_channel_var_option",
+    type=str,
+    choices=["union", "intersect"],
+    default="union",
+    help="for these channels, union or intersection with voted most frequent SS channels",
+)
 
 # Frequency Detector
 parser.add_argument(

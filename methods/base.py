@@ -1012,10 +1012,16 @@ def find_trigger_channels_or_poisoned_images(
         indices_taken_by_mean = indices_mean[:take_num]
         indices_taken_by_std = indices_std[:take_num]
 
+        print("indices_taken_by_mean.shape: ", indices_taken_by_mean.shape)
+        print("indices_taken_by_std.shape: ", indices_taken_by_std.shape)
+
         # choose the channels that appear in both tensors (high mean, and low std)
         indices_taken_by_mean_and_std = indices_taken_by_mean[
             torch.isin(indices_taken_by_mean, indices_taken_by_std)
         ]
+        print(
+            "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
+        )
 
     # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
@@ -1154,6 +1160,9 @@ def find_trigger_channels_or_poisoned_images(
         )
 
         if args.use_channel_var:
+
+            print("indices_taken_by_mean_and_std: ", indices_taken_by_mean_and_std)
+            print("essential_indices [BEFORE]: ", essential_indices)
             # merge the two tensors
             essential_indices = torch.unique(
                 torch.cat(
@@ -1163,6 +1172,7 @@ def find_trigger_channels_or_poisoned_images(
                     ]
                 )
             )
+            print("essential_indices [AFTER]: ", essential_indices)
 
     # # free the disk space
     # if args.full_dataset_svd:

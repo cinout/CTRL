@@ -60,7 +60,8 @@ python -u main_train.py \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --note "ideal_case, use 1 images only, n_view=128" \
+    --use_complex_ss_aug \
+    --note "ideal_case, use 1 images only, n_view=128, use complex augmentation" \
 
 
 ##Log this job's resource usage stats###

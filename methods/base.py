@@ -995,10 +995,6 @@ def find_trigger_channels_or_poisoned_images(
     total_images = len(data_loader.dataset)
     minority_lb = int(total_images * args.minority_lower_bound)  # index of lower bound
     minority_ub = int(total_images * args.minority_upper_bound)  # index of upper bound
-    # # TODO: check here
-    # print("total images count: ", total_images)
-    # print("minority_lb: ", minority_lb)
-    # print("minority_ub: ", minority_ub)
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 

@@ -64,7 +64,9 @@ parser.add_argument(
 Image Size
 """
 parser.add_argument("--window_size", default=32, type=int)
-parser.add_argument("--image_size", type=int, default=32)
+parser.add_argument(
+    "--image_size", type=int, default=32
+)  # 64 for imagenet-100, 32 for Cifar10/100
 
 """
 Batch Size
@@ -277,6 +279,11 @@ parser.add_argument(
     type=int,
     default=0,
     help="If >0, sample from limited number of images for trigger channel",
+)
+parser.add_argument(
+    "--use_complex_ss_aug",
+    action="store_true",
+    help="augment images for SS using more complex pipeline",
 )
 
 # Frequency Detector

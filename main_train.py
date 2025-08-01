@@ -285,6 +285,11 @@ parser.add_argument(
     action="store_true",
     help="augment images for SS using more complex pipeline",
 )
+parser.add_argument(
+    "--use_channel_var",
+    action="store_true",
+    help="use the channel's output variance as an indicator for backdoored channel",
+)
 
 # Frequency Detector
 parser.add_argument(

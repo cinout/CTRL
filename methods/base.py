@@ -923,6 +923,9 @@ def find_trigger_channels_or_poisoned_images(
             subset, batch_size=args.linear_probe_batch_size, shuffle=False
         )
 
+    if args.use_channel_var:
+        variance_by_channel = []
+
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:
             images = content[0]
@@ -953,6 +956,10 @@ def find_trigger_channels_or_poisoned_images(
             #     vision_features = unlearnt_backbone(views)
             # else:
             vision_features = backbone(views)  # [bs*n_views, 512]
+
+            # TODO: add to slurm
+            if args.use_channel_var:
+                variance_by_channel.append(vision_features)
 
         if "frequency_ensemble" in args.bd_detectors:
             get_freq_detection_scores(
@@ -988,6 +995,15 @@ def find_trigger_channels_or_poisoned_images(
     """
     Print the final detection performances
     """
+    if args.use_channel_var:
+        variance_by_channel = torch.cat(variance_by_channel, dim=0)
+        # TODO: remove prints and exit()
+        print("variance_by_channel.shape: ", variance_by_channel.shape)
+        chn_mean = torch.mean(variance_by_channel, dim=0)
+        chn_std = torch.std(variance_by_channel, dim=0)
+        print("chn_mean: ", chn_mean)
+        print("chn_std: ", chn_std)
+
     # GT, for checking performance
     is_poisoned = torch.cat(is_poisoned)
     is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
@@ -1033,38 +1049,38 @@ def find_trigger_channels_or_poisoned_images(
     #         minority_indices.extend(minority_indices_local.tolist())
     # else:
 
-    if False:
-        # get the real poisoned indices from train set
-        minority_indices = np.nonzero(is_poisoned == 1)[0]
-    else:
-        for detector, values in bd_detector_scores.items():
-            bd_scores = np.array(values)
+    # if False:
+    #     # get the real poisoned indices from train set
+    #     minority_indices = np.nonzero(is_poisoned == 1)[0]
+    # else:
+    for detector, values in bd_detector_scores.items():
+        bd_scores = np.array(values)
 
-            # calculate AUC score from each detector
-            if not args.ideal_case and not args.tap_trigger:
-                auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-                print(
-                    f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
-                )
+        # calculate AUC score from each detector
+        if not args.ideal_case and not args.tap_trigger:
+            auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+            print(
+                f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
+            )
 
-            # get the indices of the minority (estimated poisoned images)
-            # higher bd_scores indicates higher chance of being a poisoned image
-            bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
-            if minority_lb > 0:
-                minority_indices_local = bd_indices[
-                    -minority_ub:-minority_lb
-                ]  # numpy array
-            else:
-                minority_indices_local = bd_indices[-minority_ub:]
-            minority_indices.extend(minority_indices_local.tolist())
+        # get the indices of the minority (estimated poisoned images)
+        # higher bd_scores indicates higher chance of being a poisoned image
+        bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+        if minority_lb > 0:
+            minority_indices_local = bd_indices[
+                -minority_ub:-minority_lb
+            ]  # numpy array
+        else:
+            minority_indices_local = bd_indices[-minority_ub:]
+        minority_indices.extend(minority_indices_local.tolist())
 
-        # choose the indices that appear "count" times in all detectors
-        minority_indices_counter = Counter(minority_indices)
-        minority_indices = [
-            idx
-            for idx, count in minority_indices_counter.items()
-            if count in args.in_n_detectors
-        ]
+    # choose the image indices that appear "count" times in all detectors
+    minority_indices_counter = Counter(minority_indices)
+    minority_indices = [
+        idx
+        for idx, count in minority_indices_counter.items()
+        if count in args.in_n_detectors
+    ]
 
     print(f"all_votes.shape: {all_votes.shape}")
     print(f"len(minority_indices): {len(minority_indices)}")
@@ -1117,6 +1133,7 @@ def find_trigger_channels_or_poisoned_images(
             essential_indices[: max(args.removed_channel_num)]
         )
     else:
+        # TODO: this is where to update
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.removed_channel_num)
         )

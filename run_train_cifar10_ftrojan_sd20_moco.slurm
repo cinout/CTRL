@@ -60,8 +60,8 @@ python -u main_train.py \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --use_complex_ss_aug \
-    --note "ideal_case, use 4 images only, n_view=64, use complex augmentation" \
+    --use_channel_var \
+    --note "ideal_case, use 4 images only, n_view=64, use_channel_var" \
 ##    --ignore_probe_removed_channel_num 30 \
 
 

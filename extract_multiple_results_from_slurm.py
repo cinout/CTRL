@@ -71,31 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13643767-[ST:smp_4_v_64_chnv_intersect_sd20].out",
-    "slurm-13643768.out",
-    "slurm-13643769.out",
-    "slurm-13643770.out",
-    "slurm-13643771.out",
-    "slurm-13643772.out",
-    "slurm-13643773.out",
-    "slurm-13643774.out",
-    "slurm-13643775.out",
-    "slurm-13643776.out",
-    "slurm-13643777.out",
-    "slurm-13643778.out",
-    "slurm-13643779.out",
-    "slurm-13643780.out",
-    "slurm-13643781.out",
-    "slurm-13643782.out",
-    "slurm-13643783.out",
-    "slurm-13643784-[END:smp_4_v_64_chnv_intersect_sd20].out",
+    "slurm-13644293-[ST:smp_4_v_64_aug+_chnv_intersect_sd20].out",
+    "slurm-13644294.out",
+    "slurm-13644295.out",
+    "slurm-13644296.out",
+    "slurm-13644297.out",
+    "slurm-13644298.out",
+    "slurm-13644299.out",
+    "slurm-13644300.out",
+    "slurm-13644301.out",
+    "slurm-13644302.out",
+    "slurm-13644303.out",
+    "slurm-13644304.out",
+    "slurm-13644305.out",
+    "slurm-13644306.out",
+    "slurm-13644307.out",
+    "slurm-13644308.out",
+    "slurm-13644309.out",
+    "slurm-13644310-[END:smp_4_v_64_aug+_chnv_intersect_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "smp_4_v_64_chnv_intersect_sd20_"  # FIXME: change
+title = "smp_4_v_64_aug+_chnv_intersect_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

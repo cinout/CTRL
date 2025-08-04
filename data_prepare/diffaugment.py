@@ -115,10 +115,6 @@ class PoisonAgent:
                 transforms.RandomGrayscale(p=0.2),
                 transforms.RandomHorizontalFlip(p=0.5),
                 # aug.RandomGaussianBlur(kernel_size=3, sigma=(0.1, 2.0), p=0.2),
-                # T.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))
-                # aug.RandomSolarize(p=0.2),
-                # aug.RandomGrayscale(p=0.2),
-                # aug.RandomHorizontalFlip(),
                 transforms.RandomResizedCrop(
                     self.args.image_size,
                     scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),

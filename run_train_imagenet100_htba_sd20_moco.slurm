@@ -54,7 +54,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 4 \
+    --find_channels_from_n_few_samples 1 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
@@ -63,10 +63,8 @@ python -u main_train.py \
     \
     --bd_detectors entropy \
     --in_n_detectors 1 \
-    --use_channel_var \
-    --use_channel_var_option union \
-    --use_complex_ss_aug \
-    --note "ideal_case, use 4 images only, n_view=64, use_complex_ss_aug, use_channel_var, union" \
+    \
+    --note "ideal_case, use 1 images only, n_view=64" \
 
     
 

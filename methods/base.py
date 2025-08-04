@@ -2080,20 +2080,6 @@ class CLTrainer:
         trained_linear.eval()
 
         if self.args.ideal_case:
-            # Get the estimated trigger indices
-            clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
-                self.args,
-                poison.test_clean_loader,  # poisoned training set
-                poison.train_probe_loader,  # 1% clean train probe dataset
-                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
-                backbone,
-                # projector,
-                # trained_linear,
-                poison.ss_transform,
-            )
-            print(
-                f"[IDEAL CASE] [CLEAN VAL SET] predicted trigger channels are: {clean_val_contributing_indices}"
-            )
             poi_val_contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
                 poison.test_pos_loader,  # poisoned training set
@@ -2108,6 +2094,24 @@ class CLTrainer:
                 f"[IDEAL CASE] [POISON VAL SET] predicted trigger channels are: {poi_val_contributing_indices}"
             )
 
+            if self.args.find_channels_from_n_few_samples == 0:
+                # use all val images
+
+                # Get the estimated trigger indices
+                clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
+                    self.args,
+                    poison.test_clean_loader,  # poisoned training set
+                    poison.train_probe_loader,  # 1% clean train probe dataset
+                    poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+                    backbone,
+                    # projector,
+                    # trained_linear,
+                    poison.ss_transform,
+                )
+                print(
+                    f"[IDEAL CASE] [CLEAN VAL SET] predicted trigger channels are: {clean_val_contributing_indices}"
+                )
+
             ############# KNN
             clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
                 backbone,
@@ -2117,7 +2121,11 @@ class CLTrainer:
                 classes=self.args.num_classes,
                 backdoor_loader=poison.test_pos_loader,
                 use_SS_detector=True,
-                clean_val_contributing_indices=clean_val_contributing_indices,
+                clean_val_contributing_indices=(
+                    clean_val_contributing_indices
+                    if self.args.find_channels_from_n_few_samples == 0
+                    else poi_val_contributing_indices
+                ),
                 poi_val_contributing_indices=poi_val_contributing_indices,
             )
             for k in self.args.removed_channel_num:
@@ -2134,7 +2142,13 @@ class CLTrainer:
                 # if need to retrain
                 backbone_clean_val, trained_linear = (
                     self.retrain_model_with_channel_removed_encoder(
-                        poison, copy.deepcopy(backbone), clean_val_contributing_indices
+                        poison,
+                        copy.deepcopy(backbone),
+                        (
+                            clean_val_contributing_indices
+                            if self.args.find_channels_from_n_few_samples == 0
+                            else poi_val_contributing_indices
+                        ),
                     )
                 )
             print(f"<<<<<<<<< evaluating linear on CLEAN val")
@@ -2152,7 +2166,11 @@ class CLTrainer:
                 self.args,
                 val_mode="clean",
                 use_ss_detector=True,
-                contributing_indices=clean_val_contributing_indices,
+                contributing_indices=(
+                    clean_val_contributing_indices
+                    if self.args.find_channels_from_n_few_samples == 0
+                    else poi_val_contributing_indices
+                ),
             )
 
             # Poisoned Validation Set

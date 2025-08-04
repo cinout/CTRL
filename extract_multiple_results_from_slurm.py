@@ -71,31 +71,32 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "_haha/slurm-13726096-[ST:sd42_few1_cleanvalerror].out",
-    "_haha/slurm-13726097.out",
-    "_haha/slurm-13726098.out",
-    "_haha/slurm-13726102.out",
-    "_haha/slurm-13726103.out",
-    "_haha/slurm-13726104.out",
-    "_haha/slurm-13726105.out",
-    "_haha/slurm-13726106.out",
-    "_haha/slurm-13726107.out",
-    "_haha/slurm-13726499.out",
-    "_haha/slurm-13726501.out",
-    "_haha/slurm-13726502.out",
-    "_haha/slurm-13726530.out",
-    "_haha/slurm-13726531.out",
-    "_haha/slurm-13726532.out",
-    "_haha/slurm-13728638.out",
-    "_haha/slurm-13728638.out",
-    "_haha/slurm-13728640-[END:sd42_few1_cleanvalerror].out",
+    "slurm-13731506-[ST:sd42_few1_cleanvalcorrected].out",
+    "slurm-13731507.out",
+    "slurm-13731508.out",
+    "slurm-13731515.out",
+    "slurm-13731516.out",
+    "slurm-13731517.out",
+    "slurm-13731518.out",
+    "slurm-13731519.out",
+    "slurm-13731520.out",
+    "slurm-13732385.out",
+    "slurm-13732386.out",
+    "slurm-13732387.out",
+    "slurm-13732388.out",
+    "slurm-13732389.out",
+    "slurm-13732390.out",
+    "slurm-13732391.out",
+    "slurm-13732405.out",
+    "slurm-13732406.out",
+    "slurm-13732407-[END:sd42_few1_cleanvalcorrected].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sd42_few1_cleanvalerror_"  # FIXME: change
+title = "sd42_few1_cleanvalcorrected_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -194,6 +195,8 @@ for file_path in all_input_file_paths:
         ssl_method = match_basic_info(
             pattern_ssl_method, file_content, file_path, "no matching ssl_method"
         )
+
+        # print(file_path, dataset, trigger, ssl_method)
 
         """
         Ideal Case Voted Channels
@@ -366,15 +369,15 @@ for metric in metrics:
                             classifier
                         ][metric]["std"][channel_count]
 
-                        print(
-                            dataset,
-                            trigger,
-                            method,
-                            classifier,
-                            metric,
-                            mean_val,
-                            std_val,
-                        )
+                        # print(
+                        #     dataset,
+                        #     trigger,
+                        #     method,
+                        #     classifier,
+                        #     metric,
+                        #     mean_val,
+                        #     std_val,
+                        # )
 
                         output_acc_asr_file_handle.write(
                             f"{mean_val:.1f}±{std_val:.1f}\t"

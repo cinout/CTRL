@@ -71,31 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13644494-[ST:smp_4_v_64_aug+_chnv_union_sd20].out",
-    "slurm-13644495.out",
-    "slurm-13644496.out",
-    "slurm-13644497.out",
-    "slurm-13644498.out",
-    "slurm-13644499.out",
-    "slurm-13644500.out",
-    "slurm-13644501.out",
-    "slurm-13644502.out",
-    "slurm-13644503.out",
-    "slurm-13644504.out",
-    "slurm-13644505.out",
-    "slurm-13644506.out",
-    "slurm-13644507.out",
-    "slurm-13644508.out",
-    "slurm-13644509.out",
-    "slurm-13644510.out",
-    "slurm-13644511-[END:smp_4_v_64_aug+_chnv_union_sd20].out",
+    "slurm-13726096-[ST:sd42_few1_cleanvalerror].out",
+    "slurm-13726097.out",
+    "slurm-13726098.out",
+    "slurm-13726102.out",
+    "slurm-13726103.out",
+    "slurm-13726104.out",
+    "slurm-13726105.out",
+    "slurm-13726106.out",
+    "slurm-13726107.out",
+    "slurm-13726499.out",
+    "slurm-13726501.out",
+    "slurm-13726502.out",
+    "slurm-13726530.out",
+    "slurm-13726531.out",
+    "slurm-13726532.out",
+    "slurm-13728638.out",
+    "slurm-13728638.out",
+    "slurm-13728640-[END:sd42_few1_cleanvalerror].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "smp_4_v_64_aug+_chnv_union_sd20_"  # FIXME: change
+title = "sd42_few1_cleanvalerror_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

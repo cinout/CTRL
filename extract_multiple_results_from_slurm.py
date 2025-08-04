@@ -71,24 +71,24 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13726096-[ST:sd42_few1_cleanvalerror].out",
-    "slurm-13726097.out",
-    "slurm-13726098.out",
-    "slurm-13726102.out",
-    "slurm-13726103.out",
-    "slurm-13726104.out",
-    "slurm-13726105.out",
-    "slurm-13726106.out",
-    "slurm-13726107.out",
-    "slurm-13726499.out",
-    "slurm-13726501.out",
-    "slurm-13726502.out",
-    "slurm-13726530.out",
-    "slurm-13726531.out",
-    "slurm-13726532.out",
-    "slurm-13728638.out",
-    "slurm-13728638.out",
-    "slurm-13728640-[END:sd42_few1_cleanvalerror].out",
+    "_haha/slurm-13726096-[ST:sd42_few1_cleanvalerror].out",
+    "_haha/slurm-13726097.out",
+    "_haha/slurm-13726098.out",
+    "_haha/slurm-13726102.out",
+    "_haha/slurm-13726103.out",
+    "_haha/slurm-13726104.out",
+    "_haha/slurm-13726105.out",
+    "_haha/slurm-13726106.out",
+    "_haha/slurm-13726107.out",
+    "_haha/slurm-13726499.out",
+    "_haha/slurm-13726501.out",
+    "_haha/slurm-13726502.out",
+    "_haha/slurm-13726530.out",
+    "_haha/slurm-13726531.out",
+    "_haha/slurm-13726532.out",
+    "_haha/slurm-13728638.out",
+    "_haha/slurm-13728638.out",
+    "_haha/slurm-13728640-[END:sd42_few1_cleanvalerror].out",
 ]
 
 """
@@ -365,6 +365,16 @@ for metric in metrics:
                         std_val = ideal_case_acc_asr_table[dataset][trigger][method][
                             classifier
                         ][metric]["std"][channel_count]
+
+                        print(
+                            dataset,
+                            trigger,
+                            method,
+                            classifier,
+                            metric,
+                            mean_val,
+                            std_val,
+                        )
 
                         output_acc_asr_file_handle.write(
                             f"{mean_val:.1f}±{std_val:.1f}\t"

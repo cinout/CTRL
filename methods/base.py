@@ -621,21 +621,10 @@ def find_trigger_channels_or_poisoned_images(
             total_views = args.find_channels_from_n_few_samples * args.num_views
             contribution_percent_by_channel /= total_views
 
-            # TODO: remove print
-            print(
-                "contribution_percent_by_channel.shape: ",
-                contribution_percent_by_channel.shape,
-            )
-
             # get the top N indices
             essential_indices = np.argsort(-contribution_percent_by_channel)[
                 : max(args.removed_channel_num)
             ]
-
-            print(
-                "top channels contribution in DESC order: ",
-                contribution_percent_by_channel[essential_indices],
-            )
 
         else:
             all_votes = np.concatenate(

@@ -614,8 +614,6 @@ def find_trigger_channels_or_poisoned_images(
     #         "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
     #     )
 
-    all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
-
     if args.find_channels_from_n_few_samples:
         # assume have N poisoned samples
 
@@ -640,6 +638,9 @@ def find_trigger_channels_or_poisoned_images(
             )
 
         else:
+            all_votes = np.concatenate(
+                all_votes, axis=0
+            )  # [#dataset, n_view*take_channel]
             essential_indices = Counter(all_votes.flatten()).most_common(
                 max(args.removed_channel_num)
             )
@@ -693,6 +694,7 @@ def find_trigger_channels_or_poisoned_images(
             if count in args.in_n_detectors
         ]
 
+        all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
         print(f"all_votes.shape: {all_votes.shape}")
         print(f"len(minority_indices): {len(minority_indices)}")
 

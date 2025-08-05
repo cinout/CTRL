@@ -224,6 +224,31 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
         eig_for_indexing, np.transpose(visual_features)
     )  # [1, bs*n_view], not .abs() yet.
 
+    coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
+    coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
+    elementwise = (
+        eig_for_indexing * visual_features * coeff_adjust
+    )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+
+    # get contributing indices sorted from low to high
+    max_indices = np.argsort(
+        elementwise, axis=1
+    )  # [bs*n_view, C], C are indices, sorted by value from low to high
+
+    max_indices = max_indices.reshape(bs, args.num_views, feat_dim)  # [bs, n_view, C]
+
+    if probe_set:
+        take_channel = args.ignore_probe_removed_channel_num
+    else:
+        take_channel = args.voted_channel_num
+
+    max_indices_at_channel = max_indices[
+        :, :, -take_channel:
+    ]  # [bs, n_view, take_channel]
+    max_indices_at_channel = max_indices_at_channel.reshape(
+        bs, -1
+    )  # [bs, n_view*take_channel]
+
     if args.use_ss_contribute_percent:
         elementwise = eig_for_indexing * visual_features  # [bs*n_view, C]
 
@@ -233,35 +258,8 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
         # return sum in view direction (save memory)
         contribution_percent_sum = np.sum(contribution_percent, axis=0)  # [C,]
 
-        return contribution_percent_sum
+        return corrs, max_indices_at_channel, contribution_percent_sum
     else:
-        coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-        coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-        elementwise = (
-            eig_for_indexing * visual_features * coeff_adjust
-        )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
-
-        # get contributing indices sorted from low to high
-        max_indices = np.argsort(
-            elementwise, axis=1
-        )  # [bs*n_view, C], C are indices, sorted by value from low to high
-
-        max_indices = max_indices.reshape(
-            bs, args.num_views, feat_dim
-        )  # [bs, n_view, C]
-
-        if probe_set:
-            take_channel = args.ignore_probe_removed_channel_num
-        else:
-            take_channel = args.voted_channel_num
-
-        max_indices_at_channel = max_indices[
-            :, :, -take_channel:
-        ]  # [bs, n_view, take_channel]
-        max_indices_at_channel = max_indices_at_channel.reshape(
-            bs, -1
-        )  # [bs, n_view*take_channel]
-
         return corrs, max_indices_at_channel
 
 
@@ -347,9 +345,9 @@ def find_trigger_channels_or_poisoned_images(
     """
     if args.use_ss_contribute_percent:
         contribution_percent_by_channel = None
-    else:
-        all_votes = []  # for all images in the dataset
-        is_poisoned = []  # for all images in the dataset (GT)
+    # else:
+    all_votes = []  # for all images in the dataset
+    is_poisoned = []  # for all images in the dataset (GT)
 
     # if use input filtering, record the indices of estimated poisoned images
     if args.siftout_poisoned_images:
@@ -549,7 +547,7 @@ def find_trigger_channels_or_poisoned_images(
         _, C = vision_features.shape
 
         if args.use_ss_contribute_percent:
-            contribution_percent_sum = ss_statistics(
+            corrs, max_indices_at_channel, contribution_percent_sum = ss_statistics(
                 vision_features.detach().cpu().numpy(), bs, C, args
             )
 
@@ -559,21 +557,22 @@ def find_trigger_channels_or_poisoned_images(
             else:
                 contribution_percent_by_channel += contribution_percent_sum
         else:
+
             corrs, max_indices_at_channel = ss_statistics(
                 vision_features.detach().cpu().numpy(), bs, C, args
             )
 
-            if len(args.bd_detectors) > 0:
-                get_detection_scores(
-                    vision_features,
-                    corrs,
-                    max_indices_at_channel,
-                    bd_detector_scores,
-                    args,
-                )
+        if len(args.bd_detectors) > 0:
+            get_detection_scores(
+                vision_features,
+                corrs,
+                max_indices_at_channel,
+                bd_detector_scores,
+                args,
+            )
 
-            all_votes.append(max_indices_at_channel)
-            is_poisoned.append(is_batch_poisoned)
+        all_votes.append(max_indices_at_channel)
+        is_poisoned.append(is_batch_poisoned)
 
     """
     Print the final detection performances
@@ -617,25 +616,32 @@ def find_trigger_channels_or_poisoned_images(
     if args.find_channels_from_n_few_samples:
         # assume have N poisoned samples
 
+        all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
+        essential_indices = Counter(all_votes.flatten()).most_common(
+            max(args.removed_channel_num)
+        )
+        essential_indices = torch.tensor(
+            [idx for (idx, occ_count) in essential_indices]
+        )
+
         if args.use_ss_contribute_percent:
             total_views = args.find_channels_from_n_few_samples * args.num_views
             contribution_percent_by_channel /= total_views
 
             # get the top N indices
-            essential_indices = np.argsort(-contribution_percent_by_channel)[
+            supplement_essential_indices = np.argsort(-contribution_percent_by_channel)[
                 : max(args.removed_channel_num)
             ]
 
-        else:
-            all_votes = np.concatenate(
-                all_votes, axis=0
-            )  # [#dataset, n_view*take_channel]
-            essential_indices = Counter(all_votes.flatten()).most_common(
-                max(args.removed_channel_num)
-            )
-            essential_indices = torch.tensor(
-                [idx for (idx, occ_count) in essential_indices]
-            )
+            essential_indices = essential_indices[
+                torch.isin(
+                    essential_indices,
+                    torch.from_numpy(supplement_essential_indices).to(
+                        essential_indices.device
+                    ),
+                )
+            ]
+
     else:
         # need to find minorities first based on detector score
 

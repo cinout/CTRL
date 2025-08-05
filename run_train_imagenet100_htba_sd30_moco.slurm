@@ -52,17 +52,16 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 8 \
+    --find_channels_from_n_few_samples 16 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
-    --use_ss_contribute_percent \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 8 images only, use SS contribution percentage" \
+    --note "ideal_case, use 16 images only" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd30/linear.pth.tar" \
 

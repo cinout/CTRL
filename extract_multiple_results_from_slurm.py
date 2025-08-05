@@ -71,31 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13775065-[ST:sd42_few8_contri_percent_take40].out",
-    "slurm-13775066.out",
-    "slurm-13775067.out",
-    "slurm-13775068.out",
-    "slurm-13775069.out",
-    "slurm-13775070.out",
-    "slurm-13775071.out",
-    "slurm-13775072.out",
-    "slurm-13775073.out",
-    "slurm-13775074.out",
-    "slurm-13775075.out",
-    "slurm-13775076.out",
-    "slurm-13775077.out",
-    "slurm-13775078.out",
-    "slurm-13775079.out",
-    "slurm-13775080.out",
-    "slurm-13775081.out",
-    "slurm-13775082-[END:sd42_few8_contri_percent_take40].out",
+    "slurm-13780518-[ST:sd42_few8_con_perc_intersect].out",
+    "slurm-13780519.out",
+    "slurm-13780520.out",
+    "slurm-13780521.out",
+    "slurm-13780522.out",
+    "slurm-13780523.out",
+    "slurm-13780524.out",
+    "slurm-13780525.out",
+    "slurm-13780526.out",
+    "slurm-13780527.out",
+    "slurm-13780528.out",
+    "slurm-13780529.out",
+    "slurm-13780530.out",
+    "slurm-13780531.out",
+    "slurm-13780532.out",
+    "slurm-13780533.out",
+    "slurm-13780534.out",
+    "slurm-13780535-[END:sd42_few8_con_perc_intersect].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sd42_few8_contri_percent_take40_"  # FIXME: change
+title = "sd42_few8_con_perc_intersect_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

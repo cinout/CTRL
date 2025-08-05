@@ -52,14 +52,14 @@ python -u main_train.py \
     --find_channels_from_n_few_samples 8 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
+    --use_ss_contribute_percent \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
-    \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 8 images only" \
+    --note "ideal_case, use 8 images only, use SS contribution percentage" \
     --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd20/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd20/linear.pth.tar" \
 

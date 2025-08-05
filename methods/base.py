@@ -140,9 +140,9 @@ def get_pairwise_distance(
 """
 Store the detection scores for each detector. Used in function find_trigger_channels_or_poisoned_images().
 Results are stored in the bd_detector_scores dictionary, which is initialised in function find_trigger_channels_or_poisoned_images().
-Even if the detector itself does not need spectral signature (SS) information, we still need to calculate SS using get_ss_statistics() because the detector's purpose is to estimate poisoned images, and we still need the backdoor channels voting results from these estimated images.
+Even if the detector itself does not need spectral signature (SS) information, we still need to calculate SS using ss_statistics() because the detector's purpose is to estimate poisoned images, and we still need the backdoor channels voting results from these estimated images.
 
-Although if args.siftout_poisoned_images == True and detector is frequency etc, we don't really need SS results. In such case, we could improve efficiency by not calling get_ss_statistics(), but for convenience, let's leave it as it is for now.
+Although if args.siftout_poisoned_images == True and detector is frequency etc, we don't really need SS results. In such case, we could improve efficiency by not calling ss_statistics(), but for convenience, let's leave it as it is for now.
 """
 
 
@@ -199,7 +199,15 @@ def get_detection_scores(
 
 
 """
-The core function for calculating spectral signature outcome, used in get_ss_statistics()
+The core function for calculating spectral signature outcome
+
+Input:
+    visual_features: shape [bs*n_views, C=512], in numpy format
+
+Return:
+    corrs: spectral signature score, in numpy format
+    max_indices_at_channel: the indices of channels with highest contribution to SS. In numpy format, shape of [bs, n_view*take_channel]
+
 """
 
 
@@ -212,151 +220,49 @@ def ss_statistics(visual_features, bs, feat_dim, args, probe_set=False):
     # get top eigenvector
     eig_for_indexing = v[0:1]  # [1, C]
 
-    # adjust direction (sign)
-    corrs = np.matmul(eig_for_indexing, np.transpose(visual_features))  # [1, bs*n_view]
-    coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
-    coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
-    elementwise = (
-        eig_for_indexing * visual_features * coeff_adjust
-    )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
+    corrs = np.matmul(
+        eig_for_indexing, np.transpose(visual_features)
+    )  # [1, bs*n_view], not .abs() yet.
 
-    # get contributing indices sorted from low to high
-    max_indices = np.argsort(
-        elementwise, axis=1
-    )  # [bs*n_view, C], C are indices, sorted by value from low to high
+    if args.use_ss_contribute_percent:
+        elementwise = eig_for_indexing * visual_features  # [bs*n_view, C]
 
-    max_indices = max_indices.reshape(bs, args.num_views, feat_dim)  # [bs, n_view, C]
+        # get each channel's contribution to corr in each view/image
+        contribution_percent = elementwise / np.transpose(corrs)  # [bs*n_view, C]
 
-    if probe_set:
-        take_channel = args.ignore_probe_removed_channel_num
+        # return sum in view direction (save memory)
+        contribution_percent_sum = np.sum(contribution_percent, axis=0)  # [C,]
+
+        return contribution_percent_sum
     else:
-        take_channel = args.voted_channel_num
+        coeff_adjust = np.where(corrs > 0, 1, -1)  # [1, bs*n_view]
+        coeff_adjust = np.transpose(coeff_adjust)  # [bs*n_view, 1]
+        elementwise = (
+            eig_for_indexing * visual_features * coeff_adjust
+        )  # [bs*n_view, C]; if corrs is negative, then adjust its elements to reverse sign
 
-    max_indices_at_channel = max_indices[
-        :, :, -take_channel:
-    ]  # [bs, n_view, take_channel]
-    max_indices_at_channel = max_indices_at_channel.reshape(
-        bs, -1
-    )  # [bs, n_view*take_channel]
+        # get contributing indices sorted from low to high
+        max_indices = np.argsort(
+            elementwise, axis=1
+        )  # [bs*n_view, C], C are indices, sorted by value from low to high
 
-    return corrs, max_indices_at_channel
+        max_indices = max_indices.reshape(
+            bs, args.num_views, feat_dim
+        )  # [bs, n_view, C]
 
-
-"""
-A WRAPPER for getting Spectral Signature results, used in function find_trigger_channels_or_poisoned_images(). 
-The actual calculation is performed in another function ss_statistics()
-"""
-
-
-def get_ss_statistics(
-    visual_features, bs, feat_dim, args, probe_set=False, is_poisoned=None
-):
-    # is_poisoned is the GTs for poisoned train set, when not None, means the function is called by train set
-
-    if args.cluster_before_svd:
-        if is_poisoned:
-            # # should we normalize?
-            # scaler = StandardScaler()
-            # visual_features = scaler.fit_transform(visual_features)
-
-            # train set
-            neighbors = 30
-            percentage = 0.004  # change in each experiment
-            gt = torch.cat(is_poisoned)
-            gt = np.array(gt.cpu())  # [#dataset]
-
-            distances = avearge_knn_distance(
-                visual_features, k=neighbors
-            )  # [samples, ]
-
-            minority_len = int(len(gt) * percentage)
-
-            dense_indices = np.argsort(distances)[:minority_len]
-            poisoned_in_dense = gt[dense_indices].sum()
-
-            print(
-                f"<><><><> we found {poisoned_in_dense} poisoned in {minority_len} images"
-            )
-
-            dist_threshold = np.percentile(
-                distances, q=percentage * 100
-            )  # FIXME: change to max rate change
-            dbscan = DBSCAN(eps=dist_threshold, min_samples=neighbors)
-            # dbscan = OPTICS(eps=dist_threshold, min_samples=neighbors)
-
-            sorted_distances = np.sort(distances)
-            fig, ax = plt.subplots()
-            fig.set_figheight(12)
-            fig.set_figwidth(16)
-            ax.set(
-                xlabel="point",
-                ylabel="dist",
-                title=f"{args.dataset} {args.trigger_type} {args.method}",
-            )
-            ax.scatter(
-                list(range(len(sorted_distances))),
-                sorted_distances,
-                # label="RRC + Hflip + Vflip",
-                marker=".",
-                color="#6d744e",
-                # linestyle="-",
-            )
-            ax.axvline(x=dist_threshold, color="blue")
-
-            plt.show()
-            plt.savefig(
-                f"slurm-{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}.png"
-            )
-
-        else:
-            # probe set
-            dbscan = DBSCAN(eps=0.3, min_samples=30)
-
-        labels = dbscan.fit_predict(visual_features)
-
-        corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
         if probe_set:
             take_channel = args.ignore_probe_removed_channel_num
         else:
             take_channel = args.voted_channel_num
-        max_indices_at_channel_total = np.zeros(
-            shape=(bs, take_channel), dtype=np.int64
-        )
 
-        densest_cluster = None
-        densest_value = np.inf
-        for cluster_id in set(labels):
-            matching_indices = labels == cluster_id  # An array of True and False
+        max_indices_at_channel = max_indices[
+            :, :, -take_channel:
+        ]  # [bs, n_view, take_channel]
+        max_indices_at_channel = max_indices_at_channel.reshape(
+            bs, -1
+        )  # [bs, n_view*take_channel]
 
-            if is_poisoned:
-                total_poisoned_in_cluster = gt[matching_indices].sum()
-                this_cluster_dist = distances[matching_indices]
-                this_cluster_dist = np.mean(this_cluster_dist)
-                if this_cluster_dist < densest_value:
-                    densest_value = this_cluster_dist
-                    densest_cluster = cluster_id
-                print(
-                    f">>>> [TrainSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}, #poisoned: {total_poisoned_in_cluster}, dist: {round(this_cluster_dist,4)}"
-                )
-            else:
-                print(
-                    f">>>> [ProbeSet] in cluster {cluster_id}, #total: {np.nonzero(matching_indices)[0].shape[0]}"
-                )
-
-            cluster_features = visual_features[matching_indices]
-            corrs, max_indices_at_channel = ss_statistics(
-                cluster_features, cluster_features.shape[0], feat_dim, args, probe_set
-            )
-
-            # need to remember the indices of the statistics
-            corrs_total[:, matching_indices] = corrs
-            max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
-        if is_poisoned:
-            print(f"The densest cluster is {densest_cluster}")
-
-        return corrs_total, max_indices_at_channel_total
-    else:
-        return ss_statistics(visual_features, bs, feat_dim, args, probe_set)
+        return corrs, max_indices_at_channel
 
 
 """
@@ -439,8 +345,11 @@ def find_trigger_channels_or_poisoned_images(
     """
     set up arrays to store information
     """
-    all_votes = []  # for all images in the dataset
-    is_poisoned = []  # for all images in the dataset (GT)
+    if args.use_ss_contribute_percent:
+        contribution_percent_by_channel = None
+    else:
+        all_votes = []  # for all images in the dataset
+        is_poisoned = []  # for all images in the dataset (GT)
 
     # if use input filtering, record the indices of estimated poisoned images
     if args.siftout_poisoned_images:
@@ -572,13 +481,13 @@ def find_trigger_channels_or_poisoned_images(
             _, C = vision_features.shape
             vision_features = vision_features.detach().cpu().numpy()
 
-            corrs, max_indices_at_channel = get_ss_statistics(
+            corrs, max_indices_at_channel = ss_statistics(
                 vision_features, bs, C, args, probe_set=True
             )
             all_probe_votes.append(max_indices_at_channel)
 
     """
-    Extract backboone features from input images, and potentially calculate spectral signature using get_ss_statistics()
+    Extract backboone features from input images, and potentially calculate spectral signature using ss_statistics()
     """
     # batch by batch (default)
 
@@ -595,8 +504,8 @@ def find_trigger_channels_or_poisoned_images(
             subset, batch_size=args.linear_probe_batch_size, shuffle=False
         )
 
-    if args.use_channel_var:
-        variance_by_channel = []
+    # if args.use_channel_var:
+    #     variance_by_channel = []
 
     for i, content in tqdm(enumerate(data_loader)):
         if args.ideal_case:
@@ -624,13 +533,10 @@ def find_trigger_channels_or_poisoned_images(
         views = transform(views)
 
         with torch.no_grad():
-            # if args.unlearn_before_finding_trigger_channels:
-            #     vision_features = unlearnt_backbone(views)
-            # else:
             vision_features = backbone(views)  # [bs*n_views, 512]
 
-            if args.use_channel_var:
-                variance_by_channel.append(vision_features)
+            # if args.use_channel_var:
+            #     variance_by_channel.append(vision_features)
 
         if "frequency_ensemble" in args.bd_detectors:
             get_freq_detection_scores(
@@ -639,193 +545,241 @@ def find_trigger_channels_or_poisoned_images(
 
         if args.normalize_backbone_features == "l2":
             vision_features = F.normalize(vision_features, dim=-1)
+
         _, C = vision_features.shape
 
-        corrs, max_indices_at_channel = get_ss_statistics(
-            vision_features.detach().cpu().numpy(), bs, C, args
-        )
+        if args.use_ss_contribute_percent:
+            contribution_percent_sum = ss_statistics(
+                vision_features.detach().cpu().numpy(), bs, C, args
+            )
 
-        get_detection_scores(
-            vision_features,
-            corrs,
-            max_indices_at_channel,
-            bd_detector_scores,
-            args,
-        )
+            # update batch by batch
+            if contribution_percent_by_channel is None:
+                contribution_percent_by_channel = contribution_percent_sum
+            else:
+                contribution_percent_by_channel += contribution_percent_sum
+        else:
+            corrs, max_indices_at_channel = ss_statistics(
+                vision_features.detach().cpu().numpy(), bs, C, args
+            )
 
-        all_votes.append(max_indices_at_channel)
-        is_poisoned.append(is_batch_poisoned)
+            if len(args.bd_detectors) > 0:
+                get_detection_scores(
+                    vision_features,
+                    corrs,
+                    max_indices_at_channel,
+                    bd_detector_scores,
+                    args,
+                )
+
+            all_votes.append(max_indices_at_channel)
+            is_poisoned.append(is_batch_poisoned)
 
     """
     Print the final detection performances
     """
-    if args.use_channel_var:
-        variance_by_channel = torch.cat(variance_by_channel, dim=0)
+    # if args.use_channel_var:
+    #     variance_by_channel = torch.cat(variance_by_channel, dim=0)
 
-        chn_mean = torch.mean(variance_by_channel, dim=0)  # shape: [512, ]
-        chn_std = torch.std(variance_by_channel, dim=0)
+    #     chn_mean = torch.mean(variance_by_channel, dim=0)  # shape: [512, ]
+    #     chn_std = torch.std(variance_by_channel, dim=0)
 
-        # decide number of channels to take
-        if args.use_channel_var_option == "intersect":
-            # intersect
-            take_mean_percent = 0.25
-            take_std_percent = 0.2
-        else:
-            # union
-            take_mean_percent = 0.12
-            take_std_percent = 0.06
-        take_mean_num = int(take_mean_percent * chn_mean.shape[0])
-        take_std_num = int(take_std_percent * chn_std.shape[0])
+    #     # decide number of channels to take
+    #     if args.use_channel_var_option == "intersect":
+    #         # intersect
+    #         take_mean_percent = 0.25
+    #         take_std_percent = 0.2
+    #     else:
+    #         # union
+    #         take_mean_percent = 0.12
+    #         take_std_percent = 0.06
+    #     take_mean_num = int(take_mean_percent * chn_mean.shape[0])
+    #     take_std_num = int(take_std_percent * chn_std.shape[0])
 
-        # sort
-        _, indices_mean = torch.sort(chn_mean, descending=True)  # sort from max to min
-        _, indices_std = torch.sort(chn_std, descending=False)  # sort from min to max
+    #     # sort
+    #     _, indices_mean = torch.sort(chn_mean, descending=True)  # sort from max to min
+    #     _, indices_std = torch.sort(chn_std, descending=False)  # sort from min to max
 
-        # take
-        indices_taken_by_mean = indices_mean[:take_mean_num]
-        indices_std_in_mean = indices_std[
-            torch.isin(indices_std, indices_taken_by_mean)
-        ]  # keep items that appear in indices_taken_by_mean
-        indices_taken_by_mean_and_std = indices_std_in_mean[
-            :take_std_num
-        ]  # take the lowest std ones
+    #     # take
+    #     indices_taken_by_mean = indices_mean[:take_mean_num]
+    #     indices_std_in_mean = indices_std[
+    #         torch.isin(indices_std, indices_taken_by_mean)
+    #     ]  # keep items that appear in indices_taken_by_mean
+    #     indices_taken_by_mean_and_std = indices_std_in_mean[
+    #         :take_std_num
+    #     ]  # take the lowest std ones
 
-        print("indices_taken_by_mean.shape: ", indices_taken_by_mean.shape)
-        print(
-            "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
-        )
-
-    # GT, for checking performance
-    is_poisoned = torch.cat(is_poisoned)
-    is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
-
-    total_images = len(data_loader.dataset)
-    minority_lb = int(total_images * args.minority_lower_bound)  # index of lower bound
-    minority_ub = int(total_images * args.minority_upper_bound)  # index of upper bound
+    #     print("indices_taken_by_mean.shape: ", indices_taken_by_mean.shape)
+    #     print(
+    #         "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
+    #     )
 
     all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
-    # minorities found by all detectors
-    minority_indices = []
+    if args.find_channels_from_n_few_samples:
+        # assume have N poisoned samples
 
-    for detector, values in bd_detector_scores.items():
-        bd_scores = np.array(values)
+        if args.use_ss_contribute_percent:
+            total_views = args.find_channels_from_n_few_samples * args.num_views
+            contribution_percent_by_channel /= total_views
 
-        # calculate AUC score from each detector
-        if not args.ideal_case:
-            auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+            # TODO: remove print
             print(
-                f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
+                "contribution_percent_by_channel.shape: ",
+                contribution_percent_by_channel.shape,
             )
 
-        # get the indices of the minority (estimated poisoned images)
-        # higher bd_scores indicates higher chance of being a poisoned image
-        bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
-        if minority_lb > 0:
-            minority_indices_local = bd_indices[
-                -minority_ub:-minority_lb
-            ]  # numpy array
+            # get the top N indices
+            essential_indices = np.argsort(-contribution_percent_by_channel)[
+                : args.removed_channel_num
+            ]
+
+            print(
+                "top channels contribution in DESC order: ",
+                contribution_percent_by_channel[essential_indices],
+            )
+
         else:
-            minority_indices_local = bd_indices[-minority_ub:]
-        minority_indices.extend(minority_indices_local.tolist())
-
-    # choose the image indices that appear "count" times in all detectors
-    minority_indices_counter = Counter(minority_indices)
-    minority_indices = [
-        idx
-        for idx, count in minority_indices_counter.items()
-        if count in args.in_n_detectors
-    ]
-
-    print(f"all_votes.shape: {all_votes.shape}")
-    print(f"len(minority_indices): {len(minority_indices)}")
-
-    # get the votes from minority_indices, shape: [minority_num, n_view*take_channel]
-    all_votes = all_votes[minority_indices]
-
-    """
-    print the precision of poisoned image estimation
-    """
-    is_poisoned = is_poisoned[minority_indices]
-    poisoned_found = is_poisoned.sum()
-    print(
-        f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
-    )
-
-    """
-    If use input filtering method, return the indices of the estimated poisoned images, and exit this function
-    """
-    if args.siftout_poisoned_images:
-        trainset_file_indices = torch.cat(trainset_file_indices)
-        trainset_file_indices = np.array(trainset_file_indices.cpu())  # [#dataset]
-        estimated_poisoned_file_indices = trainset_file_indices[minority_indices]
-        return estimated_poisoned_file_indices  # numpy
-
-    """
-    If use trigger channel removal, return the estimated trigger channels
-    """
-    if args.find_and_ignore_probe_channels and not args.ideal_case:
-        # REMOVE channels that appear in probe dataset
-        essential_indices = Counter(all_votes.flatten()).most_common(
-            max(args.removed_channel_num) + args.ignore_probe_removed_channel_num
-        )
-        essential_indices = [idx for (idx, occ_count) in essential_indices]
-
-        all_probe_votes = np.concatenate(
-            all_probe_votes, axis=0
-        )  # [#dataset, n_view*take_channel]
-        probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
-            args.ignore_probe_removed_channel_num
-        )
-        probe_essential_indices = [
-            idx for (idx, occ_count) in probe_essential_indices
-        ]  # a list of channel indices
-
-        essential_indices = [
-            item for item in essential_indices if item not in probe_essential_indices
-        ]
-        essential_indices = torch.tensor(
-            essential_indices[: max(args.removed_channel_num)]
-        )
+            essential_indices = Counter(all_votes.flatten()).most_common(
+                max(args.removed_channel_num)
+            )
+            essential_indices = torch.tensor(
+                [idx for (idx, occ_count) in essential_indices]
+            )
     else:
-        essential_indices = Counter(all_votes.flatten()).most_common(
-            max(args.removed_channel_num)
-        )
-        essential_indices = torch.tensor(
-            [idx for (idx, occ_count) in essential_indices]
-        )
+        # need to find minorities first based on detector score
 
-        if args.use_channel_var:
-            print("indices_taken_by_mean_and_std: ", indices_taken_by_mean_and_std)
-            print("essential_indices [BEFORE]: ", essential_indices)
-            print("essential_indices.shape [BEFORE]: ", essential_indices.shape)
+        # GT, for checking performance
+        is_poisoned = torch.cat(is_poisoned)
+        is_poisoned = np.array(is_poisoned.cpu())  # [#dataset]
 
-            if args.use_channel_var_option == "intersect":
-                # intersect
-                essential_indices = essential_indices[
-                    torch.isin(
-                        essential_indices,
-                        indices_taken_by_mean_and_std.to(essential_indices.device),
-                    )
-                ]
-            else:
-                # union
-                essential_indices = torch.unique(
-                    torch.cat(
-                        [
-                            essential_indices,
-                            indices_taken_by_mean_and_std.to(essential_indices.device),
-                        ]
-                    )
+        total_images = len(data_loader.dataset)
+        minority_lb = int(
+            total_images * args.minority_lower_bound
+        )  # index of lower bound
+        minority_ub = int(
+            total_images * args.minority_upper_bound
+        )  # index of upper bound
+
+        # minorities found by all detectors
+        minority_indices = []
+
+        for detector, values in bd_detector_scores.items():
+            bd_scores = np.array(values)
+
+            # calculate AUC score from each detector
+            if not args.ideal_case:
+                auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
+                print(
+                    f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
                 )
-            print("essential_indices [AFTER]: ", essential_indices)
-            print("essential_indices.shape [AFTER]: ", essential_indices.shape)
 
-    # # free the disk space
-    # if args.full_dataset_svd:
-    #     os.remove(h5py_filename)
+            # get the indices of the minority (estimated poisoned images)
+            # higher bd_scores indicates higher chance of being a poisoned image
+            bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
+            if minority_lb > 0:
+                minority_indices_local = bd_indices[
+                    -minority_ub:-minority_lb
+                ]  # numpy array
+            else:
+                minority_indices_local = bd_indices[-minority_ub:]
+            minority_indices.extend(minority_indices_local.tolist())
+
+        # choose the image indices that appear "count" times in all detectors
+        minority_indices_counter = Counter(minority_indices)
+        minority_indices = [
+            idx
+            for idx, count in minority_indices_counter.items()
+            if count in args.in_n_detectors
+        ]
+
+        print(f"all_votes.shape: {all_votes.shape}")
+        print(f"len(minority_indices): {len(minority_indices)}")
+
+        # get the votes from minority_indices, shape: [minority_num, n_view*take_channel]
+        all_votes = all_votes[minority_indices]
+
+        """
+        print the precision of poisoned image estimation
+        """
+        is_poisoned = is_poisoned[minority_indices]
+        poisoned_found = is_poisoned.sum()
+        print(
+            f"total count of found poisoned images: {poisoned_found}/{is_poisoned.shape[0]}={np.round(poisoned_found/is_poisoned.shape[0]*100,1)}"
+        )
+
+        """
+        If use input filtering method, return the indices of the estimated poisoned images, and exit this function
+        """
+        if args.siftout_poisoned_images:
+            trainset_file_indices = torch.cat(trainset_file_indices)
+            trainset_file_indices = np.array(trainset_file_indices.cpu())  # [#dataset]
+            estimated_poisoned_file_indices = trainset_file_indices[minority_indices]
+            return estimated_poisoned_file_indices  # numpy
+
+        """
+        If use trigger channel removal, return the estimated trigger channels
+        """
+        if args.find_and_ignore_probe_channels and not args.ideal_case:
+            # REMOVE channels that appear in probe dataset
+            essential_indices = Counter(all_votes.flatten()).most_common(
+                max(args.removed_channel_num) + args.ignore_probe_removed_channel_num
+            )
+            essential_indices = [idx for (idx, occ_count) in essential_indices]
+
+            all_probe_votes = np.concatenate(
+                all_probe_votes, axis=0
+            )  # [#dataset, n_view*take_channel]
+            probe_essential_indices = Counter(all_probe_votes.flatten()).most_common(
+                args.ignore_probe_removed_channel_num
+            )
+            probe_essential_indices = [
+                idx for (idx, occ_count) in probe_essential_indices
+            ]  # a list of channel indices
+
+            essential_indices = [
+                item
+                for item in essential_indices
+                if item not in probe_essential_indices
+            ]
+            essential_indices = torch.tensor(
+                essential_indices[: max(args.removed_channel_num)]
+            )
+        else:
+            essential_indices = Counter(all_votes.flatten()).most_common(
+                max(args.removed_channel_num)
+            )
+            essential_indices = torch.tensor(
+                [idx for (idx, occ_count) in essential_indices]
+            )
 
     return essential_indices
+
+    # if args.use_channel_var:
+    #     print("indices_taken_by_mean_and_std: ", indices_taken_by_mean_and_std)
+    #     print("essential_indices [BEFORE]: ", essential_indices)
+    #     print("essential_indices.shape [BEFORE]: ", essential_indices.shape)
+
+    #     if args.use_channel_var_option == "intersect":
+    #         # intersect
+    #         essential_indices = essential_indices[
+    #             torch.isin(
+    #                 essential_indices,
+    #                 indices_taken_by_mean_and_std.to(essential_indices.device),
+    #             )
+    #         ]
+    #     else:
+    #         # union
+    #         essential_indices = torch.unique(
+    #             torch.cat(
+    #                 [
+    #                     essential_indices,
+    #                     indices_taken_by_mean_and_std.to(essential_indices.device),
+    #                 ]
+    #             )
+    #         )
+    #     print("essential_indices [AFTER]: ", essential_indices)
+    #     print("essential_indices.shape [AFTER]: ", essential_indices.shape)
 
 
 """

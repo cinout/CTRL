@@ -180,7 +180,7 @@ parser.add_argument(
     "--bd_detectors",
     type=str,
     nargs="+",
-    default=["frequency_ensemble"],
+    default=[],
     # choices=["entropy", "ss_score", "frequency_ensemble", "lid", "kdist"],
     help="applied detectors",
 )
@@ -259,11 +259,6 @@ parser.add_argument(
     help="when trigger channels are found from val set directly",
 )
 parser.add_argument(
-    "--cluster_before_svd",
-    action="store_true",
-    help="apply kNN to features before performing spectral signature",
-)
-parser.add_argument(
     "--knn_cluster_num",
     type=int,
     default=50,
@@ -280,18 +275,24 @@ parser.add_argument(
     action="store_true",
     help="augment images for SS using more complex pipeline",
 )
+# TODO: add to slurm
 parser.add_argument(
-    "--use_channel_var",
+    "--use_ss_contribute_percent",
     action="store_true",
-    help="use the channel's output variance as an indicator for backdoored channel",
+    help="instead of using the frequency of appearance to estimate backdoor channels, use the total percentage of contribution to SS",
 )
-parser.add_argument(
-    "--use_channel_var_option",
-    type=str,
-    choices=["union", "intersect"],
-    default="union",
-    help="for these channels, union or intersection with voted most frequent SS channels",
-)
+# parser.add_argument(
+#     "--use_channel_var",
+#     action="store_true",
+#     help="use the channel's output variance as an indicator for backdoored channel",
+# )
+# parser.add_argument(
+#     "--use_channel_var_option",
+#     type=str,
+#     choices=["union", "intersect"],
+#     default="union",
+#     help="for these channels, union or intersection with voted most frequent SS channels",
+# )
 
 # Frequency Detector
 parser.add_argument(

@@ -275,7 +275,6 @@ parser.add_argument(
     action="store_true",
     help="augment images for SS using more complex pipeline",
 )
-# TODO: add to slurm
 parser.add_argument(
     "--use_ss_contribute_percent",
     action="store_true",

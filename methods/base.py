@@ -629,7 +629,7 @@ def find_trigger_channels_or_poisoned_images(
 
             # get the top N indices
             essential_indices = np.argsort(-contribution_percent_by_channel)[
-                : args.removed_channel_num
+                : max(args.removed_channel_num)
             ]
 
             print(

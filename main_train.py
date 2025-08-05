@@ -254,11 +254,6 @@ parser.add_argument(
     help="after cleanse method is applied, retrain the whole model (backbone+linear) using the 1 per cent ref set",
 )
 parser.add_argument(
-    "--full_dataset_svd",
-    action="store_true",
-    help="use dense density as poison estimator",
-)
-parser.add_argument(
     "--ideal_case",
     action="store_true",
     help="when trigger channels are found from val set directly",
@@ -311,24 +306,6 @@ parser.add_argument(
 )
 parser.add_argument("--frequency_attack_trigger_ids", type=int, nargs="+", default=2)
 
-# Backbone-Projector Compare Detector
-parser.add_argument(
-    "--compare_backbone_predictor",
-    action="store_true",
-    help="use the difference of BD detector's scores between backbone and predictor to predict bd samples",
-)
-parser.add_argument(
-    "--compare_mode",
-    type=str,
-    choices=["default", "abs"],
-    default="default",
-    help="how to compare",
-)
-parser.add_argument(
-    "--proj_feature_normalize",
-    default="none",
-    choices=["none", "l2"],
-)
 
 # KDistance
 parser.add_argument(
@@ -496,18 +473,6 @@ parser.add_argument("--crop_r1", default=(4 / 3), help="crop ratio to")
 parser.add_argument("--hf_p", default=0.5, help="horizontal flip probability")
 parser.add_argument("--trigger_width", type=int, default=6)
 parser.add_argument("--trigger_location", type=float, default=0.9)
-
-# FIXME: the following two can be removed
-parser.add_argument(
-    "--triggers_combined",
-    action="store_true",
-    help="combine trigger set 1 and set 2, and choose top 4",
-)
-parser.add_argument(
-    "--tap_trigger",
-    action="store_true",
-    help="add the estimated triggers to clean images to locate trigger channels",
-)
 
 
 """

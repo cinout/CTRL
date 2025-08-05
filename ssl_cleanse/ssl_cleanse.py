@@ -514,18 +514,8 @@ def trigger_mitigation(args, backbone, trainset_data):
     trigger_regs1 = torch.tensor(trigger_regs1)  # [#clusters,]
     trigger_regs2 = torch.tensor(trigger_regs2)
 
-    if args.triggers_combined:
-        trigger_masks = torch.cat([trigger_masks1, trigger_masks2], dim=0)
-        trigger_deltas = torch.cat([trigger_deltas1, trigger_deltas2], dim=0)
-        combined = torch.cat([trigger_regs1, trigger_regs2], dim=0)
-        trigger_top_indices = outlier(combined, combined=True)
-        print(f"trigger_masks.shape: {trigger_masks.shape}")
-        print(f"trigger_deltas.shape: {trigger_deltas.shape}")
-        print(f"combined.shape: {combined.shape}")
-        print(f"trigger_top_indices: {trigger_top_indices}")
-    else:
-        trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
-        trigger2_top_indices = outlier(trigger_regs2)  # global
+    trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
+    trigger2_top_indices = outlier(trigger_regs2)  # global
 
     for ep in range(args.mitigate_epochs):
 
@@ -567,75 +557,48 @@ def trigger_mitigation(args, backbone, trainset_data):
                     use_local_trigger = random.random() < 0.5
                     cid = cluster_ids[idx]  # cluster id of the image
 
-                    if args.triggers_combined:
+                    if use_local_trigger:
+                        """
+                        # ADD LOCAL TRIGGER
+                        """
                         trigger_index = random.choice(
-                            [
-                                index
-                                for index in trigger_top_indices
-                                if index not in [cid, cid + args.num_clusters]
-                            ]
+                            [index for index in trigger1_top_indices if index != cid]
                         )
-                        mask = trigger_masks[trigger_index].unsqueeze(
+                        mask = trigger_masks1[trigger_index].unsqueeze(
                             0
                         )  # [1, 1, imgsize, imgsize]
-                        delta = trigger_deltas[trigger_index].unsqueeze(
+                        delta = trigger_deltas1[trigger_index].unsqueeze(
                             0
                         )  # [1, 3, imgsize, imgsize]
-                        new_view = draw_global(view2, args.mean, args.std, mask, delta)
-                    else:
 
-                        if use_local_trigger:
-                            """
-                            # ADD LOCAL TRIGGER
-                            """
-                            trigger_index = random.choice(
-                                [
-                                    index
-                                    for index in trigger1_top_indices
-                                    if index != cid
-                                ]
+                        if args.draw_local_trigger_by == "local":
+
+                            new_view = draw_local(
+                                view2,
+                                args.mean,
+                                args.std,
+                                mask,
+                                delta,
+                                args.image_size,
                             )
-                            mask = trigger_masks1[trigger_index].unsqueeze(
-                                0
-                            )  # [1, 1, imgsize, imgsize]
-                            delta = trigger_deltas1[trigger_index].unsqueeze(
-                                0
-                            )  # [1, 3, imgsize, imgsize]
-
-                            if args.draw_local_trigger_by == "local":
-
-                                new_view = draw_local(
-                                    view2,
-                                    args.mean,
-                                    args.std,
-                                    mask,
-                                    delta,
-                                    args.image_size,
-                                )
-                            elif args.draw_local_trigger_by == "global":
-                                new_view = draw_global(
-                                    view2, args.mean, args.std, mask, delta
-                                )
-                        else:
-                            """
-                            # ADD GLOBAL TRIGGER
-                            """
-                            trigger_index = random.choice(
-                                [
-                                    index
-                                    for index in trigger2_top_indices
-                                    if index != cid
-                                ]
-                            )
-                            mask = trigger_masks2[trigger_index].unsqueeze(
-                                0
-                            )  # [1, 1, imgsize, imgsize]
-                            delta = trigger_deltas2[trigger_index].unsqueeze(
-                                0
-                            )  # [1, 3, imgsize, imgsize]
+                        elif args.draw_local_trigger_by == "global":
                             new_view = draw_global(
                                 view2, args.mean, args.std, mask, delta
                             )
+                    else:
+                        """
+                        # ADD GLOBAL TRIGGER
+                        """
+                        trigger_index = random.choice(
+                            [index for index in trigger2_top_indices if index != cid]
+                        )
+                        mask = trigger_masks2[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 1, imgsize, imgsize]
+                        delta = trigger_deltas2[trigger_index].unsqueeze(
+                            0
+                        )  # [1, 3, imgsize, imgsize]
+                        new_view = draw_global(view2, args.mean, args.std, mask, delta)
 
                     compare_views.append(new_view)
 

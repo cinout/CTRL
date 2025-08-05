@@ -164,9 +164,6 @@ def get_detection_scores(
             entropy = -1 * np.exp(
                 h
             )  # here we changed sign, which actually means "- entropy". Poisoned sample -> lower entropy -> higher "-entropy"
-            # if from_predictor and args.compare_backbone_predictor:
-            #     bd_detector_scores["entropy_pred"].append(entropy)
-            # else:
             bd_detector_scores["entropy"].append(entropy)
 
     # Use spectral signature result directly
@@ -174,9 +171,7 @@ def get_detection_scores(
         corrs = np.abs(corrs)
         corrs = corrs.reshape(-1, args.num_views)  #  [bs,n_views]
         ss_scores = np.max(corrs, axis=1)  # [bs]
-        # if from_predictor and args.compare_backbone_predictor:
-        #     bd_detector_scores["ss_score_pred"].extend(ss_scores.tolist())
-        # else:
+
         bd_detector_scores["ss_score"].extend(ss_scores.tolist())
 
     # Use LID. Only need ot use "vision_features".
@@ -187,9 +182,6 @@ def get_detection_scores(
         lids = lids.reshape(-1, args.num_views)  #  [bs,n_views]
         lids = torch.mean(lids, dim=1)
 
-        # if from_predictor and args.compare_backbone_predictor:
-        #     bd_detector_scores["lid_pred"].extend(lids.cpu().numpy())
-        # else:
         bd_detector_scores["lid"].extend(lids.cpu().numpy())
 
     # Use K-Distance. Only need to use "vision_features".
@@ -203,31 +195,8 @@ def get_detection_scores(
         a = a.reshape(-1, args.num_views)  #  [bs,n_views]
         a = torch.mean(a, dim=1)
 
-        # if from_predictor and args.compare_backbone_predictor:
-        #     bd_detector_scores["kdist_pred"].extend(a.cpu().numpy())
-        # else:
         bd_detector_scores["kdist"].extend(a.cpu().numpy())
 
-
-# def get_detection_scores_from_projector(
-#     vision_features, projector, bs, bd_detector_scores, args
-# ):
-#     with torch.no_grad():
-#         vision_features = projector(vision_features)
-#     if args.proj_feature_normalize == "l2":
-#         vision_features = F.normalize(vision_features, dim=1)
-#     _, C = vision_features.shape
-#     corrs, max_indices_at_channel = get_ss_statistics(
-#         vision_features.detach().cpu().numpy(), bs, C, args
-#     )
-#     get_detection_scores(
-#         vision_features,
-#         corrs,
-#         max_indices_at_channel,
-#         bd_detector_scores,
-#         args,
-#         from_predictor=True,
-#     )
 
 """
 The core function for calculating spectral signature outcome, used in get_ss_statistics()
@@ -343,26 +312,7 @@ def get_ss_statistics(
             # probe set
             dbscan = DBSCAN(eps=0.3, min_samples=30)
 
-        # scaler = MinMaxScaler()
-        # scaler = StandardScaler()
-        # iso = IsolationForest(contamination=0.05)
-        # y_iso = iso.fit_predict(visual_features)
-        # X_filtered = visual_features[y_iso == 1]
-
-        # scaler = RobustScaler()
-        # pca = PCA(n_components=2)
-
-        # clusters = KMeans(
-        #     n_clusters=args.knn_cluster_num, n_init="auto", init="k-means++"
-        # ).fit(pca.fit_transform(visual_features))
-        # labels = clusters.labels_
-
         labels = dbscan.fit_predict(visual_features)
-        # labels = dbscan.fit_predict(scaler.fit_transform(visual_features))
-
-        # gmm = GaussianMixture(n_components=args.knn_cluster_num, random_state=42)
-        # labels = gmm.fit_predict(scaler.fit_transform(visual_features))
-        # num_classes = set(labels)
 
         corrs_total = np.zeros(shape=(1, bs), dtype=visual_features.dtype)
         if probe_set:
@@ -403,15 +353,6 @@ def get_ss_statistics(
             max_indices_at_channel_total[matching_indices, :] = max_indices_at_channel
         if is_poisoned:
             print(f"The densest cluster is {densest_cluster}")
-
-        # print(
-        #     f"max_indices_at_channel_total.dtype: {max_indices_at_channel_total.dtype}"
-        # )
-        # print(
-        #     f"max_indices_at_channel_total.shape: {max_indices_at_channel_total.shape}"
-        # )
-        # print(f"corrs_total.dtype: {corrs_total.dtype}")
-        # print(f"corrs_total.shape: {corrs_total.shape}")
 
         return corrs_total, max_indices_at_channel_total
     else:
@@ -471,8 +412,6 @@ def find_trigger_channels_or_poisoned_images(
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
-    # projector,
-    # linear,
     ss_transform,
 ):
     """
@@ -493,14 +432,9 @@ def find_trigger_channels_or_poisoned_images(
             for i in range(args.frequency_ensemble_size):
                 name = f"{detector}_{i}"
                 bd_detector_scores[name] = []
-
-                # if args.compare_backbone_predictor:
-                #     bd_detector_scores[f"{name}_pred"] = []
         else:
             name = detector
             bd_detector_scores[name] = []
-            # if args.compare_backbone_predictor:
-            #     bd_detector_scores[f"{name}_pred"] = []
 
     """
     set up arrays to store information
@@ -511,40 +445,6 @@ def find_trigger_channels_or_poisoned_images(
     # if use input filtering, record the indices of estimated poisoned images
     if args.siftout_poisoned_images:
         trainset_file_indices = []
-
-    # if apply unlearning before finding trigger channles
-    # NOT USED
-    # if args.unlearn_before_finding_trigger_channels:
-    #     unlearnt_backbone = copy.deepcopy(backbone)
-    #     unlearnt_linear = copy.deepcopy(linear)
-    #     criterion = torch.nn.CrossEntropyLoss().to(device)
-    #     optimizer = torch.optim.SGD(
-    #         list(unlearnt_backbone.parameters()) + list(unlearnt_linear.parameters()),
-    #         lr=args.unlearning_lr,
-    #         momentum=0.9,
-    #         weight_decay=5e-4,
-    #     )
-    #     scheduler = torch.optim.lr_scheduler.MultiStepLR(
-    #         optimizer, milestones=args.schedule, gamma=0.1
-    #     )
-    #     for epoch in range(0, args.unlearning_epochs + 1):
-    #         train_acc = train_step_unlearning(
-    #             args=args,
-    #             model=unlearnt_backbone,
-    #             linear=unlearnt_linear,
-    #             criterion=criterion,
-    #             optimizer=optimizer,
-    #             data_loader=train_probe_loader,
-    #         )
-
-    #         scheduler.step()
-    #         print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
-
-    #         if train_acc <= args.clean_threshold:
-    #             print(f">>>>>>>> arrive at early break of unlearning at epoch {epoch}")
-    #             break
-    #     unlearnt_backbone.eval()
-    #     unlearnt_linear.eval()
 
     """
     if use frequency detector(s), train them here
@@ -638,72 +538,10 @@ def find_trigger_channels_or_poisoned_images(
             freq_detector_ensemble.append(freq_detector)
 
     """
-    if we want to perform Spectral Signature on the whole set at once
-    """
-    # if args.full_dataset_svd:
-    #     h5py_filename = (
-    #         f"{args.timestamp}_{args.dataset}_{args.trigger_type}_features.hdf5"
-    #     )
-    #     h5py_handler = h5py.File(h5py_filename, "w")
-
-    #     if "cifar" in args.dataset or "gtsrb" in args.dataset:
-    #         _, feat_dim = model_dict_cifar[args.arch]
-    #     else:
-    #         _, feat_dim = model_dict[args.arch]
-
-    """
     # if we want to ignore some clean channels voted by train_probe dataset
     """
     if args.find_and_ignore_probe_channels and not args.ideal_case:
         all_probe_votes = []
-
-        # if args.full_dataset_svd:
-        #     train_probe_set_features = h5py_handler.create_dataset(
-        #         "train_probe_set_features",
-        #         (len(train_probe_loader.dataset) * args.num_views, feat_dim),
-        #     )
-        #     start_pos = 0
-        #     for i, content in enumerate(train_probe_loader):
-        #         (images, _, _) = content
-
-        #         images = images.to(device)
-
-        #         if args.num_views == 1:
-        #             views = images.clone()
-        #             views = views.unsqueeze(1)
-        #         else:
-        #             views = generate_view_tensors(images, ss_transform)
-
-        #         views = views.to(device)
-
-        #         bs, n_views, c, h, w = views.shape
-        #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-        #         views = transform(views)
-
-        #         with torch.no_grad():
-        #             vision_features = backbone(views)  # [bs*n_views, 512]
-
-        #         if args.normalize_backbone_features == "l2":
-        #             vision_features = F.normalize(vision_features, dim=-1)
-        #         _, C = vision_features.shape
-
-        #         vision_features = vision_features.detach().cpu().numpy()
-
-        #         train_probe_set_features[
-        #             start_pos : start_pos + vision_features.shape[0]
-        #         ] = vision_features
-        #         start_pos = start_pos + vision_features.shape[0]
-
-        #     # print(f"train_probe_set_features.shape: {train_probe_set_features.shape}")
-        #     corrs, max_indices_at_channel = get_ss_statistics(
-        #         train_probe_set_features,
-        #         int(train_probe_set_features.shape[0] / args.num_views),
-        #         train_probe_set_features.shape[1],
-        #         args,
-        #         probe_set=True,
-        #     )
-        #     all_probe_votes.append(max_indices_at_channel)
-        # else:
 
         # batch by batch, for probe dataset
         for i, content in enumerate(train_probe_loader):
@@ -742,172 +580,6 @@ def find_trigger_channels_or_poisoned_images(
     """
     Extract backboone features from input images, and potentially calculate spectral signature using get_ss_statistics()
     """
-
-    # if args.full_dataset_svd:
-    #     trainset_features = h5py_handler.create_dataset(
-    #         "trainset_features", (len(data_loader.dataset) * args.num_views, feat_dim)
-    #     )
-    #     start_pos = 0
-    #     for i, content in tqdm(enumerate(data_loader)):
-    #         if args.ideal_case:
-    #             images = content[0]
-    #             is_batch_poisoned = torch.ones(size=(images.shape[0],))
-    #             is_batch_poisoned = is_batch_poisoned.to(device)
-    #         else:
-    #             (images, is_batch_poisoned, _, file_index) = content
-    #             is_batch_poisoned = is_batch_poisoned.to(device)
-
-    #         images = images.to(device)
-    #         if args.siftout_poisoned_images:
-    #             trainset_file_indices.append(file_index)
-
-    #         if args.num_views == 1:
-    #             views = images.clone()
-    #             views = views.unsqueeze(1)
-    #         else:
-    #             views = generate_view_tensors(images, ss_transform)
-
-    #         views = views.to(device)
-    #         bs, n_views, c, h, w = views.shape
-    #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-    #         views = transform(views)
-
-    #         with torch.no_grad():
-    #             vision_features = backbone(views)  # [bs*n_views, 512]
-
-    #         if args.normalize_backbone_features == "l2":
-    #             vision_features = F.normalize(vision_features, dim=-1)
-    #         _, C = vision_features.shape
-
-    #         vision_features = vision_features.detach().cpu().numpy()
-    #         trainset_features[start_pos : start_pos + vision_features.shape[0]] = (
-    #             vision_features
-    #         )
-    #         start_pos = start_pos + vision_features.shape[0]
-    #         is_poisoned.append(is_batch_poisoned)
-
-    #         if "frequency_ensemble" in args.bd_detectors:
-    #             get_freq_detection_scores(
-    #                 images, freq_detector_ensemble, bd_detector_scores, args
-    #             )
-
-    #     # print(f"trainset_features.shape: {trainset_features.shape}")
-    #     corrs, max_indices_at_channel = get_ss_statistics(
-    #         trainset_features,
-    #         int(trainset_features.shape[0] / args.num_views),
-    #         trainset_features.shape[1],
-    #         args,
-    #         is_poisoned=is_poisoned,
-    #     )
-    #     # if args.only_detect_projector_features:
-    #     #     get_detection_scores_from_projector(
-    #     #         trainset_features,
-    #     #         projector,
-    #     #         int(trainset_features.shape[0] / args.num_views),
-    #     #         bd_detector_scores,
-    #     #         args,
-    #     #     )
-    #     #     pass
-    #     # else:
-    #     get_detection_scores(
-    #         trainset_features,
-    #         corrs,
-    #         max_indices_at_channel,
-    #         bd_detector_scores,
-    #         args,
-    #     )
-
-    #     all_votes.append(max_indices_at_channel)
-    # else:
-
-    # if args.tap_trigger:
-    #     trigger_masks1, trigger_deltas1, trigger_regs1 = [], [], []
-    #     trigger_masks2, trigger_deltas2, trigger_regs2 = [], [], []
-
-    #     for target in range(args.num_clusters):
-    #         trigger_path = os.path.join(args.trigger_path, f"{target}.pth")
-    #         trigger = torch.load(trigger_path, map_location=device)
-
-    #         trigger_masks1.append(trigger["mask1"].detach())
-    #         trigger_deltas1.append(trigger["delta1"].detach())
-    #         trigger_regs1.append(trigger["reg1"])
-    #         trigger_masks2.append(trigger["mask2"].detach())
-    #         trigger_deltas2.append(trigger["delta2"].detach())
-    #         trigger_regs2.append(trigger["reg2"])
-
-    #     trigger_masks1 = torch.cat(
-    #         trigger_masks1, dim=0
-    #     )  # [#clusters, 1, imgsize, imgsize]
-    #     trigger_deltas1 = torch.cat(
-    #         trigger_deltas1, dim=0
-    #     )  # [#clusters, 3, imgsize, imgsize]
-    #     trigger_masks2 = torch.cat(trigger_masks2, dim=0)
-    #     trigger_deltas2 = torch.cat(trigger_deltas2, dim=0)
-
-    #     trigger_regs1 = torch.tensor(trigger_regs1)  # [#clusters,]
-    #     trigger_regs2 = torch.tensor(trigger_regs2)
-
-    #     trigger1_top_indices = outlier(trigger_regs1)  # [#clusters,] list, local
-    #     trigger2_top_indices = outlier(trigger_regs2)  # global
-
-    #     for i, content in enumerate(train_probe_loader):
-    #         (images, _, _) = content
-
-    #         images = images.to(device)
-
-    #         is_batch_poisoned = torch.ones(size=(images.shape[0],))
-    #         is_batch_poisoned = is_batch_poisoned.to(device)
-
-    #         if args.num_views == 1:
-    #             views = images.clone()
-    #             views = views.unsqueeze(1)
-    #         else:
-    #             views = generate_view_tensors(images, ss_transform)
-
-    #         views = views.to(device)
-
-    #         bs, n_views, c, h, w = views.shape
-    #         views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
-
-    #         views = transform(views)
-
-    #         # # : add trigger to views
-    #         # use_local_trigger = random.random() < 0.5
-    #         # if use_local_trigger:
-    #         #     trigger_index = random.choice(trigger1_top_indices)
-    #         #     mask = trigger_masks1[trigger_index].unsqueeze(0)
-    #         #     delta = trigger_deltas1[trigger_index].unsqueeze(0)
-    #         #     views = draw_global(views, args.mean, args.std, mask, delta)
-    #         # else:
-    #         trigger_index = random.choice(trigger2_top_indices)
-    #         mask = trigger_masks2[trigger_index].unsqueeze(0)
-    #         delta = trigger_deltas2[trigger_index].unsqueeze(0)
-    #         views = draw_global(views, args.mean, args.std, mask, delta)
-
-    #         with torch.no_grad():
-    #             vision_features = backbone(views)  # [bs*n_views, 512]
-
-    #         if args.normalize_backbone_features == "l2":
-    #             vision_features = F.normalize(vision_features, dim=-1)
-    #         _, C = vision_features.shape
-
-    #         corrs, max_indices_at_channel = get_ss_statistics(
-    #             vision_features.detach().cpu().numpy(), bs, C, args
-    #         )
-
-    #         get_detection_scores(
-    #             vision_features,
-    #             corrs,
-    #             max_indices_at_channel,
-    #             bd_detector_scores,
-    #             args,
-    #         )
-
-    #         is_poisoned.append(is_batch_poisoned)
-    #         all_votes.append(max_indices_at_channel)
-
-    # else:
-
     # batch by batch (default)
 
     if (
@@ -965,12 +637,6 @@ def find_trigger_channels_or_poisoned_images(
                 images, freq_detector_ensemble, bd_detector_scores, args
             )
 
-        # if args.compare_backbone_predictor or args.only_detect_projector_features:
-        #     get_detection_scores_from_projector(
-        #         vision_features, projector, bs, bd_detector_scores, args
-        #     )
-
-        # if not args.only_detect_projector_features:
         if args.normalize_backbone_features == "l2":
             vision_features = F.normalize(vision_features, dim=-1)
         _, C = vision_features.shape
@@ -979,7 +645,6 @@ def find_trigger_channels_or_poisoned_images(
             vision_features.detach().cpu().numpy(), bs, C, args
         )
 
-        # if not args.only_detect_projector_features:
         get_detection_scores(
             vision_features,
             corrs,
@@ -1043,47 +708,11 @@ def find_trigger_channels_or_poisoned_images(
     # minorities found by all detectors
     minority_indices = []
 
-    # if args.compare_backbone_predictor:
-    #     for detector_name in args.bd_detectors:
-    #         eps = 1e-5
-    #         backbone_scores = np.array(bd_detector_scores[detector_name])
-    #         predictor_scores = np.array(bd_detector_scores[f"{detector_name}_pred"])
-
-    #         if args.compare_mode == "default":
-    #             bd_scores = (predictor_scores - backbone_scores) / (
-    #                 backbone_scores + eps
-    #             )
-    #         elif args.compare_mode == "abs":
-    #             bd_scores = np.abs(
-    #                 (predictor_scores - backbone_scores) / (backbone_scores + eps)
-    #             )
-
-    #         if not args.ideal_case:
-    #             auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
-    #             print(
-    #                 f"the AUROC score of comparing backbone and predictor of detector '{detector_name}' is: {np.round(auroc*100,1)}"
-    #             )
-
-    #         bd_indices = np.argsort(bd_scores)  # indices, sorted from low to high
-
-    #         if minority_lb > 0:
-    #             minority_indices_local = bd_indices[
-    #                 -minority_ub:-minority_lb
-    #             ]  # numpy array
-    #         else:
-    #             minority_indices_local = bd_indices[-minority_ub:]
-    #         minority_indices.extend(minority_indices_local.tolist())
-    # else:
-
-    # if False:
-    #     # get the real poisoned indices from train set
-    #     minority_indices = np.nonzero(is_poisoned == 1)[0]
-    # else:
     for detector, values in bd_detector_scores.items():
         bd_scores = np.array(values)
 
         # calculate AUC score from each detector
-        if not args.ideal_case and not args.tap_trigger:
+        if not args.ideal_case:
             auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
             print(
                 f"the AUROC score of detector '{detector}' is: {np.round(auroc*100,1)}"
@@ -1927,19 +1556,12 @@ class CLTrainer:
                     train_loader
                 ):  # frequency backdoor has been injected
 
-                    # if self.args.use_trigger_channel_removal:
-                    #     (images, is_poisoned, __, _) = content
-                    # else:
-                    #     (images, __, _) = content
-
                     images = content[0]
 
                     model.train()
                     images = images.to(device)
 
-                    # # data
-                    # v1 = transform_1(images)
-                    # v2 = transform_2(images)
+                    # data
                     v1 = train_transform(images)
                     v2 = train_transform(images)
 
@@ -2482,12 +2104,6 @@ class CLTrainer:
         # feature: [bsz, dim]
         # feature_bank: [dim, clean_val_total_num]
         # feature_labels: [clean_val_total_num]
-
-        # #  REMOVE LATER
-        # print(f"[___DEBUG___]: ==============================")
-        # print(f"[___DEBUG___]: feature.shape: {feature.shape}")
-        # print(f"[___DEBUG___]: feature_bank.shape: {feature_bank.shape}")
-        # print(f"[___DEBUG___]: feature_labels.shape: {feature_labels.shape}")
 
         # compute cos similarity between each feature vector and feature bank ---> [B, N]
         sim_matrix = torch.mm(feature, feature_bank)

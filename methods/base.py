@@ -641,6 +641,7 @@ def find_trigger_channels_or_poisoned_images(
         # assume have N poisoned samples
 
         all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
+        print("all_votes.shape: ", all_votes.shape)
 
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.removed_channel_num)

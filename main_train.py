@@ -271,6 +271,12 @@ parser.add_argument(
     help="If >0, sample from limited number of images for trigger channel",
 )
 parser.add_argument(
+    "--match_with_clean_samples",
+    type=int,
+    default=0,
+    help="Used together with find_channels_from_n_few_samples. If >0, sample some clean images as well",
+)
+parser.add_argument(
     "--use_complex_ss_aug",
     action="store_true",
     help="augment images for SS using more complex pipeline",

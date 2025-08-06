@@ -493,6 +493,7 @@ def find_trigger_channels_or_poisoned_images(
         args.use_trigger_channel_removal == True
         and args.find_channels_from_n_few_samples > 0
     ):
+
         total_samples = len(data_loader.dataset)
         random_indices = random.sample(
             range(total_samples), args.find_channels_from_n_few_samples
@@ -502,6 +503,19 @@ def find_trigger_channels_or_poisoned_images(
             subset, batch_size=args.linear_probe_batch_size, shuffle=False
         )
 
+        if args.match_with_clean_samples > 0:
+            total_clean_samples = len(train_probe_loader.dataset)
+            random_clean_indices = random.sample(
+                range(total_clean_samples), args.match_with_clean_samples
+            )
+            clean_subset = Subset(
+                train_probe_loader.dataset, random_clean_indices
+            )  # iterate through, and alwasy take the first item, which is images
+            clean_samples = torch.stack(
+                [image for (image, _, _) in clean_subset], dim=0
+            )  # a list of clean images
+            print("clean_samples.shape: ", clean_samples.shape)
+
     # if args.use_channel_var:
     #     variance_by_channel = []
 
@@ -509,11 +523,19 @@ def find_trigger_channels_or_poisoned_images(
         if args.ideal_case:
             images = content[0]
             is_batch_poisoned = torch.ones(size=(images.shape[0],))
-            is_batch_poisoned = is_batch_poisoned.to(device)
+
+            if (
+                args.find_channels_from_n_few_samples > 0
+                and args.match_with_clean_samples > 0
+            ):
+                images = torch.cat([images, clean_samples], dim=0)
+                # is_batch_poisoned = torch.cat(
+                #     [is_batch_poisoned, torch.zeros(size=(clean_samples.shape[0],))]
+                # )
         else:
             (images, is_batch_poisoned, _, file_index) = content
-            is_batch_poisoned = is_batch_poisoned.to(device)
 
+        is_batch_poisoned = is_batch_poisoned.to(device)
         images = images.to(device)
 
         if args.siftout_poisoned_images:
@@ -557,7 +579,6 @@ def find_trigger_channels_or_poisoned_images(
             else:
                 contribution_percent_by_channel += contribution_percent_sum
         else:
-
             corrs, max_indices_at_channel = ss_statistics(
                 vision_features.detach().cpu().numpy(), bs, C, args
             )
@@ -571,7 +592,10 @@ def find_trigger_channels_or_poisoned_images(
                 args,
             )
 
-        all_votes.append(max_indices_at_channel)
+        if args.match_with_clean_samples > 0:
+            all_votes.append(max_indices_at_channel[: -clean_samples.shape[0], :])
+        else:
+            all_votes.append(max_indices_at_channel)
         is_poisoned.append(is_batch_poisoned)
 
     """
@@ -613,10 +637,11 @@ def find_trigger_channels_or_poisoned_images(
     #         "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
     #     )
 
-    if args.find_channels_from_n_few_samples:
+    if args.find_channels_from_n_few_samples > 0:
         # assume have N poisoned samples
 
         all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
+
         essential_indices = Counter(all_votes.flatten()).most_common(
             max(args.removed_channel_num)
         )

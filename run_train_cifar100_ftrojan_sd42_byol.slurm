@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c100_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-06:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -52,7 +52,7 @@ python -u main_train.py \
     --use_ssl_cleanse \
     \
     --note "Use ssl-cleanse" \
-    --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_075005_50_75_trigger_estimation_byol_cifar100_ftrojan" \
+    \
     --num_clusters 100 \
 
 

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-16:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -55,7 +55,7 @@ python -u main_train.py \
     --use_ssl_cleanse \
     \
     --note "Use ssl-cleanse" \
-    --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_183556_16_93_trigger_estimation_simclr_imagenet100_htba" \
+    \
     --num_clusters 100 \
 
 

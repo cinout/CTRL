@@ -48,7 +48,7 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 10 \
     --num_views 1 \
     \
     --use_ssl_cleanse \

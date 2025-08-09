@@ -377,10 +377,13 @@ for metric in metrics:
                         #     mean_val,
                         #     std_val,
                         # )
+                        if isinstance(mean_val, (int, float)) and isinstance(
+                            std_val, (int, float)
+                        ):
 
-                        output_acc_asr_file_handle.write(
-                            f"{mean_val:.1f}±{std_val:.1f}\t"
-                        )
+                            output_acc_asr_file_handle.write(
+                                f"{mean_val:.1f}±{std_val:.1f}\t"
+                            )
 
             output_acc_asr_file_handle.write("\n")
         output_acc_asr_file_handle.write("\n")

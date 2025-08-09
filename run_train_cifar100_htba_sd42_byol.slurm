@@ -60,7 +60,5 @@ python -u main_train.py \
 
 
 
-
-
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

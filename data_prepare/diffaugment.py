@@ -156,22 +156,27 @@ class PoisonAgent:
         basic data manipulation
         """
         if self.args.dataset == "imagenet100":
+
             train_paths = self.trainset
             val_paths = self.validset
 
             print("transform training data")
 
+            # TODO: save the values for quicker reference
             x_train_tensor, y_train_tensor = get_data_and_label(
                 train_paths, self.args.image_size
             )
+
             x_train_tensor = torch.stack(x_train_tensor)
             y_train_tensor = torch.stack(y_train_tensor)
 
             print("transform validation data")
 
+            # TODO: save the values for quicker reference
             x_test_tensor, y_test_tensor = get_data_and_label(
                 val_paths, self.args.image_size
             )
+
             x_test_tensor = torch.stack(x_test_tensor)
             y_test_tensor = torch.stack(y_test_tensor)
             # with open(f"x_test_tensor_{self.args.dataset}.t", "wb") as f:
@@ -180,6 +185,7 @@ class PoisonAgent:
             #     torch.save(y_test_tensor, f)
 
             # memory
+            # TODO: save the values for quicker reference
             x_memory_tensor = x_train_tensor.clone().detach()
             y_memory_tensor = y_train_tensor.clone().detach()
 
@@ -222,6 +228,7 @@ class PoisonAgent:
         """
         # test set (poison all images)
         if self.args.trigger_type == "ftrojan":
+            # TODO: save the values for quicker reference
             x_test_pos_tensor, y_test_pos_tensor = (
                 self.fre_poison_agent.Poison_Frequency_Diff(
                     x_test_tensor.clone().detach(),
@@ -230,6 +237,7 @@ class PoisonAgent:
                 )
             )
         elif self.args.trigger_type == "htba":
+            # TODO: save the values for quicker reference
             x_test_pos_tensor, y_test_pos_tensor = self.fre_poison_agent.Poison_HTBA(
                 x_test_tensor.clone().detach(),
                 y_test_tensor.clone().detach(),
@@ -248,35 +256,33 @@ class PoisonAgent:
         """
         # POISONed Train Set (for stage 1 attack)
         """
-        if False:
-            # don't poison train set at all
-            train_is_poisoned = torch.zeros_like(y_train_tensor)
-        else:
-            poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
-            poison_index = poison_index[: self.poison_num]
+        poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
+        poison_index = poison_index[: self.poison_num]
 
-            # train set (poison only a portion of train images)
-            if self.args.trigger_type == "ftrojan":
-                x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-                    self.fre_poison_agent.Poison_Frequency_Diff(
-                        x_train_tensor[poison_index],
-                        y_train_tensor[poison_index],
-                        self.magnitude_train,
-                    )
+        # train set (poison only a portion of train images)
+        if self.args.trigger_type == "ftrojan":
+            # TODO: save the values for quicker reference
+            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                self.fre_poison_agent.Poison_Frequency_Diff(
+                    x_train_tensor[poison_index],
+                    y_train_tensor[poison_index],
+                    self.magnitude_train,
                 )
-            elif self.args.trigger_type == "htba":
-                x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-                    self.fre_poison_agent.Poison_HTBA(
-                        x_train_tensor[poison_index],
-                        y_train_tensor[poison_index],
-                    )
+            )
+        elif self.args.trigger_type == "htba":
+            # TODO: save the values for quicker reference
+            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                self.fre_poison_agent.Poison_HTBA(
+                    x_train_tensor[poison_index],
+                    y_train_tensor[poison_index],
                 )
+            )
 
-            """
-            Create dataloaders
-            """
-            train_is_poisoned = torch.zeros_like(y_train_tensor)
-            train_is_poisoned[poison_index] = 1
+        """
+        Create dataloaders
+        """
+        train_is_poisoned = torch.zeros_like(y_train_tensor)
+        train_is_poisoned[poison_index] = 1
 
         train_index = torch.tensor(list(range(len(self.trainset))), dtype=torch.long)
         test_index = torch.tensor(list(range(len(self.validset))), dtype=torch.long)

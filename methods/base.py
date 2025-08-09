@@ -487,20 +487,25 @@ def find_trigger_channels_or_poisoned_images(
     """
     Extract backboone features from input images, and potentially calculate spectral signature using ss_statistics()
     """
-    # batch by batch (default)
 
-    if (
-        args.use_trigger_channel_removal == True
-        and args.find_channels_from_n_few_samples > 0
-    ):
+    if args.use_trigger_channel_removal == True and args.ideal_case:
+        # use_trigger_channel_removal: only need to use args.ideal_case when we want to estimate trigger channels
 
-        total_samples = len(data_loader.dataset)
-        random_indices = random.sample(
-            range(total_samples), args.find_channels_from_n_few_samples
-        )
-        subset = Subset(data_loader.dataset, random_indices)
+        dataset = data_loader.dataset
+        poisoned_indices = [
+            i
+            for i, (_, train_is_poisoned, _, _) in enumerate(dataset)
+            if train_is_poisoned == 1
+        ]  # find all real poisoned images from train set
+
+        if args.find_channels_from_n_few_samples > 0:
+            poisoned_indices = random.sample(
+                poisoned_indices, args.find_channels_from_n_few_samples
+            )
+
+        poisoned_subset = Subset(dataset, poisoned_indices)
         data_loader = DataLoader(
-            subset, batch_size=args.linear_probe_batch_size, shuffle=False
+            poisoned_subset, batch_size=args.linear_probe_batch_size, shuffle=False
         )
 
         if args.match_with_clean_samples > 0:
@@ -514,26 +519,19 @@ def find_trigger_channels_or_poisoned_images(
             clean_samples = torch.stack(
                 [image for (image, _, _) in clean_subset], dim=0
             )  # a list of clean images
-            print("clean_samples.shape: ", clean_samples.shape)
 
     # if args.use_channel_var:
     #     variance_by_channel = []
 
     for i, content in tqdm(enumerate(data_loader)):
-        if args.ideal_case:
-            images = content[0]
-            is_batch_poisoned = torch.ones(size=(images.shape[0],))
+        (images, is_batch_poisoned, _, file_index) = content
 
-            if (
-                args.find_channels_from_n_few_samples > 0
-                and args.match_with_clean_samples > 0
-            ):
-                images = torch.cat([images, clean_samples], dim=0)
-                # is_batch_poisoned = torch.cat(
-                #     [is_batch_poisoned, torch.zeros(size=(clean_samples.shape[0],))]
-                # )
-        else:
-            (images, is_batch_poisoned, _, file_index) = content
+        if (
+            args.ideal_case
+            and args.find_channels_from_n_few_samples > 0
+            and args.match_with_clean_samples > 0
+        ):
+            images = torch.cat([images, clean_samples], dim=0)
 
         is_batch_poisoned = is_batch_poisoned.to(device)
         images = images.to(device)
@@ -593,6 +591,7 @@ def find_trigger_channels_or_poisoned_images(
             )
 
         if args.match_with_clean_samples > 0:
+            # remove the attached clean samples
             all_votes.append(max_indices_at_channel[: -clean_samples.shape[0], :])
         else:
             all_votes.append(max_indices_at_channel)
@@ -637,8 +636,8 @@ def find_trigger_channels_or_poisoned_images(
     #         "indices_taken_by_mean_and_std.shape: ", indices_taken_by_mean_and_std.shape
     #     )
 
-    if args.find_channels_from_n_few_samples > 0:
-        # assume have N poisoned samples
+    if args.ideal_case:
+        # assume all are poisoned samples
 
         all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
         print("all_votes.shape: ", all_votes.shape)
@@ -671,7 +670,7 @@ def find_trigger_channels_or_poisoned_images(
             print("essential_indices.shape: ", essential_indices.shape)
 
     else:
-        # need to find minorities first based on detector score
+        ########## need to estimate minorities first based on detector score
 
         # GT, for checking performance
         is_poisoned = torch.cat(is_poisoned)
@@ -692,6 +691,7 @@ def find_trigger_channels_or_poisoned_images(
             bd_scores = np.array(values)
 
             # calculate AUC score from each detector
+            # FIXME: can remove if condition
             if not args.ideal_case:
                 auroc = roc_auc_score(y_true=is_poisoned, y_score=bd_scores)
                 print(
@@ -745,8 +745,10 @@ def find_trigger_channels_or_poisoned_images(
         """
         If use trigger channel removal, return the estimated trigger channels
         """
+        # FIXME: can remove ideal_case from the if condition
         if args.find_and_ignore_probe_channels and not args.ideal_case:
-            # REMOVE channels that appear in probe dataset
+            # REMOVE channels that appear in probe dataset (all clean images)
+
             essential_indices = Counter(all_votes.flatten()).most_common(
                 max(args.removed_channel_num) + args.ignore_probe_removed_channel_num
             )
@@ -1680,199 +1682,137 @@ class CLTrainer:
         projector.eval()
         trained_linear.eval()
 
-        if self.args.ideal_case:
-            poi_val_contributing_indices = find_trigger_channels_or_poisoned_images(
-                self.args,
-                poison.test_pos_loader,  # poisoned training set
-                poison.train_probe_loader,  # 1% clean train probe dataset
-                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
-                backbone,
-                # projector,
-                # trained_linear,
-                poison.ss_transform,
-            )
+        # Esimate poisoned triggers
+        contributing_indices = find_trigger_channels_or_poisoned_images(
+            self.args,
+            poison.train_pos_loader,  # poisoned training set
+            poison.train_probe_loader,  # 1% clean train probe dataset
+            poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+            backbone,
+            poison.ss_transform,
+        )
+        print(f"predicted trigger channels are: {contributing_indices}")
+
+        ############# KNN
+        clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+            backbone,
+            poison.memory_loader,
+            poison.test_clean_loader,
+            self.args,
+            classes=self.args.num_classes,
+            backdoor_loader=poison.test_pos_loader,
+            use_SS_detector=True,
+            contributing_indices=contributing_indices,
+        )
+        for k in self.args.removed_channel_num:
             print(
-                f"[IDEAL CASE] [POISON VAL SET] predicted trigger channels are: {poi_val_contributing_indices}"
+                f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
             )
 
-            if self.args.find_channels_from_n_few_samples == 0:
-                # use all val images
-
-                # Get the estimated trigger indices
-                clean_val_contributing_indices = find_trigger_channels_or_poisoned_images(
-                    self.args,
-                    poison.test_clean_loader,  # poisoned training set
-                    poison.train_probe_loader,  # 1% clean train probe dataset
-                    poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
-                    backbone,
-                    # projector,
-                    # trained_linear,
-                    poison.ss_transform,
-                )
-                print(
-                    f"[IDEAL CASE] [CLEAN VAL SET] predicted trigger channels are: {clean_val_contributing_indices}"
-                )
-
-            ############# KNN
-            clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                backbone,
-                poison.memory_loader,
-                poison.test_clean_loader,
-                self.args,
-                classes=self.args.num_classes,
-                backdoor_loader=poison.test_pos_loader,
-                use_SS_detector=True,
-                clean_val_contributing_indices=(
-                    clean_val_contributing_indices
-                    if self.args.find_channels_from_n_few_samples == 0
-                    else poi_val_contributing_indices
-                ),
-                poi_val_contributing_indices=poi_val_contributing_indices,
-            )
-            for k in self.args.removed_channel_num:
-                print(
-                    f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
-                )
-
-            ########### Linear Probe
-            # Clean Validation Set
-            if (
-                self.args.retrain_linear_after_channel_removal
-                or self.args.retrain_whole_model_after_cleanse
-            ):
-                # if need to retrain
-                backbone_clean_val, trained_linear = (
-                    self.retrain_model_with_channel_removed_encoder(
-                        poison,
-                        copy.deepcopy(backbone),
-                        (
-                            clean_val_contributing_indices
-                            if self.args.find_channels_from_n_few_samples == 0
-                            else poi_val_contributing_indices
-                        ),
-                    )
-                )
-            print(f"<<<<<<<<< evaluating linear on CLEAN val")
-            clean_acc1 = eval_linear_classifier(
-                poison.test_clean_loader,
-                (
-                    backbone_clean_val
-                    if (
-                        self.args.retrain_linear_after_channel_removal
-                        or self.args.retrain_whole_model_after_cleanse
-                    )
-                    else backbone
-                ),
-                trained_linear,
-                self.args,
-                val_mode="clean",
-                use_ss_detector=True,
-                contributing_indices=(
-                    clean_val_contributing_indices
-                    if self.args.find_channels_from_n_few_samples == 0
-                    else poi_val_contributing_indices
-                ),
+        ########### Linear Probe
+        # Clean Validation Set
+        if (
+            self.args.retrain_linear_after_channel_removal
+            or self.args.retrain_whole_model_after_cleanse
+        ):
+            # if need to retrain
+            backbone, trained_linear = self.retrain_model_with_channel_removed_encoder(
+                poison, backbone, contributing_indices
             )
 
-            # Poisoned Validation Set
-            if (
-                self.args.retrain_linear_after_channel_removal
-                or self.args.retrain_whole_model_after_cleanse
-            ):
-                backbone_poi_val, trained_linear = (
-                    self.retrain_model_with_channel_removed_encoder(
-                        poison, copy.deepcopy(backbone), poi_val_contributing_indices
-                    )
-                )
-            print(f"<<<<<<<<< evaluating linear on POISON val")
-            poison_acc1 = eval_linear_classifier(
-                poison.test_pos_loader,
-                (
-                    backbone_poi_val
-                    if (
-                        self.args.retrain_linear_after_channel_removal
-                        or self.args.retrain_whole_model_after_cleanse
-                    )
-                    else backbone
-                ),
-                trained_linear,
-                self.args,
-                val_mode="poison",
-                use_ss_detector=True,
-                contributing_indices=poi_val_contributing_indices,
+        print(f"<<<<<<<<< evaluating linear on CLEAN val")
+        clean_acc1 = eval_linear_classifier(
+            poison.test_clean_loader,
+            backbone,
+            trained_linear,
+            self.args,
+            val_mode="clean",
+            use_ss_detector=True,
+            contributing_indices=contributing_indices,
+        )
+
+        print(f"<<<<<<<<< evaluating linear on POISON val")
+        poison_acc1 = eval_linear_classifier(
+            poison.test_pos_loader,
+            backbone,
+            trained_linear,
+            self.args,
+            val_mode="poison",
+            use_ss_detector=True,
+            contributing_indices=contributing_indices,
+        )
+
+        for k in self.args.removed_channel_num:
+            print(
+                f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
             )
+        # else:
+        #     ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
 
-            for k in self.args.removed_channel_num:
-                print(
-                    f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
-                )
-        else:
-            ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
+        #     contributing_indices = find_trigger_channels_or_poisoned_images(
+        #         self.args,
+        #         poison.train_pos_loader,  # poisoned training set
+        #         poison.train_probe_loader,  # 1% clean train probe dataset
+        #         poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+        #         backbone,
+        #         # projector,
+        #         # trained_linear,
+        #         poison.ss_transform,
+        #     )
 
-            contributing_indices = find_trigger_channels_or_poisoned_images(
-                self.args,
-                poison.train_pos_loader,  # poisoned training set
-                poison.train_probe_loader,  # 1% clean train probe dataset
-                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
-                backbone,
-                # projector,
-                # trained_linear,
-                poison.ss_transform,
-            )
+        #     ############# KNN
+        #     clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
+        #         backbone,
+        #         poison.memory_loader,
+        #         poison.test_clean_loader,
+        #         self.args,
+        #         classes=self.args.num_classes,
+        #         backdoor_loader=poison.test_pos_loader,
+        #         use_SS_detector=True,
+        #         contributing_indices=contributing_indices,
+        #     )
 
-            ############# KNN
-            clean_acc_SSDETECTOR, back_acc_SSDETECTOR = self.knn_monitor_fre(
-                backbone,
-                poison.memory_loader,
-                poison.test_clean_loader,
-                self.args,
-                classes=self.args.num_classes,
-                backdoor_loader=poison.test_pos_loader,
-                use_SS_detector=True,
-                contributing_indices=contributing_indices,
-            )
+        #     for k in self.args.removed_channel_num:
+        #         print(
+        #             f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
+        #         )
 
-            for k in self.args.removed_channel_num:
-                print(
-                    f"In kNN classification, by replacing top-{k} channels, clean acc: {clean_acc_SSDETECTOR[k]:.1f} | back acc: {back_acc_SSDETECTOR[k]:.1f}"
-                )
+        #     ########### Linear Probe
+        #     if (
+        #         self.args.retrain_linear_after_channel_removal
+        #         or self.args.retrain_whole_model_after_cleanse
+        #     ):
+        #         backbone, trained_linear = (
+        #             self.retrain_model_with_channel_removed_encoder(
+        #                 poison, backbone, contributing_indices
+        #             )
+        #         )
 
-            ########### Linear Probe
-            if (
-                self.args.retrain_linear_after_channel_removal
-                or self.args.retrain_whole_model_after_cleanse
-            ):
-                backbone, trained_linear = (
-                    self.retrain_model_with_channel_removed_encoder(
-                        poison, backbone, contributing_indices
-                    )
-                )
+        #     print(f"<<<<<<<<< evaluating linear on CLEAN val")
+        #     clean_acc1 = eval_linear_classifier(
+        #         poison.test_clean_loader,
+        #         backbone,
+        #         trained_linear,
+        #         self.args,
+        #         val_mode="clean",
+        #         use_ss_detector=True,
+        #         contributing_indices=contributing_indices,
+        #     )
 
-            print(f"<<<<<<<<< evaluating linear on CLEAN val")
-            clean_acc1 = eval_linear_classifier(
-                poison.test_clean_loader,
-                backbone,
-                trained_linear,
-                self.args,
-                val_mode="clean",
-                use_ss_detector=True,
-                contributing_indices=contributing_indices,
-            )
-
-            print(f"<<<<<<<<< evaluating linear on POISON val")
-            poison_acc1 = eval_linear_classifier(
-                poison.test_pos_loader,
-                backbone,
-                trained_linear,
-                self.args,
-                val_mode="poison",
-                use_ss_detector=True,
-                contributing_indices=contributing_indices,
-            )
-            for k in self.args.removed_channel_num:
-                print(
-                    f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
-                )
+        #     print(f"<<<<<<<<< evaluating linear on POISON val")
+        #     poison_acc1 = eval_linear_classifier(
+        #         poison.test_pos_loader,
+        #         backbone,
+        #         trained_linear,
+        #         self.args,
+        #         val_mode="poison",
+        #         use_ss_detector=True,
+        #         contributing_indices=contributing_indices,
+        #     )
+        #     for k in self.args.removed_channel_num:
+        #         print(
+        #             f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
+        #         )
 
     """
     The function used for kNN classifier evaluation (label prediction).
@@ -1893,8 +1833,6 @@ class CLTrainer:
         backdoor_loader=None,
         use_SS_detector=False,
         contributing_indices=None,
-        clean_val_contributing_indices=None,
-        poi_val_contributing_indices=None,
     ):
         transform = T.Compose(
             [
@@ -1958,12 +1896,7 @@ class CLTrainer:
 
             if use_SS_detector:
                 for k in args.removed_channel_num:
-
-                    indices_toremove = (
-                        clean_val_contributing_indices[0:k]
-                        if args.ideal_case
-                        else contributing_indices[0:k]
-                    )
+                    indices_toremove = contributing_indices[0:k]
                     feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
@@ -2028,11 +1961,7 @@ class CLTrainer:
 
             if use_SS_detector:
                 for k in args.removed_channel_num:
-                    indices_toremove = (
-                        poi_val_contributing_indices[0:k]
-                        if args.ideal_case
-                        else contributing_indices[0:k]
-                    )
+                    indices_toremove = contributing_indices[0:k]
                     feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(

@@ -256,7 +256,7 @@ parser.add_argument(
 parser.add_argument(
     "--ideal_case",
     action="store_true",
-    help="when trigger channels are found from val set directly",
+    help="when we assume we have N real poisoned images",
 )
 parser.add_argument(
     "--knn_cluster_num",

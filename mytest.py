@@ -1,9 +1,11 @@
 from collections import Counter
 import numpy as np
 import torch
+import random
 
 a = [5, 6, 7, 8, 9]
-print(a[:-2])
+
+print(random.sample(a, 3))
 
 uncleansed_asr = [
     # BYOL

@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:50:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,25 +45,19 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
+    --pretrained_ssl_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 42 \
-    --num_views 64 \
+    --num_views 1 \
     \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --find_channels_from_n_few_samples 1 \
-    --voted_channel_num 8 \
-    --removed_channel_num 40 \
+    --use_ssl_cleanse \
     \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 1.000 \
-    --bd_detectors entropy \
-    --in_n_detectors 1 \
-    \
-    --note "ideal_case, use 1 poisoned images only" \
-    --pretrained_ssl_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/linear.pth.tar" \
+    --note "Use ssl-cleanse" \
+    --trigger_path "./SSL_Cleanse_Estimated_Triggers/20241030_183556_16_93_trigger_estimation_simclr_imagenet100_htba" \
+    --num_clusters 100 \
+
 
 
 

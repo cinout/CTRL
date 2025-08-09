@@ -83,12 +83,12 @@ all_input_file_paths = [
     "slurm-13953225.out",
     "slurm-13953226.out",
     "slurm-13953227.out",
-    # "slurm-13953228.out",
-    # "slurm-13953229.out",
-    # "slurm-13953230.out",
-    # "slurm-13953231.out",
-    # "slurm-13953232.out",
-    # "slurm-13953233.out",
+    "slurm-13953228.out",
+    "slurm-13953229.out",
+    "slurm-13953230.out",
+    "slurm-13953231.out",
+    "slurm-13953232.out",
+    "slurm-13953233.out",
 ]
 
 """

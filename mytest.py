@@ -3,9 +3,6 @@ import numpy as np
 import torch
 import random
 
-a = [5, 6, 7, 8, 9]
-
-print(random.sample(a, 3))
 
 uncleansed_asr = [
     # BYOL
@@ -95,44 +92,44 @@ baseline_asr = [
 
 ours_sample16_asr = [
     # BYOL
-    4.0,
-    11.4,
-    0.4,
-    2.2,
-    39.8,
-    10.1,
-    3.7,
-    11.2,
-    0.0,
-    2.5,
-    25.8,
-    0.2,
-    # MoCo
-    11.8,
-    66.5,
-    11.6,
-    2.8,
-    2.0,
-    0.3,
+    1.5,
+    9.1,
+    0.1,
+    1.5,
+    37.2,
+    1.9,
+    1.6,
     9.7,
-    73.4,
-    13.8,
-    3.4,
-    5.0,
-    1.4,
-    # SimCLR
+    0.0,
+    1.8,
+    17.0,
+    0.6,
+    # MoCo
     5.3,
-    17.4,
-    11.7,
+    64.5,
+    6.4,
+    2.5,
+    1.3,
+    0.1,
+    3.8,
+    72.1,
+    5.1,
+    3.1,
+    2.6,
+    0.4,
+    # SimCLR
+    3.7,
     4.7,
-    44.8,
-    16.8,
-    2.3,
-    15.6,
-    9.2,
-    4.4,
-    38.2,
-    36.8,
+    0.8,
+    2.0,
+    27.4,
+    3.0,
+    2.2,
+    4.6,
+    1.5,
+    1.9,
+    16.7,
+    13.2,
 ]
 
 uncleansed_asr = np.array(uncleansed_asr)
@@ -143,13 +140,13 @@ ours_sample16_asr = np.array(ours_sample16_asr)
 Absolute Diff
 """
 
-# diff = baseline_asr - ours_sample16_asr
+diff = baseline_asr - ours_sample16_asr
 
-# baseline_wins = np.sum(diff < 0)
-# our_wins = np.sum(diff > 0)
-# ties = np.sum(diff == 0)
+baseline_wins = np.sum(diff < 0)
+our_wins = np.sum(diff > 0)
+ties = np.sum(diff == 0)
 
-# print(f"baseline_wins: {baseline_wins}; our_wins: {our_wins}; ties: {ties}")
+print(f"baseline_wins: {baseline_wins}; our_wins: {our_wins}; ties: {ties}")
 
 
 """
@@ -169,5 +166,6 @@ ours_sample16_percent_wrt_uncleansed = (
 ) / uncleansed_asr
 
 
-print(baseline_percent_wrt_uncleansed.mean())
-print(ours_sample16_percent_wrt_uncleansed.mean())
+print(
+    f"baseline reduction rate:{baseline_percent_wrt_uncleansed.mean()}, our reduction rate: {ours_sample16_percent_wrt_uncleansed.mean()}"
+)

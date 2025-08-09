@@ -52,7 +52,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 16 \
+    --find_channels_from_n_few_samples 4 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     \
@@ -61,7 +61,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 16 poisoned images only" \
+    --note "ideal_case, use 4 poisoned images only" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_byol_ref_set_sd20/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_byol_ref_set_sd20/linear.pth.tar" \
 

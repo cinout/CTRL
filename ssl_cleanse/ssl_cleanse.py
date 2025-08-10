@@ -204,6 +204,7 @@ def trigger_inversion(args, backbone, poison, feat_dim):
         prepare dataset
         """
 
+        # TODO: error here
         dataloader = DataLoader(
             dataset=DatasetInit(poison.train_probe_loader),
             batch_size=100,
@@ -222,6 +223,8 @@ def trigger_inversion(args, backbone, poison, feat_dim):
         # x: [#total_images, 3, image_size, image_size], tensored (value range in 0-1), and transformed by above
         # x_untransformed: same shape as above, tensored (value range in 0-1), but no transformed
         # _ is gt label
+
+        # TODO: error here
         rep, x, x_untransformed, _ = get_data(
             device, backbone, dataloader, args.image_size, feat_dim, transform
         )

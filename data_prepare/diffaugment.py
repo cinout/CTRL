@@ -292,7 +292,7 @@ class PoisonAgent:
         ):
             tensor_dict = torch.load(
                 f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth",
-                map_location=device,
+                # map_location=device,
             )
 
             x_train_tensor = tensor_dict["x_train_tensor"]

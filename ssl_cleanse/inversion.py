@@ -14,6 +14,7 @@ class DatasetInit(data.Dataset):
             :2
         ]  # tuple, image [500, 3, 32, 32] and label [500]
 
+    # TODO: this is where error happens
     def __getitem__(self, idx):
         image, target = self.file_list[0][idx], self.file_list[1][idx]
 
@@ -85,6 +86,7 @@ def get_data(device, encoder, loader, image_size, output_size, transform):
     )
 
     with torch.no_grad():
+        # TODO: error
         for i, (x, y) in enumerate(loader):
             x, y = x.to(device), y.to(device)
             xs_untransformed[i] = x

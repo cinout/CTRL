@@ -49,16 +49,18 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 1 \
+    --find_channels_from_n_few_samples 8 \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
+    --use_ss_contribute_percent \
+    --contribute_percent_option standalone \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 1 poisoned images only" \
+    --note "ideal_case, use 8 poisoned images only, contribute_percent: standalone" \
     --pretrained_ssl_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd30/linear.pth.tar" \
 

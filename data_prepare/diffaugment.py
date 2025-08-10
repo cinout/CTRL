@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader, TensorDataset
-import random
+import random, os
 import numpy as np
 from PIL import Image
 from torch import Tensor
@@ -156,38 +156,38 @@ class PoisonAgent:
         basic data manipulation
         """
         if self.args.dataset == "imagenet100":
+            if os.path.exists(
+                f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
+            ):
+                # tensors are saved to local disk already
+                pass
+            else:
 
-            train_paths = self.trainset
-            val_paths = self.validset
+                train_paths = self.trainset
+                val_paths = self.validset
 
-            print("transform training data")
+                print("transform training data")
 
-            # TODO: save the values for quicker reference
-            x_train_tensor, y_train_tensor = get_data_and_label(
-                train_paths, self.args.image_size
-            )
+                x_train_tensor, y_train_tensor = get_data_and_label(
+                    train_paths, self.args.image_size
+                )
 
-            x_train_tensor = torch.stack(x_train_tensor)
-            y_train_tensor = torch.stack(y_train_tensor)
+                x_train_tensor = torch.stack(x_train_tensor)
+                y_train_tensor = torch.stack(y_train_tensor)
 
-            print("transform validation data")
+                print("transform validation data")
 
-            # TODO: save the values for quicker reference
-            x_test_tensor, y_test_tensor = get_data_and_label(
-                val_paths, self.args.image_size
-            )
+                x_test_tensor, y_test_tensor = get_data_and_label(
+                    val_paths, self.args.image_size
+                )
 
-            x_test_tensor = torch.stack(x_test_tensor)
-            y_test_tensor = torch.stack(y_test_tensor)
-            # with open(f"x_test_tensor_{self.args.dataset}.t", "wb") as f:
-            #     torch.save(x_test_tensor, f)
-            # with open(f"y_test_tensor_{self.args.dataset}.t", "wb") as f:
-            #     torch.save(y_test_tensor, f)
+                x_test_tensor = torch.stack(x_test_tensor)
+                y_test_tensor = torch.stack(y_test_tensor)
 
-            # memory
-            # TODO: save the values for quicker reference
-            x_memory_tensor = x_train_tensor.clone().detach()
-            y_memory_tensor = y_train_tensor.clone().detach()
+                # memory
+
+                x_memory_tensor = x_train_tensor.clone().detach()
+                y_memory_tensor = y_train_tensor.clone().detach()
 
         else:
             # CIFAR-10/100
@@ -226,83 +226,84 @@ class PoisonAgent:
         """
         # POISONed Validation Set
         """
-        # test set (poison all images)
-        if self.args.trigger_type == "ftrojan":
-            # TODO: save the values for quicker reference
-            x_test_pos_tensor, y_test_pos_tensor = (
-                self.fre_poison_agent.Poison_Frequency_Diff(
-                    x_test_tensor.clone().detach(),
-                    y_test_tensor.clone().detach(),
-                    self.magnitude_val,
+        if self.args.dataset == "imagenet100" and os.path.exists(
+            f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
+        ):
+            pass
+        else:
+            # test set (poison all images)
+            if self.args.trigger_type == "ftrojan":
+                x_test_pos_tensor, y_test_pos_tensor = (
+                    self.fre_poison_agent.Poison_Frequency_Diff(
+                        x_test_tensor.clone().detach(),
+                        y_test_tensor.clone().detach(),
+                        self.magnitude_val,
+                    )
                 )
-            )
-        elif self.args.trigger_type == "htba":
-            # TODO: save the values for quicker reference
-            x_test_pos_tensor, y_test_pos_tensor = self.fre_poison_agent.Poison_HTBA(
-                x_test_tensor.clone().detach(),
-                y_test_tensor.clone().detach(),
+            elif self.args.trigger_type == "htba":
+                x_test_pos_tensor, y_test_pos_tensor = (
+                    self.fre_poison_agent.Poison_HTBA(
+                        x_test_tensor.clone().detach(),
+                        y_test_tensor.clone().detach(),
+                    )
+                )
+
+            # why? is it because above code does not assign correct label to poisoned images?
+            # [YES], the Poison_Frequency_Diff() function only poisons image data, but does not pollute label.
+            y_test_pos_tensor = (
+                torch.ones_like(y_test_pos_tensor, dtype=torch.long)
+                * self.args.target_class
             )
 
-        # why? is it because above code does not assign correct label to poisoned images?
-        # [YES], the Poison_Frequency_Diff() function only poisons image data, but does not pollute label.
-        y_test_pos_tensor = (
-            torch.ones_like(y_test_pos_tensor, dtype=torch.long)
-            * self.args.target_class
-        )
-
-        # uncomment to show poisoned image example
-        # tensor_back_to_PIL(x_test_pos_tensor[0])
+            # uncomment to show poisoned image example
+            # tensor_back_to_PIL(x_test_pos_tensor[0])
 
         """
         # POISONed Train Set (for stage 1 attack)
         """
-        poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
-        poison_index = poison_index[: self.poison_num]
+        if self.args.dataset == "imagenet100" and os.path.exists(
+            f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
+        ):
+            pass
+        else:
+            poison_index = torch.where(y_train_tensor == self.args.target_class)[0]
+            poison_index = poison_index[: self.poison_num]
 
-        # train set (poison only a portion of train images)
-        if self.args.trigger_type == "ftrojan":
-            # TODO: save the values for quicker reference
-            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-                self.fre_poison_agent.Poison_Frequency_Diff(
-                    x_train_tensor[poison_index],
-                    y_train_tensor[poison_index],
-                    self.magnitude_train,
+            # train set (poison only a portion of train images)
+            if self.args.trigger_type == "ftrojan":
+
+                x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                    self.fre_poison_agent.Poison_Frequency_Diff(
+                        x_train_tensor[poison_index],
+                        y_train_tensor[poison_index],
+                        self.magnitude_train,
+                    )
                 )
-            )
-        elif self.args.trigger_type == "htba":
-            # TODO: save the values for quicker reference
-            x_train_tensor[poison_index], y_train_tensor[poison_index] = (
-                self.fre_poison_agent.Poison_HTBA(
-                    x_train_tensor[poison_index],
-                    y_train_tensor[poison_index],
+            elif self.args.trigger_type == "htba":
+                x_train_tensor[poison_index], y_train_tensor[poison_index] = (
+                    self.fre_poison_agent.Poison_HTBA(
+                        x_train_tensor[poison_index],
+                        y_train_tensor[poison_index],
+                    )
                 )
-            )
 
-        # TODO: all saves and loads for imagenet100 are here:
-
-        # x_train_tensor, y_train_tensor
-        # x_test_tensor, y_test_tensor
-        # x_memory_tensor, y_memory_tensor
-        # x_test_pos_tensor, y_test_pos_tensor
-        # poison_index
-
-        # one for each poison
-        tensor_dict = {
-            "x_train_tensor": x_train_tensor,
-            "y_train_tensor": y_train_tensor,
-            "x_test_tensor": x_test_tensor,
-            "y_test_tensor": y_test_tensor,
-            "x_test_pos_tensor": x_test_pos_tensor,
-            "y_test_pos_tensor": y_test_pos_tensor,
-            "x_memory_tensor": x_memory_tensor,
-            "y_memory_tensor": y_memory_tensor,
-            "poison_index": poison_index,
-        }
-        if self.args.dataset == "imagenet100":
-            torch.save(
-                tensor_dict,
+        if self.args.dataset == "imagenet100" and os.path.exists(
+            f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
+        ):
+            tensor_dict = torch.load(
                 f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth",
+                map_location=device,
             )
+
+            x_train_tensor = tensor_dict["x_train_tensor"]
+            y_train_tensor = tensor_dict["y_train_tensor"]
+            x_test_tensor = tensor_dict["x_test_tensor"]
+            y_test_tensor = tensor_dict["y_test_tensor"]
+            x_test_pos_tensor = tensor_dict["x_test_pos_tensor"]
+            y_test_pos_tensor = tensor_dict["y_test_pos_tensor"]
+            x_memory_tensor = tensor_dict["x_memory_tensor"]
+            y_memory_tensor = tensor_dict["y_memory_tensor"]
+            poison_index = tensor_dict["poison_index"]
 
         """
         Create dataloaders

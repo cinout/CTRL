@@ -278,6 +278,32 @@ class PoisonAgent:
                 )
             )
 
+        # TODO: all saves and loads for imagenet100 are here:
+
+        # x_train_tensor, y_train_tensor
+        # x_test_tensor, y_test_tensor
+        # x_memory_tensor, y_memory_tensor
+        # x_test_pos_tensor, y_test_pos_tensor
+        # poison_index
+
+        # one for each poison
+        tensor_dict = {
+            "x_train_tensor": x_train_tensor,
+            "y_train_tensor": y_train_tensor,
+            "x_test_tensor": x_test_tensor,
+            "y_test_tensor": y_test_tensor,
+            "x_test_pos_tensor": x_test_pos_tensor,
+            "y_test_pos_tensor": y_test_pos_tensor,
+            "x_memory_tensor": x_memory_tensor,
+            "y_memory_tensor": y_memory_tensor,
+            "poison_index": poison_index,
+        }
+        if self.args.dataset == "imagenet100":
+            torch.save(
+                tensor_dict,
+                f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth",
+            )
+
         """
         Create dataloaders
         """

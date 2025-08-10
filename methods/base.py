@@ -653,11 +653,20 @@ def find_trigger_channels_or_poisoned_images(
                 ]
             elif args.contribute_percent_option == "pick_from_voted":
                 all_voted_channels = np.unique(all_votes)  # find all voted channels
+
+                print("all_voted_channels: ", all_voted_channels)
+                print("all_voted_channels.shape: ", all_voted_channels.shape)
+
                 contribution_percent_by_channel = contribution_percent_by_channel[
                     all_voted_channels
                 ]  # only take the channels voted in all_voted_channels
-                essential_indices = np.argsort(-contribution_percent_by_channel)[
-                    : max(args.removed_channel_num)
+
+                top_contribution_indices_of_all_voted_channels = np.argsort(
+                    -contribution_percent_by_channel
+                )[: max(args.removed_channel_num)]
+
+                essential_indices = all_voted_channels[
+                    top_contribution_indices_of_all_voted_channels
                 ]
 
             # # get the top N indices

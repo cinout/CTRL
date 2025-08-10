@@ -207,6 +207,7 @@ Input:
 Return:
     corrs: spectral signature score, in numpy format
     max_indices_at_channel: the indices of channels with highest contribution to SS. In numpy format, shape of [bs, n_view*take_channel]
+    contribution_percent_sum: shape [C,], in numpy format
 
 """
 
@@ -637,37 +638,51 @@ def find_trigger_channels_or_poisoned_images(
     #     )
 
     if args.ideal_case:
-        # assume all are poisoned samples
+        # all images are poisoned samples
 
         all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
-        print("all_votes.shape: ", all_votes.shape)
-
-        essential_indices = Counter(all_votes.flatten()).most_common(
-            max(args.removed_channel_num)
-        )
-        essential_indices = torch.tensor(
-            [idx for (idx, occ_count) in essential_indices]
-        )
 
         if args.use_ss_contribute_percent:
             total_views = args.find_channels_from_n_few_samples * args.num_views
             contribution_percent_by_channel /= total_views
 
-            # get the top N indices
-            supplement_essential_indices = np.argsort(-contribution_percent_by_channel)[
-                : max(args.removed_channel_num)
-            ]
+            if args.contribute_percent_option == "standalone":
+                # essential_indices is totally replaced by contribution_percent_by_channel's results
+                essential_indices = np.argsort(-contribution_percent_by_channel)[
+                    : max(args.removed_channel_num)
+                ]
+            elif args.contribute_percent_option == "pick_from_voted":
+                all_voted_channels = np.unique(all_votes)  # find all voted channels
+                contribution_percent_by_channel = contribution_percent_by_channel[
+                    all_voted_channels
+                ]  # only take the channels voted in all_voted_channels
+                essential_indices = np.argsort(-contribution_percent_by_channel)[
+                    : max(args.removed_channel_num)
+                ]
 
-            essential_indices = essential_indices[
-                torch.isin(
-                    essential_indices,
-                    torch.from_numpy(supplement_essential_indices).to(
-                        essential_indices.device
-                    ),
-                )
-            ]
+            # # get the top N indices
+            # supplement_essential_indices = np.argsort(-contribution_percent_by_channel)[
+            #     : max(args.removed_channel_num)
+            # ]
 
-            print("essential_indices.shape: ", essential_indices.shape)
+            # essential_indices = essential_indices[
+            #     torch.isin(
+            #         essential_indices,
+            #         torch.from_numpy(supplement_essential_indices).to(
+            #             essential_indices.device
+            #         ),
+            #     )
+            # ]
+        else:
+            # use voting frequency (default option)
+            essential_indices = Counter(all_votes.flatten()).most_common(
+                max(args.removed_channel_num)
+            )
+            essential_indices = torch.tensor(
+                [idx for (idx, occ_count) in essential_indices]
+            )
+
+        print("essential_indices.shape: ", essential_indices.shape)
 
     else:
         ########## need to estimate minorities first based on detector score

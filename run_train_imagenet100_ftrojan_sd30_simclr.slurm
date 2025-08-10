@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method byol \
+    --method simclr \
     \
     --image_size 64 \
     \
@@ -46,7 +46,7 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 30 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -61,8 +61,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "ideal_case, use 1 poisoned images only" \
-    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd30/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd30/linear.pth.tar" \
     
 
 ##Log this job's resource usage stats###

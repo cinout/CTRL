@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="c10_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-04:00:00
+#SBATCH --time=0-00:15:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -44,22 +44,25 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 10 \
-    --num_views 1 \
+    --seed 42 \
+    --num_views 64 \
     \
-    --use_ssl_cleanse \
+    --use_trigger_channel_removal \
+    --ideal_case \
+    --find_channels_from_n_few_samples 1 \
+    --voted_channel_num 8 \
+    --removed_channel_num 40 \
     \
-    --note "Use ssl-cleanse, sd=10" \
+    --minority_lower_bound 0.000 \
+    --minority_upper_bound 1.000 \
+    --bd_detectors entropy \
+    --in_n_detectors 1 \
     \
-    --num_clusters 10 \
-
-
-
-
+    --note "ideal_case, use 1 poisoned images only" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_byol_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd42/linear.pth.tar" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

@@ -156,6 +156,7 @@ class PoisonAgent:
         basic data manipulation
         """
         if self.args.dataset == "imagenet100":
+            ###### NOTICE: quick_fetch_tensors_imagenet100_XXX.pth are generated with SD42 and should be used with SSL poisoned model with SD42
             if os.path.exists(
                 f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
             ):

@@ -286,6 +286,14 @@ parser.add_argument(
     action="store_true",
     help="instead of using the frequency of appearance to estimate backdoor channels, use the total percentage of contribution to SS",
 )
+# TODO: add
+parser.add_argument(
+    "--contribute_percent_option",
+    type=str,
+    choices=["standalone", "pick_from_voted"],
+    default="standalone",
+    help="(1) standalone: use as a stand-alone channel estimator; (2) pick_from_voted: from the pool of top channels voted, choose the ones with top contribution percent",
+)
 # parser.add_argument(
 #     "--use_channel_var",
 #     action="store_true",

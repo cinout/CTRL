@@ -70,13 +70,13 @@ def match_basic_info(pattern, file_content, file_path, error_message):
 Input File Paths
 """
 # FIXME: change
-all_input_file_paths = ["slurm-13974465-ref.out", "slurm-13974631-ref.out"]
+all_input_file_paths = ["slurm-13977635.out", "slurm-13977639.out"]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "img100_ref_"  # FIXME: change
+title = "img100_shortcut_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

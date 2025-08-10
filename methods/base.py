@@ -925,8 +925,9 @@ def train_linear_classifier(
 
         # compute output
         if args.retrain_whole_model_after_cleanse:
-            # same as below, but use grad backpropagation
-            output = backbone(images)
+            output = backbone(
+                images
+            )  # same as else condition below, but use grad backpropagation
             if args.use_trigger_channel_removal and use_ss_detector:
                 indices_toremove = contributing_indices[
                     0 : max(args.removed_channel_num)

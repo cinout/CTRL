@@ -56,14 +56,14 @@ python -u main_train.py \
     --voted_channel_num 8 \
     --removed_channel_num 40 \
     --use_ss_contribute_percent \
-    --contribute_percent_option standalone \
+    --contribute_percent_option pick_from_voted \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "ideal_case, use 8 poisoned images only, contribute_percent: standalone" \
+    --note "ideal_case, use 8 poisoned images only, contribute_percent: pick_from_voted" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd20/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd20/linear.pth.tar" \
 

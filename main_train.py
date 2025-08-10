@@ -286,7 +286,6 @@ parser.add_argument(
     action="store_true",
     help="instead of using the frequency of appearance to estimate backdoor channels, use the total percentage of contribution to SS",
 )
-# TODO: add
 parser.add_argument(
     "--contribute_percent_option",
     type=str,

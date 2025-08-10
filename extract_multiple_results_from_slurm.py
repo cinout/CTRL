@@ -70,32 +70,13 @@ def match_basic_info(pattern, file_content, file_path, error_message):
 Input File Paths
 """
 # FIXME: change
-all_input_file_paths = [
-    "slurm-13955495-[ST:sd42_few1_fromtrainset].out",
-    "slurm-13955496.out",
-    "slurm-13955497.out",
-    "slurm-13955498.out",
-    "slurm-13955499.out",
-    "slurm-13955500.out",
-    "slurm-13955501.out",
-    "slurm-13955502.out",
-    "slurm-13955503.out",
-    "slurm-13955504.out",
-    "slurm-13955505.out",
-    "slurm-13955506.out",
-    "slurm-13955507.out",
-    "slurm-13955508.out",
-    "slurm-13955509.out",
-    "slurm-13955510.out",
-    "slurm-13955511.out",
-    "slurm-13955512-[END:sd42_few1_fromtrainset].out",
-]
+all_input_file_paths = ["slurm-13974465-ref.out", "slurm-13974631-ref.out"]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sd42_few1_fromtrainset"  # FIXME: change
+title = "img100_ref_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

@@ -669,6 +669,11 @@ def find_trigger_channels_or_poisoned_images(
                     top_contribution_indices_of_all_voted_channels
                 ]
 
+                print(
+                    "contribution in DESC: ",
+                    contribution_percent_by_channel[essential_indices],
+                )
+
             # # get the top N indices
             # supplement_essential_indices = np.argsort(-contribution_percent_by_channel)[
             #     : max(args.removed_channel_num)

@@ -51,17 +51,16 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 4 \
+    --find_channels_from_n_few_samples 1 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
-    --retrain_whole_model_after_cleanse \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "use 4 poi images, vote 30 remove 70, ft_whole" \
+    --note "use 1 poi images, vote 30 remove 70" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd20/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd20/linear.pth.tar" \
 

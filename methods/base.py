@@ -1694,7 +1694,7 @@ class CLTrainer:
     Use Channel Removal Strategy. Only called if args.use_trigger_channel_removal == True
     """
 
-    def trigger_channel_removal(self, model, poison, trained_linear):
+    def trigger_channel_removal(self, model, poison, linear_model):
         ######## Prepare backbone and linear
 
         if self.args.method == "mocov2":
@@ -1707,6 +1707,8 @@ class CLTrainer:
         if self.args.method == "byol":
             backbone = copy.deepcopy(model.backbone)
             projector = copy.deepcopy(model.predictor)
+
+        trained_linear = copy.deepcopy(linear_model)
 
         backbone.eval()
         projector.eval()

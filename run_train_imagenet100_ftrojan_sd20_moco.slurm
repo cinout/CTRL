@@ -53,14 +53,14 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
-    --removed_channel_num 60 \
+    --removed_channel_num 70 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "use 4 poi images, vote 30 remove 60" \
+    --note "use 4 poi images, vote 30 remove 70" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd20/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd20/linear.pth.tar" \
 

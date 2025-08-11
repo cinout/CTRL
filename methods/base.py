@@ -1747,7 +1747,7 @@ class CLTrainer:
         ):
             # if need to retrain
             backbone, trained_linear = self.retrain_model_with_channel_removed_encoder(
-                poison, backbone, contributing_indices
+                poison, copy.deepcopy(backbone), contributing_indices
             )
 
         print(f"<<<<<<<<< evaluating linear on CLEAN val")

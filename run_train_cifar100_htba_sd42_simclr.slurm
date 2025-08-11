@@ -2,18 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
 #SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=2-00:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,25 +45,21 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --linear_probe_normalize ref_set \
-    \
-    --seed 42 \
-    --num_views 64 \
-    \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --find_channels_from_n_few_samples 8 \
-    --voted_channel_num 30 \
-    --removed_channel_num 70 \
-    \
-    --minority_lower_bound 0.000 \
-    --minority_upper_bound 1.000 \
-    --bd_detectors entropy \
-    --in_n_detectors 1 \
-    \
-    --note "use 8 poi images, vote 30 remove 70" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_simclr_ref_set_sd42/linear.pth.tar" \
+    --linear_probe_normalize ref_set \
+    \
+    --seed 20 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    \
+    --note "Use ssl-cleanse, sd=20" \
+    \
+    --num_clusters 100 \
+
+
+
 
 
 ##Log this job's resource usage stats###

@@ -54,14 +54,14 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
-    --removed_channel_num 50 \
+    --removed_channel_num 60 \
     \
     --minority_lower_bound 0.000 \
     --minority_upper_bound 1.000 \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "use 4 poi images, vote 30 remove 50" \
+    --note "use 4 poi images, vote 30 remove 60" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_mocov2_ref_set_sd30/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_mocov2_ref_set_sd30/linear.pth.tar" \
 

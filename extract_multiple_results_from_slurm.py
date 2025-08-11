@@ -122,8 +122,8 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-# pattern_cleansed_model_knn = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
-# pattern_cleansed_model_linear = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
+pattern_cleansed_model_knn_general = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_general = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 
 
 pattern_cleansed_model_knn_remove_4 = r"In kNN classification, by replacing top-4 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
@@ -156,20 +156,22 @@ output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 # FIXME: update # channels removed
 pattern_knn_list = [
+    pattern_cleansed_model_knn_general,
     # pattern_cleansed_model_knn_remove_8,
     # pattern_cleansed_model_knn_remove_12,
     # pattern_cleansed_model_knn_remove_20,
-    pattern_cleansed_model_knn_remove_40,
+    # pattern_cleansed_model_knn_remove_40,
     # pattern_cleansed_model_knn_remove_60,
     # pattern_cleansed_model_knn_remove_80,
     # pattern_cleansed_model_knn_remove_100,
     # pattern_cleansed_model_knn_remove_120,
 ]
 pattern_linear_list = [
+    pattern_cleansed_model_linear_general,
     # pattern_cleansed_model_linear_remove_8,
     # pattern_cleansed_model_linear_remove_12,
     # pattern_cleansed_model_linear_remove_20,
-    pattern_cleansed_model_linear_remove_40,
+    # pattern_cleansed_model_linear_remove_40,
     # pattern_cleansed_model_linear_remove_60,
     # pattern_cleansed_model_linear_remove_80,
     # pattern_cleansed_model_linear_remove_100,

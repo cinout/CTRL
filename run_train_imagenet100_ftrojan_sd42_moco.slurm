@@ -51,7 +51,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 1 \
+    --find_channels_from_n_few_samples 8 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
@@ -60,7 +60,7 @@ python -u main_train.py \
     --bd_detectors entropy \
     --in_n_detectors 1 \
     \
-    --note "use 1 poi images, vote 30 remove 70" \
+    --note "use 8 poi images, vote 30 remove 70" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

@@ -71,14 +71,14 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14095825-use8.out",
+    "slurm-14096268-use1.out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "use8_"  # FIXME: change
+title = "use1_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

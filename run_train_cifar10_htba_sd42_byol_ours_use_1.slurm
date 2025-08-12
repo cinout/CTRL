@@ -47,7 +47,7 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 20 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \

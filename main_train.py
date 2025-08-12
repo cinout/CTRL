@@ -750,7 +750,7 @@ if __name__ == "__main__":
 
     # Defense Baseline: SSL-Cleanse generated triggers
     if args.trigger_path == "":
-        args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}_SD{args.ssl_pretrain_seed}"
+        args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}_SD{args.ssl_cleanse_seed}"
 
     if not os.path.exists(args.saved_path):
         os.makedirs(args.saved_path)

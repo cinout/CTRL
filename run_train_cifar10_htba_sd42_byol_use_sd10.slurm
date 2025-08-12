@@ -49,12 +49,12 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 20 \
+    --seed 10 \
     --num_views 1 \
     \
     --use_ssl_cleanse \
     \
-    --note "Use ssl-cleanse, sd=20" \
+    --note "Use ssl-cleanse, sd=10" \
     \
     --num_clusters 10 \
 

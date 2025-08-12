@@ -9,9 +9,9 @@
 
 ###SBATCH --partition=deeplearn
 ###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --constraint=dlg5|dlg6
 
-#SBATCH --job-name="c100_f"
+#SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
 #SBATCH --time=0-00:10:00
 
@@ -29,13 +29,16 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+
+
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method byol \
+    --method simclr \
+    --trigger_type htba \
     \
     --magnitude_train 50.0 \
     --magnitude_val 100.0 \
@@ -44,7 +47,7 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 20 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -59,10 +62,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "use 8 poi images, vote 30 remove 70" \
-    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
-
-
+    --pretrained_ssl_model "./Experiments/cifar100_htba_simclr_ref_set_sd20/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar100_htba_simclr_ref_set_sd20/linear.pth.tar" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

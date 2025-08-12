@@ -44,7 +44,7 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --seed 30 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -59,8 +59,8 @@ python -u main_train.py \
     --in_n_detectors 1 \
     \
     --note "use 8 poi images, vote 30 remove 70" \
-    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd30/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar100_ftrojan_byol_ref_set_sd30/linear.pth.tar" \
 
 
 

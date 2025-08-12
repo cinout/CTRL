@@ -127,7 +127,7 @@ parser.add_argument(
     + "_"
     + str(random.randint(0, 100)),
 )
-parser.add_argument("--seed", default=42, type=int)
+parser.add_argument("--ssl_pretrain_seed", default=42, type=int)
 parser.add_argument("--num_workers", default=1, type=int)
 
 
@@ -427,6 +427,11 @@ parser.add_argument(
     help="use the method from ECCV2024 paper: ssl-cleanse",
 )
 parser.add_argument(
+    "--ssl_cleanse_seed",
+    type=int,
+    default=10,
+)
+parser.add_argument(
     "--attack_succ_threshold",
     type=float,
     default=0.99,
@@ -515,10 +520,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def main(args):
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
+    torch.manual_seed(args.ssl_pretrain_seed)
+    torch.cuda.manual_seed_all(args.ssl_pretrain_seed)
+    np.random.seed(args.ssl_pretrain_seed)
+    random.seed(args.ssl_pretrain_seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -629,6 +634,10 @@ def main(args):
     Baseline 1: Use SSL-CLeanse (ECCV 2024 paper)
     """
     if args.use_ssl_cleanse:
+        torch.manual_seed(args.ssl_cleanse_seed)
+        torch.cuda.manual_seed_all(args.ssl_cleanse_seed)
+        np.random.seed(args.ssl_cleanse_seed)
+        random.seed(args.ssl_cleanse_seed)
         if args.method == "mocov2":
             backbone = copy.deepcopy(model.encoder_q)
             backbone.fc = nn.Sequential()
@@ -736,12 +745,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.saved_path = os.path.join(
-        f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}_{args.linear_probe_normalize}_sd{args.seed}"
+        f"./{args.log_path}/{args.timestamp}_{args.dataset}_{args.trigger_type}_{args.method}_{args.linear_probe_normalize}_sd{args.ssl_pretrain_seed}"
     )
 
     # Defense Baseline: SSL-Cleanse generated triggers
     if args.trigger_path == "":
-        args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}_SD{args.seed}"
+        args.trigger_path = f"{args.timestamp}_trigger_estimation_{args.method}_{args.dataset}_{args.trigger_type}_SD{args.ssl_pretrain_seed}"
 
     if not os.path.exists(args.saved_path):
         os.makedirs(args.saved_path)

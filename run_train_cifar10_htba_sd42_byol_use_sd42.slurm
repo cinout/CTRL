@@ -49,7 +49,7 @@ python -u main_train.py \
     --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
-    --seed 42 \
+    --ssl_pretrain_seed 42 \
     --num_views 1 \
     \
     --use_ssl_cleanse \

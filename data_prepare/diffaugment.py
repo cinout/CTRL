@@ -136,7 +136,7 @@ class PoisonAgent:
         )
 
         print(
-            f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.seed}"
+            f"Initializing Poison data (chosen images, examples, sources, labels) with random seed {self.args.ssl_pretrain_seed}"
         )
 
         (

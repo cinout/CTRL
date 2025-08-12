@@ -616,7 +616,17 @@ def main(args):
     """
 
     """
-    IDEA 1: Use SSL-CLeanse (ECCV 2024 paper)
+    Ours: Channel Voting, Estimation, and Removal Strategy
+    """
+    if args.use_trigger_channel_removal:
+        if args.find_channels_from_n_few_samples > 0:
+            for _ in range(10):
+                trainer.trigger_channel_removal(model, poison, trained_linear)
+        else:
+            trainer.trigger_channel_removal(model, poison, trained_linear)
+
+    """
+    Baseline 1: Use SSL-CLeanse (ECCV 2024 paper)
     """
     if args.use_ssl_cleanse:
         if args.method == "mocov2":
@@ -648,7 +658,26 @@ def main(args):
         _ = new_trainer.linear_probing(cleansed_backbone, poison, force_training=True)
 
     """
-    IDEA 2: Input Filtering
+    Baseline 2: Mask Pruning Strategy
+    """
+    if args.use_mask_pruning:
+        if args.method == "mocov2":
+            backbone = copy.deepcopy(model.encoder_q)
+            backbone.fc = nn.Sequential()
+        else:
+            backbone = copy.deepcopy(new_model.backbone)
+        trainer.linear_probing(
+            backbone, poison, use_mask_pruning=True, trained_linear=trained_linear
+        )
+
+    """
+    # TODO:
+    Baseline 3: Random Channel Removal (can be merged into the code of our method)
+    """
+
+    """
+    Other Cleanse Options: Input Filtering
+    # FIXME: consider removing this option
     """
     # Sift out estimated poisoned images, and re-train the SSL model
     if args.siftout_poisoned_images:
@@ -701,29 +730,6 @@ def main(args):
         else:
             backbone = copy.deepcopy(new_model.backbone)
         _ = new_trainer.linear_probing(backbone, poison, force_training=True)
-
-    """
-    IDEA 3: Channel Removal Strategy
-    """
-    if args.use_trigger_channel_removal:
-        if args.find_channels_from_n_few_samples > 0:
-            for _ in range(10):
-                trainer.trigger_channel_removal(model, poison, trained_linear)
-        else:
-            trainer.trigger_channel_removal(model, poison, trained_linear)
-
-    """
-    IDEA 4: Mask Pruning Strategy
-    """
-    if args.use_mask_pruning:
-        if args.method == "mocov2":
-            backbone = copy.deepcopy(model.encoder_q)
-            backbone.fc = nn.Sequential()
-        else:
-            backbone = copy.deepcopy(new_model.backbone)
-        trainer.linear_probing(
-            backbone, poison, use_mask_pruning=True, trained_linear=trained_linear
-        )
 
 
 if __name__ == "__main__":

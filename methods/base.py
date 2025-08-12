@@ -1250,6 +1250,7 @@ class CLTrainer:
     ):
         if use_mask_pruning:
             # use mask pruning
+            # TODO: udpate code to accommodate new SSL methods
 
             new_linear = copy.deepcopy(trained_linear)
             new_linear.train()

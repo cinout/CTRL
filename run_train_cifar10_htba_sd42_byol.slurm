@@ -29,6 +29,7 @@
 # export MASTER_ADDR=$master_addr
 # echo ">>> MASTER_ADDR="$MASTER_ADDR
 
+#### FIXME: notice that pretrained models are from sd20 instead of sd42
 
 module purge
 
@@ -44,8 +45,8 @@ python -u main_train.py \
     --dataset cifar10 \
     --target_class 0 \
     \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_byol_ref_set_sd20/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_byol_ref_set_sd20/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --seed 20 \

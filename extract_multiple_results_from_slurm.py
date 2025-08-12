@@ -71,31 +71,14 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14026016-[ST:few8_vote30_rm70].out",
-    "slurm-14026017.out",
-    "slurm-14026018.out",
-    "slurm-14026019.out",
-    "slurm-14026020.out",
-    "slurm-14026021.out",
-    "slurm-14026022.out",
-    "slurm-14026023.out",
-    "slurm-14026024.out",
-    "slurm-14026025.out",
-    "slurm-14026026.out",
-    "slurm-14026027.out",
-    "slurm-14026028.out",
-    "slurm-14026029.out",
-    "slurm-14026030.out",
-    "slurm-14026031.out",
-    "slurm-14026032.out",
-    "slurm-14026033-[END:few8_vote30_rm70].out",
+    "slurm-14095825-use8.out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "few8_vote30_rm70_"  # FIXME: change
+title = "use8_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

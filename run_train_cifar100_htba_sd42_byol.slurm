@@ -2,18 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg5|dlg6
 
 #SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=2-00:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,12 +45,21 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --ssl_pretrain_seed 42 \
-    --use_mask_pruning \
-    \
-    --note "use mask pruning" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_byol_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_byol_ref_set_sd42/linear.pth.tar" \
+    --linear_probe_normalize ref_set \
+    \
+    --ssl_pretrain_seed 42 \
+    --ssl_cleanse_seed 20 \
+    --num_views 1 \
+    \
+    --use_ssl_cleanse \
+    \
+    --note "Use ssl-cleanse, sd=20" \
+    \
+    --num_clusters 100 \
+
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

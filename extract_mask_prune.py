@@ -198,6 +198,8 @@ for metric in metrics:
     for method in ssl_methods:
         output_acc_asr_file_handle.write(f"{method}\n")
         for thres in thresholds_count:
+            output_acc_asr_file_handle.write(f"{thres}\n")
+
             for trigger in triggers:
                 for dataset in datasets:
 

@@ -45,31 +45,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14129744-[ST:mask_prune].out",
-    "slurm-14129745.out",
-    "slurm-14129746.out",
-    "slurm-14129747.out",
-    "slurm-14129748.out",
-    "slurm-14129749.out",
-    "slurm-14129750.out",
-    "slurm-14129751.out",
-    "slurm-14129752.out",
-    "slurm-14129753.out",
-    "slurm-14129754.out",
-    "slurm-14129755.out",
-    "slurm-14129756.out",
-    "slurm-14129757.out",
-    "slurm-14129758.out",
-    "slurm-14129759.out",
-    "slurm-14129760.out",
-    "slurm-14129761-[END:mask_prune].out",
+    "slurm-14144980-[ST:prune_smaller].out",
+    "slurm-14144981.out",
+    "slurm-14144982.out",
+    "slurm-14144983.out",
+    "slurm-14144984.out",
+    "slurm-14144985.out",
+    "slurm-14144986.out",
+    "slurm-14144987.out",
+    "slurm-14144988.out",
+    "slurm-14144989.out",
+    "slurm-14144990.out",
+    "slurm-14144991.out",
+    "slurm-14144992.out",
+    "slurm-14144993.out",
+    "slurm-14144994.out",
+    "slurm-14144995.out",
+    "slurm-14144996.out",
+    "slurm-14144997-[END:prune_smaller].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "mask_prune_"  # FIXME: change
+title = "mask_prune_smaller_"  # FIXME: change
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()
@@ -92,22 +92,11 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-# pattern_mask_0d1 = r"^.*layer.*\s0\.10\s+([\d.]+)\s+([\d.]+)\s*$"
-# pattern_mask_0d3 = r"^.*layer.*\s0\.30\s+([\d.]+)\s+([\d.]+)\s*$"
-# pattern_mask_0d5 = r"^.*layer.*\s0\.50\s+([\d.]+)\s+([\d.]+)\s*$"
-# pattern_mask_0d7 = r"^.*layer.*\s0\.70\s+([\d.]+)\s+([\d.]+)\s*$"
-# pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
-
-pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
-# pattern_mask_0d1 = r"^.*\s0\.10\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$"
-# pattern_mask_0d3 = r"^[\d]+\s\t\slayer\.*0\.30\s\t\s([\d.]+)\s\t\s([\d.]+)$"
-# pattern_mask_0d5 = r"^[\d]+\s\t\slayer\.*0\.50\s\t\s([\d.]+)\s\t\s([\d.]+)$"
-# pattern_mask_0d7 = r"^[\d]+\s\t\slayer\.*0\.70\s\t\s([\d.]+)\s\t\s([\d.]+)$"
-# pattern_mask_0d9 = r"^[\d]+\s\t\slayer\.*0\.90\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.01\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.03\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.05\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.07\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.09\s+([\d.]+)\s+([\d.]+)\s*"
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")

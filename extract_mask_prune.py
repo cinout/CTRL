@@ -28,7 +28,7 @@ def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_m
         item = match_pattern[0]
         return float(item[2]), float(item[1])
     else:
-        raise Exception(error_message + f"in file {file_path}")
+        raise Exception(error_message + f" in file {file_path}")
 
 
 # match basic information such as trigger type
@@ -37,7 +37,7 @@ def match_basic_info(pattern, file_content, file_path, error_message):
     if match_pattern:
         return match_pattern.group(1)
     else:
-        raise Exception(error_message + f"in file {file_path}")
+        raise Exception(error_message + f" in file {file_path}")
 
 
 """
@@ -92,7 +92,7 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-pattern_mask_0 = r".0\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0 = r"0\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.01\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.03\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.05\s+([\d.]+)\s+([\d.]+)\s*"

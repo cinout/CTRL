@@ -33,7 +33,10 @@ def match_two_float_numbers(pattern, file_content, file_path, error_message):
 
 # match a group of two float numbers from strings
 def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_message):
+
     match_pattern = re.findall(pattern, file_content)
+    print("pattern is: ", pattern)
+    print("match_pattern is: ", match_pattern)
     if match_pattern:
         result_1_list = []
         result_2_list = []

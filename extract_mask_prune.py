@@ -117,11 +117,12 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 # pattern_mask_0d7 = r"^.*layer.*\s0\.70\s+([\d.]+)\s+([\d.]+)\s*$"
 # pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
 
-pattern_mask_0d1 = r".*layer.*\t0\.10\t([\d.]+)\t([\d.]+)"
-pattern_mask_0d3 = r".*layer.*\t0\.30\t([\d.]+)\t([\d.]+)"
-pattern_mask_0d5 = r".*layer.*\t0\.50\t([\d.]+)\t([\d.]+)"
-pattern_mask_0d7 = r".*layer.*\t0\.70\t([\d.]+)\t([\d.]+)"
-pattern_mask_0d9 = r".*layer.*\t0\.90\t([\d.]+)\t([\d.]+)"
+pattern_mask_0d1 = r"^[\d]+\s\t\slayer\.*0\.10\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+pattern_mask_0d3 = r"^[\d]+\s\t\slayer\.*0\.30\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+pattern_mask_0d5 = r"^[\d]+\s\t\slayer\.*0\.50\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+pattern_mask_0d7 = r"^[\d]+\s\t\slayer\.*0\.70\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+pattern_mask_0d9 = r"^[\d]+\s\t\slayer\.*0\.90\s\t\s([\d.]+)\s\t\s([\d.]+)$"
+
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 

@@ -24,9 +24,9 @@ def to_dict(d):
 def match_two_float_numbers(pattern, file_content, file_path, error_message):
     match_pattern = re.search(pattern, file_content)
     if match_pattern:
-        result_1 = float(match_pattern.group(1))
-        result_2 = float(match_pattern.group(2))
-        return result_1, result_2
+        result_1 = float(match_pattern.group(1))  # poison
+        result_2 = float(match_pattern.group(2))  # clean
+        return result_2, result_1
     else:
         raise Exception(error_message + f"in file {file_path}")
 

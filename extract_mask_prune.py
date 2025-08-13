@@ -41,8 +41,8 @@ def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_m
         result_1_list = []
         result_2_list = []
         for item in match_pattern:
-            result_1 = float(item[0])
-            result_2 = float(item[1])
+            result_1 = float(item[1])
+            result_2 = float(item[2])
             result_1_list.append(result_1)
             result_2_list.append(result_2)
         return result_1_list, result_2_list
@@ -117,11 +117,11 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 # pattern_mask_0d7 = r"^.*layer.*\s0\.70\s+([\d.]+)\s+([\d.]+)\s*$"
 # pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
 
-pattern_mask_0d1 = r".*layer.*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d3 = r".*layer.*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d5 = r".*layer.*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d7 = r".*layer.*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d9 = r".*layer.*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
 # pattern_mask_0d1 = r"^.*\s0\.10\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$"
 # pattern_mask_0d3 = r"^[\d]+\s\t\slayer\.*0\.30\s\t\s([\d.]+)\s\t\s([\d.]+)$"
 # pattern_mask_0d5 = r"^[\d]+\s\t\slayer\.*0\.50\s\t\s([\d.]+)\s\t\s([\d.]+)$"

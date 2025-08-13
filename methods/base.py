@@ -14,7 +14,7 @@ from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
 from ssl_cleanse.mitigation import outlier
 from ssl_cleanse.ssl_cleanse import draw_global
-from utils.util import AverageMeter, save_model
+from utils.util import AverageMeter, extract_backbone, save_model
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.models as models
@@ -1234,6 +1234,149 @@ class CLTrainer:
         return backbone, linear
 
     """
+    Use Mask Pruning (ICML 2023), called when args.use_mask_pruning===True
+    """
+
+    def mask_prune(self, backbone, poison, trained_linear):
+
+        new_linear = copy.deepcopy(trained_linear)
+        new_linear.train()
+
+        new_backbone = copy.deepcopy(backbone)
+        new_backbone.train()
+
+        criterion = torch.nn.CrossEntropyLoss().to(device)
+        optimizer = torch.optim.SGD(
+            list(new_backbone.parameters()) + list(new_linear.parameters()),
+            lr=self.args.unlearning_lr,
+            momentum=0.9,
+            weight_decay=5e-4,
+        )
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer, milestones=self.args.schedule, gamma=0.1
+        )
+
+        #### stage 1: model unlearing
+        print(f">>>>>>>> start model unlearning")
+        for epoch in range(0, self.args.unlearning_epochs + 1):
+            # UNLEARNING
+            train_acc = train_step_unlearning(
+                args=self.args,
+                model=new_backbone,
+                linear=new_linear,
+                criterion=criterion,
+                optimizer=optimizer,
+                data_loader=poison.train_probe_loader,
+            )
+
+            scheduler.step()
+            print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
+
+            if train_acc <= self.args.clean_threshold:
+                print(
+                    f">>>>>>>> arrive at early break of stage 1 unlearning at epoch {epoch}"
+                )
+                # end stage 1
+                break
+
+        #### stage 2: model recovering
+        print(f">>>>>>>> start model recovering")
+        if self.args.method == "mocov2":
+            unlearned_model = models.__dict__[self.args.arch](
+                num_classes=512, norm_layer=MaskBatchNorm2d
+            )
+            unlearned_model.fc = nn.Sequential()
+        else:
+            if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
+                model_fun, _ = model_dict_cifar[self.args.arch]
+            else:
+                model_fun, _ = model_dict[self.args.arch]
+            unlearned_model = model_fun(norm_layer=MaskBatchNorm2d)
+
+        refill_unlearned_model(
+            unlearned_model, orig_state_dict=new_backbone.state_dict()
+        )
+
+        unlearned_model = unlearned_model.to(device)
+        criterion = torch.nn.CrossEntropyLoss().to(device)
+
+        parameters = list(unlearned_model.named_parameters())
+        mask_params = [
+            v for n, v in parameters if "neuron_mask" in n
+        ]  # only update neuron_mask ones
+        mask_optimizer = torch.optim.SGD(
+            mask_params, lr=self.args.recovering_lr, momentum=0.9
+        )
+
+        for epoch in range(1, self.args.recovering_epochs + 1):
+            train_step_recovering(
+                args=self.args,
+                unlearned_model=unlearned_model,
+                linear=new_linear,
+                criterion=criterion,
+                data_loader=poison.train_probe_loader,
+                mask_opt=mask_optimizer,
+            )
+
+        save_mask_scores(
+            unlearned_model.state_dict(),
+            os.path.join(self.args.saved_path, "mask_values.txt"),
+        )
+
+        del unlearned_model, new_linear, new_backbone
+
+        #### stage 3: model pruning
+        print(f">>>>>>>> start model pruning")
+
+        backbone = copy.deepcopy(backbone)
+        linear = copy.deepcopy(trained_linear)
+
+        criterion = torch.nn.CrossEntropyLoss().to(device)
+        mask_file = os.path.join(self.args.saved_path, "mask_values.txt")
+        mask_values = read_data(mask_file)
+        mask_values = sorted(mask_values, key=lambda x: float(x[2]))
+        print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
+        cl_loss, cl_acc = test_maskprune(
+            args=self.args,
+            model=backbone,
+            linear=linear,
+            criterion=criterion,
+            data_loader=poison.test_clean_loader,
+            val_mode="clean",
+        )
+        po_loss, po_acc = test_maskprune(
+            args=self.args,
+            model=backbone,
+            linear=linear,
+            criterion=criterion,
+            data_loader=poison.test_pos_loader,
+            val_mode="poison",
+        )
+        print(
+            "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f}".format(
+                # po_loss,
+                po_acc * 100,
+                # cl_loss,
+                cl_acc * 100,
+            )
+        )  # this records the backdoored model's initial results
+
+        if self.args.pruning_by == "threshold":
+            evaluate_by_threshold(
+                self.args,
+                backbone,
+                linear,
+                mask_values,
+                pruning_max=self.args.pruning_max,
+                pruning_step=self.args.pruning_step,
+                criterion=criterion,
+                clean_loader=poison.test_clean_loader,
+                poison_loader=poison.test_pos_loader,
+            )
+        else:
+            raise Exception("Not implemented yet")
+
+    """
     Linear classifier training (unless args.pretrained_linear_model have value and not force_training) and evalaution
     """
 
@@ -1241,285 +1384,139 @@ class CLTrainer:
         self,  # call self.args for options
         backbone,
         poison,
-        use_mask_pruning=False,
-        trained_linear=None,
         force_training=False,
     ):
-        if use_mask_pruning:
-            # use mask pruning
-            # TODO: udpate code to accommodate new SSL methods
+        backbone.eval()
 
-            new_linear = copy.deepcopy(trained_linear)
-            new_linear.train()
+        if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
+            _, feat_dim = model_dict_cifar[self.args.arch]
+        else:
+            _, feat_dim = model_dict[self.args.arch]
 
-            new_backbone = copy.deepcopy(backbone)
-            new_backbone.train()
+        # train_probe_feats_mean = None
+        if (
+            self.args.linear_probe_normalize == "ref_set"
+            or self.args.replacement_value == "ref_mean"
+        ):
+            train_probe_feats = get_feats(
+                poison.train_probe_loader, backbone, self.args
+            )  # shape: ? [N, D]
+            # train_probe_feats_mean = torch.mean(
+            #     train_probe_feats, dim=0
+            # )  # shape: [D, ], used if replacement_value == "ref_mean"
 
-            criterion = torch.nn.CrossEntropyLoss().to(device)
-            optimizer = torch.optim.SGD(
-                list(new_backbone.parameters()) + list(new_linear.parameters()),
-                lr=self.args.unlearning_lr,
-                momentum=0.9,
-                weight_decay=5e-4,
+        # training linear
+        if self.args.linear_probe_normalize == "ref_set":
+            train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
+
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                FullBatchNorm(
+                    train_var, train_mean
+                ),  # the train_var/mean are from L2-normed features
+                nn.Linear(feat_dim, self.args.num_classes),
             )
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                optimizer, milestones=self.args.schedule, gamma=0.1
+        elif self.args.linear_probe_normalize == "batch":
+            linear = nn.Sequential(
+                nn.BatchNorm1d(feat_dim, affine=False),
+                nn.Linear(feat_dim, self.args.num_classes),
+            )
+        elif self.args.linear_probe_normalize == "none":
+            linear = nn.Linear(feat_dim, self.args.num_classes)
+        elif self.args.linear_probe_normalize == "regular":
+            linear = nn.Sequential(
+                Normalize(),  # L2 norm
+                nn.Linear(feat_dim, self.args.num_classes),
             )
 
-            #### stage 1: model unlearing
-            print(f">>>>>>>> start model unlearning")
-            for epoch in range(0, self.args.unlearning_epochs + 1):
-                # UNLEARNING
-                train_acc = train_step_unlearning(
-                    args=self.args,
-                    model=new_backbone,
-                    linear=new_linear,
-                    criterion=criterion,
-                    optimizer=optimizer,
-                    data_loader=poison.train_probe_loader,
+        if self.args.pretrained_linear_model != "":
+            pretrained_state_dict = torch.load(
+                self.args.pretrained_linear_model, map_location=device
+            )
+            linear.load_state_dict(pretrained_state_dict, strict=True)
+
+        linear = linear.to(device)
+
+        if self.args.pretrained_linear_model == "" or force_training:
+            if self.args.retrain_whole_model_after_cleanse:
+                backbone.train()
+                optimizer = torch.optim.SGD(
+                    [
+                        {"params": backbone.parameters(), "lr": 0.001},
+                        {"params": linear.parameters(), "lr": 0.06},
+                    ],
+                    momentum=0.9,
+                    weight_decay=1e-4,
                 )
-
-                scheduler.step()
-                print(f">>>>>>>> at epoch {epoch}, the train_acc is {train_acc}")
-
-                if train_acc <= self.args.clean_threshold:
-                    print(
-                        f">>>>>>>> arrive at early break of stage 1 unlearning at epoch {epoch}"
-                    )
-                    # end stage 1
-                    break
-
-            #### stage 2: model recovering
-            print(f">>>>>>>> start model recovering")
-            if self.args.method == "mocov2":
-                unlearned_model = models.__dict__[self.args.arch](
-                    num_classes=512, norm_layer=MaskBatchNorm2d
-                )
-                unlearned_model.fc = nn.Sequential()
             else:
-                if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
-                    model_fun, _ = model_dict_cifar[self.args.arch]
-                else:
-                    model_fun, _ = model_dict[self.args.arch]
-                unlearned_model = model_fun(norm_layer=MaskBatchNorm2d)
-
-            refill_unlearned_model(
-                unlearned_model, orig_state_dict=new_backbone.state_dict()
-            )
-
-            unlearned_model = unlearned_model.to(device)
-            criterion = torch.nn.CrossEntropyLoss().to(device)
-
-            parameters = list(unlearned_model.named_parameters())
-            mask_params = [
-                v for n, v in parameters if "neuron_mask" in n
-            ]  # only update neuron_mask ones
-            mask_optimizer = torch.optim.SGD(
-                mask_params, lr=self.args.recovering_lr, momentum=0.9
-            )
-
-            for epoch in range(1, self.args.recovering_epochs + 1):
-                train_step_recovering(
-                    args=self.args,
-                    unlearned_model=unlearned_model,
-                    linear=new_linear,
-                    criterion=criterion,
-                    data_loader=poison.train_probe_loader,
-                    mask_opt=mask_optimizer,
+                optimizer = torch.optim.SGD(
+                    linear.parameters(),
+                    lr=0.06,
+                    momentum=0.9,
+                    weight_decay=1e-4,
                 )
 
-            save_mask_scores(
-                unlearned_model.state_dict(),
-                os.path.join(self.args.saved_path, "mask_values.txt"),
+            sched = [15, 30, 40]
+            lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                optimizer, milestones=sched
             )
 
-            del unlearned_model, new_linear, new_backbone
+            # train linear classifier
+            linear_probing_epochs = 40
 
-            #### stage 3: model pruning
-            print(f">>>>>>>> start model pruning")
-
-            backbone = copy.deepcopy(backbone)
-            linear = copy.deepcopy(trained_linear)
-
-            criterion = torch.nn.CrossEntropyLoss().to(device)
-            mask_file = os.path.join(self.args.saved_path, "mask_values.txt")
-            mask_values = read_data(mask_file)
-            mask_values = sorted(mask_values, key=lambda x: float(x[2]))
-            print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
-            cl_loss, cl_acc = test_maskprune(
-                args=self.args,
-                model=backbone,
-                linear=linear,
-                criterion=criterion,
-                data_loader=poison.test_clean_loader,
-                val_mode="clean",
-            )
-            po_loss, po_acc = test_maskprune(
-                args=self.args,
-                model=backbone,
-                linear=linear,
-                criterion=criterion,
-                data_loader=poison.test_pos_loader,
-                val_mode="poison",
-            )
-            print(
-                "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f}".format(
-                    # po_loss,
-                    po_acc * 100,
-                    # cl_loss,
-                    cl_acc * 100,
-                )
-            )  # this records the backdoored model's initial results
-
-            if self.args.pruning_by == "threshold":
-                evaluate_by_threshold(
-                    self.args,
+            for epoch in range(linear_probing_epochs):
+                print(f"training linear classifier, epoch: {epoch}")
+                train_linear_classifier(
+                    poison.train_probe_loader,
                     backbone,
                     linear,
-                    mask_values,
-                    pruning_max=self.args.pruning_max,
-                    pruning_step=self.args.pruning_step,
-                    criterion=criterion,
-                    clean_loader=poison.test_clean_loader,
-                    poison_loader=poison.test_pos_loader,
+                    optimizer,
+                    self.args,
                 )
-            else:
-                raise Exception("Not implemented yet")
+                # modify lr
+                lr_scheduler.step()
 
-        else:
-            # NOT USING MASK PRUNING
-
-            backbone.eval()
-
-            if "cifar" in self.args.dataset or "gtsrb" in self.args.dataset:
-                _, feat_dim = model_dict_cifar[self.args.arch]
-            else:
-                _, feat_dim = model_dict[self.args.arch]
-
-            # train_probe_feats_mean = None
-            if (
-                self.args.linear_probe_normalize == "ref_set"
-                or self.args.replacement_value == "ref_mean"
+            if not self.args.distributed or (
+                self.args.distributed
+                and self.args.local_rank % self.args.ngpus_per_node == 0
             ):
-                train_probe_feats = get_feats(
-                    poison.train_probe_loader, backbone, self.args
-                )  # shape: ? [N, D]
-                # train_probe_feats_mean = torch.mean(
-                #     train_probe_feats, dim=0
-                # )  # shape: [D, ], used if replacement_value == "ref_mean"
-
-            # training linear
-            if self.args.linear_probe_normalize == "ref_set":
-                train_var, train_mean = torch.var_mean(train_probe_feats, dim=0)
-
-                linear = nn.Sequential(
-                    Normalize(),  # L2 norm
-                    FullBatchNorm(
-                        train_var, train_mean
-                    ),  # the train_var/mean are from L2-normed features
-                    nn.Linear(feat_dim, self.args.num_classes),
-                )
-            elif self.args.linear_probe_normalize == "batch":
-                linear = nn.Sequential(
-                    nn.BatchNorm1d(feat_dim, affine=False),
-                    nn.Linear(feat_dim, self.args.num_classes),
-                )
-            elif self.args.linear_probe_normalize == "none":
-                linear = nn.Linear(feat_dim, self.args.num_classes)
-            elif self.args.linear_probe_normalize == "regular":
-                linear = nn.Sequential(
-                    Normalize(),  # L2 norm
-                    nn.Linear(feat_dim, self.args.num_classes),
+                save_model(
+                    linear.state_dict(),
+                    filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
                 )
 
-            if self.args.pretrained_linear_model != "":
-                pretrained_state_dict = torch.load(
-                    self.args.pretrained_linear_model, map_location=device
-                )
-                linear.load_state_dict(pretrained_state_dict, strict=True)
+        backbone.eval()
+        linear.eval()
 
-            linear = linear.to(device)
+        print(f"<<<<<<<<< evaluating linear on CLEAN val")
+        clean_acc1 = eval_linear_classifier(
+            poison.test_clean_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="clean",
+            use_ss_detector=False,
+            contributing_indices=None,
+            # contributing_indices=self.contributing_indices,
+        )
 
-            if self.args.pretrained_linear_model == "" or force_training:
-                if self.args.retrain_whole_model_after_cleanse:
-                    backbone.train()
-                    optimizer = torch.optim.SGD(
-                        [
-                            {"params": backbone.parameters(), "lr": 0.001},
-                            {"params": linear.parameters(), "lr": 0.06},
-                        ],
-                        momentum=0.9,
-                        weight_decay=1e-4,
-                    )
-                else:
-                    optimizer = torch.optim.SGD(
-                        linear.parameters(),
-                        lr=0.06,
-                        momentum=0.9,
-                        weight_decay=1e-4,
-                    )
+        print(f"<<<<<<<<< evaluating linear on POISON val")
+        poison_acc1 = eval_linear_classifier(
+            poison.test_pos_loader,
+            backbone,
+            linear,
+            self.args,
+            val_mode="poison",
+            use_ss_detector=False,
+            contributing_indices=None,
+            # contributing_indices=self.contributing_indices,
+        )
 
-                sched = [15, 30, 40]
-                lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                    optimizer, milestones=sched
-                )
+        print(
+            f"for linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
+        )
 
-                # train linear classifier
-                linear_probing_epochs = 40
-
-                for epoch in range(linear_probing_epochs):
-                    print(f"training linear classifier, epoch: {epoch}")
-                    train_linear_classifier(
-                        poison.train_probe_loader,
-                        backbone,
-                        linear,
-                        optimizer,
-                        self.args,
-                    )
-                    # modify lr
-                    lr_scheduler.step()
-
-                if not self.args.distributed or (
-                    self.args.distributed
-                    and self.args.local_rank % self.args.ngpus_per_node == 0
-                ):
-                    save_model(
-                        linear.state_dict(),
-                        filename=os.path.join(self.args.saved_path, "linear.pth.tar"),
-                    )
-
-            backbone.eval()
-            linear.eval()
-
-            print(f"<<<<<<<<< evaluating linear on CLEAN val")
-            clean_acc1 = eval_linear_classifier(
-                poison.test_clean_loader,
-                backbone,
-                linear,
-                self.args,
-                val_mode="clean",
-                use_ss_detector=False,
-                contributing_indices=None,
-                # contributing_indices=self.contributing_indices,
-            )
-
-            print(f"<<<<<<<<< evaluating linear on POISON val")
-            poison_acc1 = eval_linear_classifier(
-                poison.test_pos_loader,
-                backbone,
-                linear,
-                self.args,
-                val_mode="poison",
-                use_ss_detector=False,
-                contributing_indices=None,
-                # contributing_indices=self.contributing_indices,
-            )
-
-            print(
-                f"for linear classifier, the ACC on clean val is: {np.round(clean_acc1,1)}, the ASR on poisoned val is: {np.round(poison_acc1,1)}"
-            )
-
-            return linear  # the returned linear is only used if use_ss_detector=False
+        return linear  # the returned linear is only used if use_ss_detector=False
 
     """
     Train the SSL encoder (unless provided with args.pretrained_ssl_model and not force_training) and then perform kNN classifier evalution
@@ -1608,11 +1605,7 @@ class CLTrainer:
             ):
                 model.eval()
 
-                if self.args.method == "mocov2":
-                    backbone = copy.deepcopy(model.encoder_q)
-                    backbone.fc = nn.Sequential()
-                else:
-                    backbone = copy.deepcopy(model.backbone)
+                backbone = extract_backbone(self.args.method, model)
 
                 clean_acc, back_acc = self.knn_monitor_fre(
                     backbone,
@@ -1662,19 +1655,21 @@ class CLTrainer:
 
         model.eval()
 
-        if self.args.method == "mocov2":
-            backbone = copy.deepcopy(model.encoder_q)
-            projector = copy.deepcopy(backbone.fc)
-            backbone.fc = nn.Sequential()
-        elif self.args.method == "simclr":
-            backbone = copy.deepcopy(model.backbone)
-            projector = copy.deepcopy(model.proj_head)
-        if self.args.method == "byol":
-            backbone = copy.deepcopy(model.backbone)
-            projector = copy.deepcopy(model.predictor)
+        # if self.args.method == "mocov2":
+        #     backbone = copy.deepcopy(model.encoder_q)
+        #     # projector = copy.deepcopy(backbone.fc)
+        #     backbone.fc = nn.Sequential()
+        # elif self.args.method == "simclr":
+        #     backbone = copy.deepcopy(model.backbone)
+        #     # projector = copy.deepcopy(model.proj_head)
+        # if self.args.method == "byol":
+        #     backbone = copy.deepcopy(model.backbone)
+        #     # projector = copy.deepcopy(model.predictor)
+
+        backbone = extract_backbone(self.args.method, model)
 
         backbone.eval()
-        projector.eval()
+        # projector.eval()
 
         estimated_poisoned_file_indices = find_trigger_channels_or_poisoned_images(
             self.args,
@@ -1695,21 +1690,22 @@ class CLTrainer:
     def trigger_channel_removal(self, model, poison, linear_model):
         ######## Prepare backbone and linear
 
-        if self.args.method == "mocov2":
-            backbone = copy.deepcopy(model.encoder_q)
-            projector = copy.deepcopy(backbone.fc)
-            backbone.fc = nn.Sequential()
-        elif self.args.method == "simclr":
-            backbone = copy.deepcopy(model.backbone)
-            projector = copy.deepcopy(model.proj_head)
-        if self.args.method == "byol":
-            backbone = copy.deepcopy(model.backbone)
-            projector = copy.deepcopy(model.predictor)
+        # if self.args.method == "mocov2":
+        #     backbone = copy.deepcopy(model.encoder_q)
+        #     # projector = copy.deepcopy(backbone.fc)
+        #     backbone.fc = nn.Sequential()
+        # elif self.args.method == "simclr":
+        #     backbone = copy.deepcopy(model.backbone)
+        #     # projector = copy.deepcopy(model.proj_head)
+        # if self.args.method == "byol":
+        #     backbone = copy.deepcopy(model.backbone)
+        #     # projector = copy.deepcopy(model.predictor)
+        backbone = extract_backbone(self.args.method, model)
 
         trained_linear = copy.deepcopy(linear_model)
 
         backbone.eval()
-        projector.eval()
+        # projector.eval()
         trained_linear.eval()
 
         # Esimate poisoned triggers

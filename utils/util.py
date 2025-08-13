@@ -1,14 +1,18 @@
+import copy
 import os
-import random
-import numpy as np
 import torch
-from PIL import Image
-import torchvision
-import time
-import sys
-
+import torch.nn as nn
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def extract_backbone(method, model):
+    if method == "mocov2":
+        backbone = copy.deepcopy(model.encoder_q)
+        backbone.fc = nn.Sequential()
+    else:
+        backbone = copy.deepcopy(model.backbone)
+    return backbone
 
 
 class AverageMeter(object):

@@ -19,6 +19,7 @@ from ssl_cleanse.ssl_cleanse import (
 import copy
 import torch.nn as nn
 import torchvision.transforms as T
+import numpy as np
 
 parser = argparse.ArgumentParser(description="CTRL Training")
 
@@ -604,11 +605,8 @@ def main(args):
     trainer.train_freq(model, optimizer, train_transform, poison)
 
     # Linear Probe and Evaluation [Poisoned Model]
-    if args.method == "mocov2":
-        backbone = copy.deepcopy(model.encoder_q)
-        backbone.fc = nn.Sequential()
-    else:
-        backbone = copy.deepcopy(model.backbone)
+    backbone = extract_backbone(args.method, model)
+
     trained_linear = trainer.linear_probing(backbone, poison)
 
     """
@@ -633,11 +631,8 @@ def main(args):
         torch.cuda.manual_seed_all(args.ssl_cleanse_seed)
         np.random.seed(args.ssl_cleanse_seed)
         random.seed(args.ssl_cleanse_seed)
-        if args.method == "mocov2":
-            backbone = copy.deepcopy(model.encoder_q)
-            backbone.fc = nn.Sequential()
-        else:
-            backbone = copy.deepcopy(model.backbone)
+
+        backbone = extract_backbone(args.method, model)
 
         trainset_data = trigger_inversion(
             args, backbone, poison, model.feat_dim
@@ -665,14 +660,8 @@ def main(args):
     Baseline 2: Mask Pruning Strategy
     """
     if args.use_mask_pruning:
-        if args.method == "mocov2":
-            backbone = copy.deepcopy(model.encoder_q)
-            backbone.fc = nn.Sequential()
-        else:
-            backbone = copy.deepcopy(new_model.backbone)
-        trainer.linear_probing(
-            backbone, poison, use_mask_pruning=True, trained_linear=trained_linear
-        )
+        backbone = extract_backbone(args.method, model)
+        trainer.mask_prune(backbone, poison, trained_linear)
 
     """
     # TODO:
@@ -728,11 +717,8 @@ def main(args):
         )
 
         # Linear Probe and Evaluation
-        if args.method == "mocov2":
-            backbone = copy.deepcopy(new_model.encoder_q)
-            backbone.fc = nn.Sequential()
-        else:
-            backbone = copy.deepcopy(new_model.backbone)
+        backbone = extract_backbone(args.method, new_model)
+
         _ = new_trainer.linear_probing(backbone, poison, force_training=True)
 
 

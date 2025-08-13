@@ -118,6 +118,10 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 # pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
 
 pattern_mask_0d1 = r".*layer.*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d3 = r".*layer.*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d5 = r".*layer.*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d7 = r".*layer.*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d9 = r".*layer.*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
 # pattern_mask_0d1 = r"^.*\s0\.10\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$"
 # pattern_mask_0d3 = r"^[\d]+\s\t\slayer\.*0\.30\s\t\s([\d.]+)\s\t\s([\d.]+)$"
 # pattern_mask_0d5 = r"^[\d]+\s\t\slayer\.*0\.50\s\t\s([\d.]+)\s\t\s([\d.]+)$"
@@ -129,10 +133,10 @@ output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 pattern_list = [
     pattern_mask_0d1,
-    # pattern_mask_0d3,
-    # pattern_mask_0d5,
-    # pattern_mask_0d7,
-    # pattern_mask_0d9,
+    pattern_mask_0d3,
+    pattern_mask_0d5,
+    pattern_mask_0d7,
+    pattern_mask_0d9,
 ]
 num_mask_thresholds = len(pattern_list)
 
@@ -157,7 +161,6 @@ for file_path in all_input_file_paths:
         """
         ACC and ASR - Cleansed
         """
-        # FIXME: change output content
         cleansed_linear_acc_mean_list = []
         cleansed_linear_asr_mean_list = []
 

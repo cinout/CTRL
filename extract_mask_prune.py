@@ -204,7 +204,6 @@ for metric in metrics:
     for method in ssl_methods:
         output_acc_asr_file_handle.write(f"{method}\n")
         for thres in thresholds_count:
-            output_acc_asr_file_handle.write(f"{thres}\n")
 
             for trigger in triggers:
                 for dataset in datasets:
@@ -216,5 +215,5 @@ for metric in metrics:
                     if isinstance(value, (int, float)):
                         output_acc_asr_file_handle.write(f"{value:.1f}\t")
 
-        output_acc_asr_file_handle.write("\n")
+            output_acc_asr_file_handle.write("\n")
     output_acc_asr_file_handle.write("\n")

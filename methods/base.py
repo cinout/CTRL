@@ -470,9 +470,6 @@ def find_trigger_channels_or_poisoned_images(
 
             views = transform(views)
             with torch.no_grad():
-                # if args.unlearn_before_finding_trigger_channels:
-                #     vision_features = unlearnt_backbone(views)
-                # else:
                 vision_features = backbone(views)  # [bs*n_views, 512]
 
             if args.normalize_backbone_features == "l2":

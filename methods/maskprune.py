@@ -96,7 +96,7 @@ def evaluate_by_threshold(
     args,
     model,
     linear,
-    mask_values,  # sorted by [2], from low to high
+    mask_values,  # sorted by [2], from low to high.
     pruning_max,  # 0.9
     pruning_step,  # 0.05
     criterion,
@@ -139,9 +139,9 @@ def evaluate_by_threshold(
         )
         print(
             "{} \t {} \t {} \t {:.2f} \t {:.4f} \t {:.4f}".format(
-                start,
-                layer_name,
-                neuron_idx,
+                start,  # prune from which idx in mask_values
+                layer_name,  # idx's layer name
+                neuron_idx,  # idx's indice inn the layer
                 threshold,
                 # po_loss,
                 po_acc * 100,

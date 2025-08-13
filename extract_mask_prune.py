@@ -35,17 +35,11 @@ def match_two_float_numbers(pattern, file_content, file_path, error_message):
 def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_message):
 
     match_pattern = re.findall(pattern, file_content)
-    print("pattern is: ", pattern)
-    print("match_pattern is: ", match_pattern)
+    # print("pattern is: ", pattern)
+    # print("match_pattern is: ", match_pattern)
     if match_pattern:
-        result_1_list = []
-        result_2_list = []
-        for item in match_pattern:
-            result_1 = float(item[1])
-            result_2 = float(item[2])
-            result_1_list.append(result_1)
-            result_2_list.append(result_2)
-        return result_1_list, result_2_list
+        item = match_pattern[0]
+        return float(item[1]), float(item[2])
     else:
         raise Exception(error_message + f"in file {file_path}")
 

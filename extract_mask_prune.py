@@ -92,7 +92,7 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-pattern_mask_0 = r"0\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0 = r"(0)\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.01\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.03\s+([\d.]+)\s+([\d.]+)\s*"
 pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.05\s+([\d.]+)\s+([\d.]+)\s*"

@@ -2,10 +2,10 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
 ###SBATCH --partition=deeplearn
 ###SBATCH --qos=gpgpudeeplearn
@@ -13,14 +13,14 @@
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=2-02:00:00
+#SBATCH --time=0-00:10:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=180G
+#SBATCH --mem=120G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -45,21 +45,14 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
+    --ssl_pretrain_seed 42 \
+    --use_mask_pruning \
+    --pruning-max 0.10 \
+    --pruning-step 0.01 \
+    \
+    --note "use mask pruning, prune <=0.10" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/linear.pth.tar" \
-    --linear_probe_normalize ref_set \
-    \
-    --ssl_pretrain_seed 42 \
-    --ssl_cleanse_seed 20 \
-    --num_views 1 \
-    \
-    --use_ssl_cleanse \
-    \
-    --note "Use ssl-cleanse, sd=20" \
-    \
-    --num_clusters 100 \
-
-
 
 
     

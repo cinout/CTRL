@@ -20,26 +20,13 @@ def to_dict(d):
         return d
 
 
-# match two float numbers from string
-def match_two_float_numbers(pattern, file_content, file_path, error_message):
-    match_pattern = re.search(pattern, file_content)
-    if match_pattern:
-        result_1 = float(match_pattern.group(1))  # poison
-        result_2 = float(match_pattern.group(2))  # clean
-        return result_2, result_1
-    else:
-        raise Exception(error_message + f"in file {file_path}")
-
-
 # match a group of two float numbers from strings
 def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_message):
 
     match_pattern = re.findall(pattern, file_content)
-    # print("pattern is: ", pattern)
-    # print("match_pattern is: ", match_pattern)
     if match_pattern:
         item = match_pattern[0]
-        return float(item[1]), float(item[2])
+        return float(item[2]), float(item[1])
     else:
         raise Exception(error_message + f"in file {file_path}")
 

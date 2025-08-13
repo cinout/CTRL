@@ -179,15 +179,15 @@ for file_path in all_input_file_paths:
             "acc"
         ] = cleansed_linear_acc_mean_list
 
-        print("cleansed_linear_acc_mean_list")
-        print(cleansed_linear_acc_mean_list)
+        # print("cleansed_linear_acc_mean_list")
+        # print(cleansed_linear_acc_mean_list)
 
         ideal_case_acc_asr_table[dataset][trigger][ssl_method][
             "asr"
         ] = cleansed_linear_asr_mean_list
 
-        print("cleansed_linear_asr_mean_list")
-        print(cleansed_linear_asr_mean_list)
+        # print("cleansed_linear_asr_mean_list")
+        # print(cleansed_linear_asr_mean_list)
 
 
 """

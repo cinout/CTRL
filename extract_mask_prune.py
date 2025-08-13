@@ -111,12 +111,17 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-pattern_mask_0d1 = r"^.*layer.*\s0\.10\s+([\d.]+)\s+([\d.]+)\s*$"
-pattern_mask_0d3 = r"^.*layer.*\s0\.30\s+([\d.]+)\s+([\d.]+)\s*$"
-pattern_mask_0d5 = r"^.*layer.*\s0\.50\s+([\d.]+)\s+([\d.]+)\s*$"
-pattern_mask_0d7 = r"^.*layer.*\s0\.70\s+([\d.]+)\s+([\d.]+)\s*$"
-pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
+# pattern_mask_0d1 = r"^.*layer.*\s0\.10\s+([\d.]+)\s+([\d.]+)\s*$"
+# pattern_mask_0d3 = r"^.*layer.*\s0\.30\s+([\d.]+)\s+([\d.]+)\s*$"
+# pattern_mask_0d5 = r"^.*layer.*\s0\.50\s+([\d.]+)\s+([\d.]+)\s*$"
+# pattern_mask_0d7 = r"^.*layer.*\s0\.70\s+([\d.]+)\s+([\d.]+)\s*$"
+# pattern_mask_0d9 = r"^.*layer.*\s0\.90\s+([\d.]+)\s+([\d.]+)\s*$"
 
+pattern_mask_0d1 = r".*layer.*\t0\.10\t([\d.]+)\t([\d.]+)"
+pattern_mask_0d3 = r".*layer.*\t0\.30\t([\d.]+)\t([\d.]+)"
+pattern_mask_0d5 = r".*layer.*\t0\.50\t([\d.]+)\t([\d.]+)"
+pattern_mask_0d7 = r".*layer.*\t0\.70\t([\d.]+)\t([\d.]+)"
+pattern_mask_0d9 = r".*layer.*\t0\.90\t([\d.]+)\t([\d.]+)"
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 

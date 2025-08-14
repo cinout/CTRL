@@ -529,8 +529,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def main(args):
     update_seed(args.ssl_pretrain_seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+
+    # Ensure deterministic behavior in cuDNN
+    torch.backends.cudnn.deterministic = (
+        True  # forces cuDNN to use deterministic algorithms.
+    )
+    torch.backends.cudnn.benchmark = False  # avoids cuDNN choosing the fastest (but potentially nondeterministic) algorithm.
 
     """
     Create Model

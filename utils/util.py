@@ -80,7 +80,8 @@ def load_model(model, path):
 
 
 def update_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    torch.manual_seed(seed)  # PyTorch CPU
+    torch.cuda.manual_seed(seed)  # PyTorch GPU (all devices)
+    torch.cuda.manual_seed_all(seed)  # PyTorch GPU (if using multi-GPU)
     np.random.seed(seed)
     random.seed(seed)

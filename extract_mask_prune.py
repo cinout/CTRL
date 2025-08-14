@@ -45,31 +45,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14184312-[ST:prune_sd10].out",
-    "slurm-14184313.out",
-    "slurm-14184314.out",
-    "slurm-14184315.out",
-    "slurm-14184316.out",
-    "slurm-14184317.out",
-    "slurm-14184319.out",
-    "slurm-14184321.out",
-    "slurm-14184323.out",
-    "slurm-14184325.out",
-    "slurm-14184327.out",
-    "slurm-14184328.out",
-    "slurm-14184331.out",
-    "slurm-14184333.out",
-    "slurm-14184335.out",
-    "slurm-14184337.out",
-    "slurm-14184339.out",
-    "slurm-14184341-[END:prune_sd10].out",
+    "slurm-14184568-[ST:prune_sd42].out",
+    "slurm-14184569.out",
+    "slurm-14184570.out",
+    "slurm-14184571.out",
+    "slurm-14184572.out",
+    "slurm-14184573.out",
+    "slurm-14184574.out",
+    "slurm-14184575.out",
+    "slurm-14184576.out",
+    "slurm-14184577.out",
+    "slurm-14184578.out",
+    "slurm-14184579.out",
+    "slurm-14184580.out",
+    "slurm-14184581.out",
+    "slurm-14184582.out",
+    "slurm-14184583.out",
+    "slurm-14184584.out",
+    "slurm-14184585-[END:prune_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "prune_sd10_"  # FIXME: change
+title = "prune_sd42_"  # FIXME: change
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()

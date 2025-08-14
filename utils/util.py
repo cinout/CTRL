@@ -1,7 +1,7 @@
-import copy
-import os
+import copy, os, random
 import torch
 import torch.nn as nn
+import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -77,3 +77,10 @@ def load_model(model, path):
     print(checkpoint["epoch"])
 
     return model
+
+
+def update_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)

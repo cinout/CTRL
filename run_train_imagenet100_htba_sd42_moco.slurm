@@ -47,10 +47,9 @@ python -u main_train.py \
     \
     --ssl_pretrain_seed 42 \
     --use_mask_pruning \
-    --pruning-max 0.10 \
-    --pruning-step 0.01 \
+    --mask_pruning_seed 10 \
     \
-    --note "use mask pruning, prune <=0.10" \
+    --note "use mask pruning, sd10" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 

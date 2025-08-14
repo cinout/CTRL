@@ -359,6 +359,7 @@ parser.add_argument(
     action="store_true",
     help="apply mask pruning (RNP paper)",
 )
+parser.add_argument("--mask_pruning_seed", default=42, type=int)
 parser.add_argument("--alpha", type=float, default=0.2)
 parser.add_argument(
     "--clean_threshold",
@@ -516,10 +517,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def main(args):
-    torch.manual_seed(args.ssl_pretrain_seed)
-    torch.cuda.manual_seed_all(args.ssl_pretrain_seed)
-    np.random.seed(args.ssl_pretrain_seed)
-    random.seed(args.ssl_pretrain_seed)
+    update_seed(args.ssl_pretrain_seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -627,10 +625,7 @@ def main(args):
     Baseline 1: Use SSL-CLeanse (ECCV 2024 paper)
     """
     if args.use_ssl_cleanse:
-        torch.manual_seed(args.ssl_cleanse_seed)
-        torch.cuda.manual_seed_all(args.ssl_cleanse_seed)
-        np.random.seed(args.ssl_cleanse_seed)
-        random.seed(args.ssl_cleanse_seed)
+        update_seed(args.ssl_cleanse_seed)
 
         backbone = extract_backbone(args.method, model)
 
@@ -661,6 +656,7 @@ def main(args):
     """
     if args.use_mask_pruning:
         backbone = extract_backbone(args.method, model)
+        update_seed(args.mask_pruning_seed)
         trainer.mask_prune(backbone, poison, trained_linear)
 
     """

@@ -978,6 +978,7 @@ Evaluate the performance of linear probing (linear classifier)
 def eval_linear_classifier(
     val_loader, backbone, linear, args, val_mode, use_ss_detector, contributing_indices
 ):
+    # TODO: compare with code here
     transform = T.Compose(
         [
             T.Normalize(args.mean, args.std),
@@ -1342,8 +1343,7 @@ class CLTrainer:
         mask_values = sorted(mask_values, key=lambda x: float(x[2]))
         print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
 
-        # TODO: double check the liearn and backboen here
-        # TODO: check normalization choices
+        # TODO:
         cl_loss, cl_acc = test_maskprune(
             args=self.args,
             model=backbone,

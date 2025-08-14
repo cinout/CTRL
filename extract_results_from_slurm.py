@@ -56,31 +56,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13222005-[ST:vote8_rm40_retrain_whole_sd42].out",
-    "slurm-13222006.out",
-    "slurm-13222007.out",
-    "slurm-13222008.out",
-    "slurm-13222009.out",
-    "slurm-13222010.out",
-    "slurm-13222011.out",
-    "slurm-13222012.out",
-    "slurm-13222013.out",
-    "slurm-13222014.out",
-    "slurm-13222015.out",
-    "slurm-13222016.out",
-    "slurm-13222017.out",
-    "slurm-13222018.out",
-    "slurm-13222019.out",
-    "slurm-13222020.out",
-    "slurm-13222021.out",
-    "slurm-13222022-[END:vote8_rm40_retrain_whole_sd42].out",
+    "slurm-14177726-[ST:random_dropout_sd10].out",
+    "slurm-14177727.out",
+    "slurm-14177728.out",
+    "slurm-14177729.out",
+    "slurm-14177730.out",
+    "slurm-14177731.out",
+    "slurm-14177732.out",
+    "slurm-14177733.out",
+    "slurm-14177734.out",
+    "slurm-14177735.out",
+    "slurm-14177736.out",
+    "slurm-14177737.out",
+    "slurm-14177738.out",
+    "slurm-14177739.out",
+    "slurm-14177740.out",
+    "slurm-14177741.out",
+    "slurm-14177742.out",
+    "slurm-14177743-[END:random_dropout_sd10].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "vote8_rm40_retrain_whole_sd42_"  # FIXME: change
+title = "random_dropout_sd10_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
@@ -109,7 +109,8 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 # Cleansed
 # pattern_cleansed_model_knn = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 # pattern_cleansed_model_linear = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
-
+pattern_cleansed_model_knn_general = r"In kNN classification, by replacing top-\d+ channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+pattern_cleansed_model_linear_general = r"In linear probe, by replacing \d+ channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
 
 pattern_cleansed_model_knn_remove_4 = r"In kNN classification, by replacing top-4 channels, clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
 pattern_cleansed_model_linear_remove_4 = r"In linear probe, by replacing 4 channels, the ACC on clean val is:\s*([\d.]+), the ASR on poisoned val is:\s*([\d.]+)"
@@ -141,20 +142,22 @@ output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 # FIXME: update # channels removed
 pattern_knn_list = [
+    pattern_cleansed_model_knn_general
     # pattern_cleansed_model_knn_remove_8,
     # pattern_cleansed_model_knn_remove_12,
     # pattern_cleansed_model_knn_remove_20,
-    pattern_cleansed_model_knn_remove_40,
+    # pattern_cleansed_model_knn_remove_40,
     # pattern_cleansed_model_knn_remove_60,
     # pattern_cleansed_model_knn_remove_80,
     # pattern_cleansed_model_knn_remove_100,
     # pattern_cleansed_model_knn_remove_120,
 ]
 pattern_linear_list = [
+    pattern_cleansed_model_linear_general
     # pattern_cleansed_model_linear_remove_8,
     # pattern_cleansed_model_linear_remove_12,
     # pattern_cleansed_model_linear_remove_20,
-    pattern_cleansed_model_linear_remove_40,
+    # pattern_cleansed_model_linear_remove_40,
     # pattern_cleansed_model_linear_remove_60,
     # pattern_cleansed_model_linear_remove_80,
     # pattern_cleansed_model_linear_remove_100,

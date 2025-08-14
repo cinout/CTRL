@@ -65,6 +65,7 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
                 labels = labels[valid_indices]
 
             output = model(images)
+            # TODO: check here
             output = linear(output)
 
             total_loss += criterion(output, labels).item()

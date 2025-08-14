@@ -3,169 +3,92 @@ import numpy as np
 import torch
 import random
 
+# ACC
+acc_byol_avg = [42.4, 87.2, 55.7, 41.8, 87.6, 56.3, 20.2, 84.9, 33.5, 21.1, 75.5, 34.3]
+acc_byol_std = [0.6, 0.1, 0.2, 0.5, 0.2, 0.1, 0.6, 0.2, 0.4, 0.3, 2.0, 0.4]
 
-uncleansed_asr = [
-    # BYOL
-    2.1,
-    4.1,
-    44.0,
-    41.9,
-    83.0,
-    88.0,
-    0.0,
-    2.0,
-    50.6,
-    62.7,
-    89.9,
-    67.3,
-    # MoCo
-    5.5,
-    82.0,
-    40.3,
-    44.9,
-    1.9,
-    0.5,
-    17.0,
-    65.5,
-    22.5,
-    23.8,
-    4.1,
-    1.4,
-    # SimCLR
+
+acc_mocov2_avg = [
+    42.5,
+    78.9,
+    45.9,
+    42.5,
+    79.6,
+    46.5,
+    24.9,
+    68.3,
+    24.0,
+    25.3,
+    69.2,
+    26.5,
+]
+acc_mocov2_std = [0.9, 0.3, 0.2, 0.2, 0.1, 0.2, 0.4, 1.1, 0.2, 0.7, 1.0, 0.2]
+
+
+acc_simclr_avg = [
     38.4,
-    84.2,
-    79.1,
-    35.1,
-    81.8,
-    70.6,
-    43.8,
-    66.0,
-    68.9,
-    14.0,
-    86.7,
-    53.2,
+    85.1,
+    49.9,
+    38.8,
+    85.4,
+    50.4,
+    20.4,
+    70.8,
+    24.7,
+    23.6,
+    74.9,
+    24.0,
 ]
+acc_simclr_std = [0.3, 0.1, 0.2, 0.2, 0.3, 0.3, 0.2, 0.6, 0.9, 0.3, 0.6, 0.8]
+
+# ASR
+asr_byol_avg = [2.1, 66.8, 38.7, 44.9, 86.5, 88.0, 0.0, 78.8, 46.1, 64.6, 92.0, 67.0]
+asr_byol_std = [1.0, 21.3, 21.9, 2.1, 0.4, 0.8, 0.0, 31.4, 11.9, 1.0, 1.6, 10.9]
 
 
-baseline_asr = [
-    # BYOL
-    1.9,
-    2.1,
-    2.2,
-    2.1,
-    6.5,
-    13.5,
-    1.6,
-    5.7,
-    3.1,
-    2.4,
-    26.0,
-    6.2,
-    # MoCo
-    1.8,
-    23.9,
-    20.1,
-    2.2,
-    2.4,
-    0.6,
-    2.6,
-    15.8,
-    20.6,
-    1.8,
-    3.7,
-    1.0,
-    # SimCLR
-    1.8,
-    23.9,
-    20.1,
-    2.2,
-    2.4,
-    0.6,
-    2.6,
-    15.8,
-    20.6,
-    1.8,
-    3.7,
-    1.0,
+asr_mocov2_avg = [2.0, 84.7, 43.2, 41.8, 1.8, 0.3, 6.6, 61.9, 19.6, 22.2, 3.8, 1.1]
+asr_mocov2_std = [0.6, 0.2, 2.7, 2.6, 0.1, 0.1, 6.7, 8.9, 2.3, 7.1, 0.3, 0.2]
+
+
+asr_simclr_avg = [
+    48.6,
+    85.7,
+    80.3,
+    28.3,
+    82.3,
+    72.5,
+    48.8,
+    66.9,
+    71.0,
+    14.1,
+    86.6,
+    47.2,
 ]
+asr_simclr_std = [12.5, 0.5, 0.6, 4.8, 2.2, 0.9, 22.9, 4.2, 5.9, 5.3, 3.0, 18.5]
 
 
-ours_sample16_asr = [
-    # BYOL
-    0.4,
-    4.5,
-    0.0,
-    0.8,
-    37.8,
-    0.1,
-    0.3,
-    7.6,
-    0.0,
-    0.7,
-    14.3,
-    0.3,
-    # MoCo
-    2.4,
-    53.7,
-    3.5,
-    0.8,
-    1.1,
-    0.1,
-    0.3,
-    56.7,
-    1.2,
-    0.7,
-    2.1,
-    0.3,
-    # SimCLR
-    1.3,
-    0.8,
-    0.0,
-    0.4,
-    14.6,
-    0.0,
-    0.0,
-    0.1,
-    0.0,
-    0.0,
-    3.1,
-    12.0,
-]
-
-uncleansed_asr = np.array(uncleansed_asr)
-baseline_asr = np.array(baseline_asr)
-ours_sample16_asr = np.array(ours_sample16_asr)
-
-"""
-Absolute Diff
-"""
-
-diff = baseline_asr - ours_sample16_asr
-
-baseline_wins = np.sum(diff < 0)
-our_wins = np.sum(diff > 0)
-ties = np.sum(diff == 0)
-
-print(f"baseline_wins: {baseline_wins}; our_wins: {our_wins}; ties: {ties}")
-
-
-"""
-percent diff with respect to uncleansed
-"""
-# only consider uncleansed ASR>1.0
-uncleansed_asr_gt_1 = uncleansed_asr > 1
-
-uncleansed_asr = uncleansed_asr[uncleansed_asr_gt_1]
-baseline_asr = baseline_asr[uncleansed_asr_gt_1]
-ours_sample16_asr = ours_sample16_asr[uncleansed_asr_gt_1]
-
-
-baseline_percent_wrt_uncleansed = (baseline_asr - uncleansed_asr) / uncleansed_asr
-ours_sample16_percent_wrt_uncleansed = (
-    ours_sample16_asr - uncleansed_asr
-) / uncleansed_asr
-
-
-print(
-    f"baseline reduction rate:{baseline_percent_wrt_uncleansed.mean()}, our reduction rate: {ours_sample16_percent_wrt_uncleansed.mean()}"
+acc_byol = "\t".join([f"{v}±{e}" for v, e in zip(acc_byol_avg, acc_byol_std)]) + "\n"
+acc_mocov2 = (
+    "\t".join([f"{v}±{e}" for v, e in zip(acc_mocov2_avg, acc_mocov2_std)]) + "\n"
 )
+acc_simclr = (
+    "\t".join([f"{v}±{e}" for v, e in zip(acc_simclr_avg, acc_simclr_std)]) + "\n"
+)
+asr_byol = "\t".join([f"{v}±{e}" for v, e in zip(asr_byol_avg, asr_byol_std)]) + "\n"
+asr_mocov2 = (
+    "\t".join([f"{v}±{e}" for v, e in zip(asr_mocov2_avg, asr_mocov2_std)]) + "\n"
+)
+asr_simclr = (
+    "\t".join([f"{v}±{e}" for v, e in zip(asr_simclr_avg, asr_simclr_std)]) + "\n"
+)
+
+
+output_file = open("combined.txt", "w", encoding="utf-8")
+
+
+output_file.write(acc_byol)
+output_file.write(acc_mocov2)
+output_file.write(acc_simclr)
+output_file.write(asr_byol)
+output_file.write(asr_mocov2)
+output_file.write(asr_simclr)

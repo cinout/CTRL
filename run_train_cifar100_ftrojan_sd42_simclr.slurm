@@ -42,20 +42,11 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --linear_probe_normalize ref_set \
-    \
     --ssl_pretrain_seed 42 \
-    --num_views 64 \
+    --use_mask_pruning \
+    --mask_pruning_seed 20 \
     \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --voted_channel_num 30 \
-    --removed_channel_num 70 \
-    \
-    --remove_random_channels \
-    --remove_random_channels_seed 20 \
-    \
-    --note "remove random channels, sd20" \
+    --note "use mask pruning, sd20" \
     --pretrained_ssl_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
 

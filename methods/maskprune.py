@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from collections import Counter, OrderedDict
 import torch.nn as nn
+import torchvision.transforms as T
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -38,6 +39,12 @@ def pruning(net, neuron):
 
 # for evaluating performances at different stages
 def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
+    transform = T.Compose(
+        [
+            T.Normalize(args.mean, args.std),
+        ]
+    )
+
     model.eval()
     linear.eval()
 
@@ -54,7 +61,9 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
             else:
                 raise Exception(f"unimplemented val_mode {val_mode}")
 
-            images, labels = images.to(device), labels.to(device)
+            images = images.to(device)
+            images = transform(images)
+            labels = labels.to(device)
             if val_mode == "poison":
                 valid_indices = original_label != args.target_class
                 if torch.all(~valid_indices):

@@ -209,7 +209,6 @@ parser.add_argument(
     action="store_true",
     help="apply channel removal strategy",
 )
-# TODO: create new slurms for the following two
 parser.add_argument(
     "--remove_random_channels",
     action="store_true",

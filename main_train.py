@@ -129,7 +129,7 @@ parser.add_argument(
     + str(random.randint(0, 100)),
 )
 parser.add_argument("--ssl_pretrain_seed", default=42, type=int)
-parser.add_argument("--num_workers", default=1, type=int)
+parser.add_argument("--num_workers", default=0, type=int)
 
 
 """

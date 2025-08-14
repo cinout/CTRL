@@ -53,9 +53,9 @@ python -u main_train.py \
     --removed_channel_num 70 \
     \
     --remove_random_channels \
-    --remove_random_channels_seed 10 \
+    --remove_random_channels_seed 20 \
     \
-    --note "remove random channels, sd10" \
+    --note "remove random channels, sd20" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
 

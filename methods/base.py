@@ -14,7 +14,7 @@ from networks.resnet_org import model_dict
 from networks.resnet_cifar import model_dict as model_dict_cifar
 from ssl_cleanse.mitigation import outlier
 from ssl_cleanse.ssl_cleanse import draw_global
-from utils.util import AverageMeter, extract_backbone, save_model
+from utils.util import AverageMeter, extract_backbone, save_model, update_seed
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.models as models
@@ -308,6 +308,10 @@ Called by CLTrainer class
 
 If args.siftout_poisoned_images == True, return indices of estimated poisoned images;
 Else, return the estimated trigger channels.
+
+
+Return:
+    essential_indices: tensor of shape (#max_removed_channels,)
 """
 
 
@@ -1709,14 +1713,21 @@ class CLTrainer:
         trained_linear.eval()
 
         # Esimate poisoned triggers
-        contributing_indices = find_trigger_channels_or_poisoned_images(
-            self.args,
-            poison.train_pos_loader,  # poisoned training set
-            poison.train_probe_loader,  # 1% clean train probe dataset
-            poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
-            backbone,
-            poison.ss_transform,
-        )
+        if self.args.remove_random_channels:
+            update_seed(self.args.remove_random_channels_seed)
+            # FIXME: 512, read from resnet18
+            contributing_indices = torch.randperm(512)[
+                : max(self.args.removed_channel_num)
+            ]
+        else:
+            contributing_indices = find_trigger_channels_or_poisoned_images(
+                self.args,
+                poison.train_pos_loader,  # poisoned training set
+                poison.train_probe_loader,  # 1% clean train probe dataset
+                poison.train_probe_freq_detector_loader,  # same to train_probe_loader, only batch size is fxied to 64
+                backbone,
+                poison.ss_transform,
+            )
         print(f"predicted trigger channels are: {contributing_indices}")
 
         ############# KNN

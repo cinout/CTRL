@@ -209,13 +209,17 @@ parser.add_argument(
     action="store_true",
     help="apply channel removal strategy",
 )
-# TODO: create new slurms
+# TODO: create new slurms for the following two
 parser.add_argument(
     "--remove_random_channels",
     action="store_true",
     help="a baseline: randomly drop out some channels",
 )
-
+parser.add_argument(
+    "--remove_random_channels_seed",
+    type=int,
+    default=42,
+)
 parser.add_argument(
     "--siftout_poisoned_images",
     action="store_true",
@@ -667,7 +671,6 @@ def main(args):
         trainer.mask_prune(backbone, poison, trained_linear)
 
     """
-    # TODO:
     Baseline 3: Random Channel Removal, add args.remove_random_channels
     """
 

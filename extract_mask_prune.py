@@ -104,12 +104,12 @@ output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 # FIXME: update
 pattern_list = [
-    pattern_mask_0,
-    pattern_mask_0d1,
-    pattern_mask_0d3,
+    # pattern_mask_0,
+    # pattern_mask_0d1,
+    # pattern_mask_0d3,
     pattern_mask_0d5,
-    pattern_mask_0d7,
-    pattern_mask_0d9,
+    # pattern_mask_0d7,
+    # pattern_mask_0d9,
 ]
 num_mask_thresholds = len(pattern_list)
 

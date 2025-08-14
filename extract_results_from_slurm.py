@@ -183,28 +183,28 @@ for file_path in all_input_file_paths:
             pattern_ssl_method, file_content, file_path, "no matching ssl_method"
         )
 
-        """
-        Ideal Case Voted Channels
-        """
-        ideal_case_clean_channels = match_voted_channels(
-            pattern_ideal_case_clean_channels,
-            file_content,
-            file_path,
-            "no matching ideal case voted clean channels",
-        )
-        ideal_case_poison_channels = match_voted_channels(
-            pattern_ideal_case_poison_channels,
-            file_content,
-            file_path,
-            "no matching ideal case voted poison channels",
-        )
-        #  add to dictionary
-        ideal_case_channels[dataset][trigger][ssl_method][
-            "clean"
-        ] = ideal_case_clean_channels
-        ideal_case_channels[dataset][trigger][ssl_method][
-            "poison"
-        ] = ideal_case_poison_channels
+        # """
+        # Ideal Case Voted Channels
+        # """
+        # ideal_case_clean_channels = match_voted_channels(
+        #     pattern_ideal_case_clean_channels,
+        #     file_content,
+        #     file_path,
+        #     "no matching ideal case voted clean channels",
+        # )
+        # ideal_case_poison_channels = match_voted_channels(
+        #     pattern_ideal_case_poison_channels,
+        #     file_content,
+        #     file_path,
+        #     "no matching ideal case voted poison channels",
+        # )
+        # #  add to dictionary
+        # ideal_case_channels[dataset][trigger][ssl_method][
+        #     "clean"
+        # ] = ideal_case_clean_channels
+        # ideal_case_channels[dataset][trigger][ssl_method][
+        #     "poison"
+        # ] = ideal_case_poison_channels
 
         """
         ACC and ASR - Uncleanse
@@ -324,12 +324,12 @@ for metric in metrics:
         output_acc_asr_file_handle.write("\n")
     output_acc_asr_file_handle.write("\n")
 
-"""
-Write Channels
-"""
-# Convert to regular dict if printing or saving
-ideal_case_channels = to_dict(ideal_case_channels)
+# """
+# Write Channels
+# """
+# # Convert to regular dict if printing or saving
+# ideal_case_channels = to_dict(ideal_case_channels)
 
-# Output file (voted_channels)
-with open(output_file_voted_channels, "w") as f:
-    f.write("ideal_case_channels = " + repr(ideal_case_channels))
+# # Output file (voted_channels)
+# with open(output_file_voted_channels, "w") as f:
+#     f.write("ideal_case_channels = " + repr(ideal_case_channels))

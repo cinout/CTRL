@@ -93,11 +93,11 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 
 # Cleansed
 pattern_mask_0 = r"(0)\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.1\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.3\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.5\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.7\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.9\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")

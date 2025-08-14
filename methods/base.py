@@ -1263,7 +1263,7 @@ class CLTrainer:
         #### stage 1: model unlearing
         print(f">>>>>>>> start model unlearning")
         for epoch in range(0, self.args.unlearning_epochs + 1):
-            # UNLEARNING
+            # UNLEARNING: use copied backbone and linear, both are learnable
             train_acc = train_step_unlearning(
                 args=self.args,
                 model=new_backbone,
@@ -1297,6 +1297,7 @@ class CLTrainer:
                 model_fun, _ = model_dict[self.args.arch]
             unlearned_model = model_fun(norm_layer=MaskBatchNorm2d)
 
+        # initialze it with the weights of unlearned model new_backbone
         refill_unlearned_model(
             unlearned_model, orig_state_dict=new_backbone.state_dict()
         )
@@ -1315,8 +1316,8 @@ class CLTrainer:
         for epoch in range(1, self.args.recovering_epochs + 1):
             train_step_recovering(
                 args=self.args,
-                unlearned_model=unlearned_model,
-                linear=new_linear,
+                unlearned_model=unlearned_model,  # use the unlearnt backbone, plus learnable masks injected
+                linear=new_linear,  # use the unlearnt linear from previous step
                 criterion=criterion,
                 data_loader=poison.train_probe_loader,
                 mask_opt=mask_optimizer,
@@ -1332,8 +1333,8 @@ class CLTrainer:
         #### stage 3: model pruning
         print(f">>>>>>>> start model pruning")
 
-        backbone = copy.deepcopy(backbone)
-        linear = copy.deepcopy(trained_linear)
+        backbone = copy.deepcopy(backbone)  # unimpacted backbone
+        linear = copy.deepcopy(trained_linear)  # unimpacted linear
 
         criterion = torch.nn.CrossEntropyLoss().to(device)
         mask_file = os.path.join(self.args.saved_path, "mask_values.txt")

@@ -71,14 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14099275.out",
+    "slurm-14176087-[ST:random_dropout_sd42].out",
+    "slurm-14176088.out",
+    "slurm-14176089.out",
+    "slurm-14176090.out",
+    "slurm-14176091.out",
+    "slurm-14176092.out",
+    "slurm-14176093.out",
+    "slurm-14176094.out",
+    "slurm-14176095.out",
+    "slurm-14176096.out",
+    "slurm-14176097.out",
+    "slurm-14176098.out",
+    "slurm-14176099.out",
+    "slurm-14176100.out",
+    "slurm-14176101.out",
+    "slurm-14176102.out",
+    "slurm-14176103.out",
+    "slurm-14176104-[END:random_dropout_sd42].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "use5_"  # FIXME: change
+title = "random_dropout_sd42_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

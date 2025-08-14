@@ -1343,6 +1343,7 @@ class CLTrainer:
         print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
 
         # TODO: double check the liearn and backboen here
+        # TODO: check normalization choices
         cl_loss, cl_acc = test_maskprune(
             args=self.args,
             model=backbone,

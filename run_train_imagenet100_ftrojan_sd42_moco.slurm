@@ -51,14 +51,13 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 8 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
     --remove_random_channels \
-    --remove_random_channels_seed 42 \
+    --remove_random_channels_seed 10 \
     \
-    --note "remove random channels, sd42" \
+    --note "remove random channels, sd10" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

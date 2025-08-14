@@ -47,9 +47,9 @@ python -u main_train.py \
     \
     --ssl_pretrain_seed 42 \
     --use_mask_pruning \
-    --mask_pruning_seed 20 \
+    --mask_pruning_seed 10 \
     \
-    --note "use mask pruning, sd20" \
+    --note "use mask pruning, sd10" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_simclr_ref_set_sd42/linear.pth.tar" \
 

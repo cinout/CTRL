@@ -45,31 +45,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14174476-[ST:maskprune_sd20].out",
-    "slurm-14174477.out",
-    "slurm-14174478.out",
-    "slurm-14174479.out",
-    "slurm-14174480.out",
-    "slurm-14174481.out",
-    "slurm-14174482.out",
-    "slurm-14174483.out",
-    "slurm-14174484.out",
-    "slurm-14174485.out",
-    "slurm-14174486.out",
-    "slurm-14174487.out",
-    "slurm-14174488.out",
-    "slurm-14174489.out",
-    "slurm-14174490.out",
-    "slurm-14174491.out",
-    "slurm-14174492.out",
-    "slurm-14174493-[END:maskprune_sd20].out",
+    "slurm-14183664-[ST:prune_sd20].out",
+    "slurm-14183665.out",
+    "slurm-14183666.out",
+    "slurm-14183667.out",
+    "slurm-14183668.out",
+    "slurm-14183669.out",
+    "slurm-14183670.out",
+    "slurm-14183671.out",
+    "slurm-14183672.out",
+    "slurm-14183673.out",
+    "slurm-14183674.out",
+    "slurm-14183675.out",
+    "slurm-14183676.out",
+    "slurm-14183677.out",
+    "slurm-14183678.out",
+    "slurm-14183679.out",
+    "slurm-14183680.out",
+    "slurm-14183681-[END:prune_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "mask_prune_sd20_"  # FIXME: change
+title = "prune_sd20_"  # FIXME: change
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()
@@ -93,11 +93,11 @@ pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val 
 
 # Cleansed
 pattern_mask_0 = r"(0)\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.01\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.03\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.05\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.07\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.09\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.1\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.3\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.5\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.7\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.9\s+([\d.]+)\s+([\d.]+)\s*"
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
@@ -105,11 +105,11 @@ output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 # FIXME: update
 pattern_list = [
     pattern_mask_0,
-    # pattern_mask_0d1,
-    # pattern_mask_0d3,
-    # pattern_mask_0d5,
-    # pattern_mask_0d7,
-    # pattern_mask_0d9,
+    pattern_mask_0d1,
+    pattern_mask_0d3,
+    pattern_mask_0d5,
+    pattern_mask_0d7,
+    pattern_mask_0d9,
 ]
 num_mask_thresholds = len(pattern_list)
 

@@ -57,31 +57,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-13980010-[ST:sslcleanse_sd10].out",
-    "slurm-13980011.out",
-    "slurm-13980012.out",
-    "slurm-13980013.out",
-    "slurm-13980014.out",
-    "slurm-13980015.out",
-    "slurm-13980016.out",
-    "slurm-13980017.out",
-    "slurm-13980018.out",
-    "slurm-13980019.out",
-    "slurm-13980020.out",
-    "slurm-13980021.out",
-    "slurm-13983398.out",
-    "slurm-13983399.out",
-    "slurm-13983400.out",
-    "slurm-13983401.out",
-    "slurm-13983402.out",
-    "slurm-13983403-[END:sslcleanse_sd10].out",
+    "slurm-14040297-[ST:sslcleanse_sd20].out",
+    "slurm-14040298.out",
+    "slurm-14040299.out",
+    "slurm-14040300.out",
+    "slurm-14040301.out",
+    "slurm-14040302.out",
+    "slurm-14040303.out",
+    "slurm-14040304.out",
+    "slurm-14040305.out",
+    "slurm-14040306.out",
+    "slurm-14040307.out",
+    "slurm-14040308.out",
+    "slurm-14138982.out"
+    "slurm-14138983.out"
+    "slurm-14138984.out"
+    "slurm-14138985.out"
+    "slurm-14138986.out"
+    "slurm-14138987-[END:sslcleanse_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "sslcleanse_sd10_"  # FIXME: change
+title = "sslcleanse_sd20_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

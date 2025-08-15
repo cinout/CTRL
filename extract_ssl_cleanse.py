@@ -69,11 +69,11 @@ all_input_file_paths = [
     "slurm-14040306.out",
     "slurm-14040307.out",
     "slurm-14040308.out",
-    "slurm-14138982.out"
-    "slurm-14138983.out"
-    "slurm-14138984.out"
-    "slurm-14138985.out"
-    "slurm-14138986.out"
+    "slurm-14138982.out",
+    "slurm-14138983.out",
+    "slurm-14138984.out",
+    "slurm-14138985.out",
+    "slurm-14138986.out",
     "slurm-14138987-[END:sslcleanse_sd20].out",
 ]
 

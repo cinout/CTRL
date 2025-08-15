@@ -26,7 +26,8 @@ def match_two_float_numbers(
     pattern, file_content, file_path, error_message, index_of_multi_match=0
 ):
     if index_of_multi_match > 0:
-        matches = pattern.findall(file_content)
+        matches = re.findall(pattern, file_content)
+
         if len(matches) >= 2:
             clean_acc, back_acc = matches[index_of_multi_match]
             return float(clean_acc), float(back_acc)

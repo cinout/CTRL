@@ -104,8 +104,8 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-pattern_knn = r">>>> With SSL-cleanse model, for kNN classifier, clean acc: ([\d.]+), back acc: ([\d.]+)$"
-pattern_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)$"
+pattern_knn = r"With SSL-cleanse model, for kNN classifier, clean acc: ([\d.]+), back acc: ([\d.]+)"
+pattern_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")

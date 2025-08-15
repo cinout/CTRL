@@ -22,14 +22,24 @@ def to_dict(d):
 
 
 # match two float numbers from string
-def match_two_float_numbers(pattern, file_content, file_path, error_message):
-    match_pattern = re.search(pattern, file_content)
-    if match_pattern:
-        result_1 = float(match_pattern.group(1))
-        result_2 = float(match_pattern.group(2))
-        return result_1, result_2
+def match_two_float_numbers(
+    pattern, file_content, file_path, error_message, index_of_multi_match=0
+):
+    if index_of_multi_match > 0:
+        matches = pattern.findall(file_content)
+        if len(matches) >= 2:
+            clean_acc, back_acc = matches[index_of_multi_match]
+            return float(clean_acc), float(back_acc)
+        else:
+            raise Exception(error_message + f" in file {file_path}")
     else:
-        raise Exception(error_message + f"in file {file_path}")
+        match_pattern = re.search(pattern, file_content)
+        if match_pattern:
+            result_1 = float(match_pattern.group(1))
+            result_2 = float(match_pattern.group(2))
+            return result_1, result_2
+        else:
+            raise Exception(error_message + f" in file {file_path}")
 
 
 # match basic information such as trigger type
@@ -37,16 +47,6 @@ def match_basic_info(pattern, file_content, file_path, error_message):
     match_pattern = re.search(pattern, file_content)
     if match_pattern:
         return match_pattern.group(1)
-    else:
-        raise Exception(error_message + f"in file {file_path}")
-
-
-# match voted channels
-def match_voted_channels(pattern, file_content, file_path, error_message):
-    match_pattern = re.search(pattern, file_content)
-    if match_pattern:
-        array_content = match_pattern.group(1)
-        return [int(num) for num in re.findall(r"\d+", array_content)]
     else:
         raise Exception(error_message + f"in file {file_path}")
 
@@ -97,11 +97,11 @@ pattern_trigger = r"trigger_type: (.*)"
 pattern_ssl_method = r"method: (.*)"
 
 
-# Uncleansed
-pattern_uncleansed_model_knn = (
-    r"\[800-epoch\].*?clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
-)
-pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
+# # Uncleansed
+# pattern_uncleansed_model_knn = (
+#     r"\[800-epoch\].*?clean acc:\s*([\d.]+)\s*\|\s*back acc:\s*([\d.]+)"
+# )
+# pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
 pattern_knn = r"With SSL-cleanse model, for kNN classifier, clean acc: ([\d.]+), back acc: ([\d.]+)"
@@ -133,24 +133,24 @@ for file_path in all_input_file_paths:
             pattern_ssl_method, file_content, file_path, "no matching ssl_method"
         )
 
-        """
-        ACC and ASR - Uncleanse
-        """
-        # Uncleansed kNN
-        uncleansed_knn_acc, uncleansed_knn_asr = match_two_float_numbers(
-            pattern_uncleansed_model_knn,
-            file_content,
-            file_path,
-            "no matching uncleansed kNN",
-        )
+        # """
+        # ACC and ASR - Uncleanse
+        # """
+        # # Uncleansed kNN
+        # uncleansed_knn_acc, uncleansed_knn_asr = match_two_float_numbers(
+        #     pattern_uncleansed_model_knn,
+        #     file_content,
+        #     file_path,
+        #     "no matching uncleansed kNN",
+        # )
 
-        # Uncleansed Linear
-        uncleansed_linear_acc, uncleansed_linear_asr = match_two_float_numbers(
-            pattern_uncleansed_model_linear,
-            file_content,
-            file_path,
-            "no matching uncleansed linear",
-        )
+        # # Uncleansed Linear
+        # uncleansed_linear_acc, uncleansed_linear_asr = match_two_float_numbers(
+        #     pattern_uncleansed_model_linear,
+        #     file_content,
+        #     file_path,
+        #     "no matching uncleansed linear",
+        # )
 
         """
         ACC and ASR - Cleansed

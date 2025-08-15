@@ -178,6 +178,7 @@ for file_path in all_input_file_paths:
                 file_content,
                 file_path,
                 "no matching cleansed linear",
+                index_of_multi_match=1,
             )
 
             cleansed_knn_acc_list.append(cleansed_knn_acc)

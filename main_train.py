@@ -709,17 +709,20 @@ def main(args):
         trainer.mimic(model, poison, student, train_transform)
 
         # TODO: error line
-        # student_backbone = extract_backbone(args.method, student)
+        for p in student.parameters():
+            p = p.detach().clone()
 
-        if args.method == "mocov2":
-            # backbone = copy.deepcopy(model.encoder_q)
-            student_backbone = type(student.encoder_q)()  # new instance
-            student_backbone.load_state_dict(student.encoder_q.state_dict())
-            student_backbone.fc = nn.Sequential()
-        else:
-            # backbone = copy.deepcopy(model.backbone)
-            student_backbone = type(student.backbone)()  # new instance
-            student_backbone.load_state_dict(student.backbone.state_dict())
+        student_backbone = extract_backbone(args.method, student)
+
+        # if args.method == "mocov2":
+        #     # backbone = copy.deepcopy(model.encoder_q)
+        #     student_backbone = type(student.encoder_q)()  # new instance
+        #     student_backbone.load_state_dict(student.encoder_q.state_dict())
+        #     student_backbone.fc = nn.Sequential()
+        # else:
+        #     # backbone = copy.deepcopy(model.backbone)
+        #     student_backbone = type(student.backbone)()  # new instance
+        #     student_backbone.load_state_dict(student.backbone.state_dict())
 
         new_trainer = CLTrainer(args)
         clean_acc, back_acc = new_trainer.knn_monitor_fre(

@@ -1312,8 +1312,7 @@ class CLTrainer:
                     + str(epoch)
                     + ".pth",
                 )
-        # TODO: would this fix?
-        student.eval()
+
         # FIXME: ideally remove the hooks of student here
 
     """

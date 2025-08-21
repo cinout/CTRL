@@ -53,6 +53,7 @@ python -u main_train.py \
     --mimic_seed 20 \
     \
     --use_mimic \
+    --mimic_epochs 100 \
     \
     --note "Use MIMIC, sd=20" \
 

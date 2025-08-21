@@ -125,6 +125,10 @@ class weight_scheduler:
                     bs = feature_maps.shape[0] // 2
                     feature_maps, _ = torch.split(feature_maps, [bs, bs], dim=0)
 
+                # TODO: remove me
+                print(f"feature_maps.shape: {feature_maps.shape}")
+                print(f"features.shape: {features.shape}")
+
             T = TNet(
                 feature_map_size=feature_maps.size(2),
                 feature_map_channels=feature_maps.size(1),

@@ -105,8 +105,12 @@ class weight_scheduler:
             # just to get the feature map size
             model.eval()
             with torch.no_grad():
-                inputs_1 = torch.rand(100, 3, 32, 32).to(device)
-                inputs_2 = torch.rand(100, 3, 32, 32).to(device)
+                inputs_1 = torch.rand(
+                    100, 3, self.args.image_size, self.args.image_size
+                ).to(device)
+                inputs_2 = torch.rand(
+                    100, 3, self.args.image_size, self.args.image_size
+                ).to(device)
 
                 proj_outputs = model(inputs_1, inputs_2)
 
@@ -124,12 +128,6 @@ class weight_scheduler:
                     # for internal layers
                     bs = feature_maps.shape[0] // 2
                     feature_maps, _ = torch.split(feature_maps, [bs, bs], dim=0)
-
-                # TODO: remove me
-                print("======0========")
-                print(f"layer: {layers[index]}")
-                print(f"feature_maps.shape: {feature_maps.shape}")
-                print(f"features.shape: {features.shape}")
 
             T = TNet(
                 feature_map_size=feature_maps.size(2),
@@ -176,11 +174,7 @@ class weight_scheduler:
                             fea_layers, _ = torch.split(fea_layers, [bs, bs], dim=0)
 
                     estimator.train()
-                    # TODO: remove me
-                    print("======1========")
-                    print(f"layer: {layers[index]}")
-                    print(f"fea_layers.shape: {fea_layers.shape}")
-                    print(f"features.shape: {features.shape}")
+
                     loss = estimator.learning_loss(fea_layers, features)
                     assert not loss.isnan()
                     opt.zero_grad()

@@ -708,7 +708,6 @@ def main(args):
         student = student.to(device)
         trainer.mimic(model, poison, student, train_transform)
 
-        # TODO: error line
         student.eval()
         for p in student.parameters():
             p.requires_grad = False

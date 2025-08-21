@@ -708,6 +708,7 @@ def main(args):
         student = student.to(device)
         trainer.mimic(model, poison, student, train_transform)
 
+        # TODO: error line
         student_backbone = extract_backbone(args.method, student)
         new_trainer = CLTrainer(args)
         clean_acc, back_acc = new_trainer.knn_monitor_fre(

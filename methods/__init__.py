@@ -18,10 +18,10 @@ def set_model(args):
             K=65536,
             m=0.999,
             contr_tau=0.2,
-            align_alpha=2,
-            unif_t=3,
-            unif_intra_batch=True,
             mlp=True,
+            # align_alpha=2,
+            # unif_t=3,
+            # unif_intra_batch=True,
         )
     else:
         raise NotImplementedError

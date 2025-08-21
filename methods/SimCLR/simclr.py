@@ -44,7 +44,7 @@ class SimCLRModel(CLModel):
     def forward(self, v1, v2):
 
         x = torch.cat([v1, v2], dim=0)
-        x = self.backbone(x)
+        x = self.backbone(x)  # includes two views' features
         reps = F.normalize(self.proj_head(x), dim=1)
 
         bsz = reps.shape[0] // 2

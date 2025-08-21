@@ -501,8 +501,31 @@ parser.add_argument("--trigger_location", type=float, default=0.9)
 
 
 """
+Baseline: MIMIC
+"""
+# TODO: [Later] add to slurm
+parser.add_argument(
+    "--use_mimic",
+    action="store_true",
+    help="use the method from Mutual Information Guided Backdoor Mitigation for Pre-trained Encoders",
+)
+# TODO: [Later] add to slurm
+parser.add_argument("--mimic_seed", default=42, type=int)
+parser.add_argument(
+    "--mimic_lr", default=1e-2, type=float, help="initial learning rate"
+)
+parser.add_argument("--mimic_batch_size", default=128, type=int, help="")
+parser.add_argument("--mimic_epochs", default=1000, type=int, help="")
+parser.add_argument("--opt1", default=1000, type=int, help="opt1")
+parser.add_argument("--opt2", default=1000, type=int, help="opt2")
+parser.add_argument("--opt3", default=1000, type=int, help="opt3")
+parser.add_argument("--opt4", default=1000, type=int, help="opt4")
+parser.add_argument("--opt5", default=1, type=int, help="opt5")
+
+"""
 SSL Training Loss
 """
+# FIXME: can remove
 parser.add_argument(
     "--ssl_covariance_loss",
     action="store_true",
@@ -676,6 +699,31 @@ def main(args):
     """
     Baseline 3: Random Channel Removal, add args.remove_random_channels
     """
+
+    """
+    Baseline 4: MIMIC
+    """
+    if args.use_mimic:
+        # teacher = extract_backbone(args.method, model)
+        update_seed(args.mimic_seed)
+        student = set_model(args)
+        student = student.to(device)
+        trainer.mimic(model, poison, student, train_transform)
+
+        student_backbone = extract_backbone(args.method, student)
+        new_trainer = CLTrainer(args)
+        clean_acc, back_acc = new_trainer.knn_monitor_fre(
+            student_backbone,
+            poison.memory_loader,
+            poison.test_clean_loader,
+            args,
+            classes=args.num_classes,
+            backdoor_loader=poison.test_pos_loader,
+        )
+        print(
+            f">>>> With MIMIC model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
+        )
+        _ = new_trainer.linear_probing(student_backbone, poison, force_training=True)
 
     """
     Other Cleanse Options: Input Filtering

@@ -2,10 +2,10 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
-###SBATCH --partition=feit-gpu-a100
-###SBATCH --qos=feit
+#SBATCH --partition=feit-gpu-a100
+#SBATCH --qos=feit
 
 ###SBATCH --partition=deeplearn
 ###SBATCH --qos=gpgpudeeplearn
@@ -13,14 +13,14 @@
 
 #SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=2-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 ### "ntasks-per-node" should have same value as "res=gpu:"
 
-#SBATCH --mem=120G
+#SBATCH --mem=180G
 
 # export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 # export MASTER_PORT=28400
@@ -44,22 +44,23 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
+    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --num_views 64 \
+    --ssl_cleanse_seed 20 \
+    --num_views 1 \
     \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --voted_channel_num 30 \
-    --removed_channel_num 70 \
+    --use_ssl_cleanse \
     \
-    --remove_random_channels \
-    --remove_random_channels_seed 20 \
+    --note "Use ssl-cleanse, sd=20" \
     \
-    --note "remove random channels, sd20" \
-    --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/imagenet100_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
+    --num_clusters 100 \
+
+
+
+
     
 
 ##Log this job's resource usage stats###

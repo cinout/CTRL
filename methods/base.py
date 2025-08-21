@@ -5,6 +5,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torch
 import numpy as np
+
+# from methods import set_model
+from mimic.model_train import mimic_model_train
+from mimic.scheduler import weight_scheduler
 from warmup_scheduler import GradualWarmupScheduler
 from torch.utils.tensorboard import SummaryWriter
 import logging
@@ -20,10 +24,10 @@ import torch.nn.functional as F
 import torchvision.models as models
 import torchvision.transforms as T
 from networks.mask_batchnorm import MaskBatchNorm2d
-import h5py
 import PIL
 import random
-from frequency_detector import FrequencyDetector, patching_train, dct2
+
+# from frequency_detector import FrequencyDetector, patching_train, dct2
 from methods.maskprune import (
     test_maskprune,
     evaluate_by_threshold,
@@ -34,16 +38,17 @@ from methods.maskprune import (
     train_step_unlearning,
 )
 from torch.utils.data import Subset, DataLoader
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import RobustScaler
-from sklearn.decomposition import PCA
-from sklearn.cluster import DBSCAN, OPTICS
-from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import NearestNeighbors
-import matplotlib.pyplot as plt
+
+# from sklearn.cluster import KMeans
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.ensemble import IsolationForest
+# from sklearn.preprocessing import RobustScaler
+# from sklearn.decomposition import PCA
+# from sklearn.cluster import DBSCAN, OPTICS
+# from sklearn.mixture import GaussianMixture
+# import matplotlib.pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -362,92 +367,94 @@ def find_trigger_channels_or_poisoned_images(
     if use frequency detector(s), train them here
     """
     if "frequency_ensemble" in args.bd_detectors:
-        freq_detector_ensemble = []
-        for ensemble_id in range(args.frequency_ensemble_size):
-            freq_detector = FrequencyDetector(
-                height=args.image_size, width=args.image_size
-            )
-            freq_detector = freq_detector.to(device)
-            if args.pretrained_frequency_model == "":
-                # train from scratch
-                optimizer = torch.optim.Adadelta(
-                    freq_detector.parameters(), lr=0.05, weight_decay=1e-4
-                )
-                criterion = nn.CrossEntropyLoss()
-                freq_detector.train()
+        pass
+        #### Uncomment if needed
+        # freq_detector_ensemble = []
+        # for ensemble_id in range(args.frequency_ensemble_size):
+        #     freq_detector = FrequencyDetector(
+        #         height=args.image_size, width=args.image_size
+        #     )
+        #     freq_detector = freq_detector.to(device)
+        #     if args.pretrained_frequency_model == "":
+        #         # train from scratch
+        #         optimizer = torch.optim.Adadelta(
+        #             freq_detector.parameters(), lr=0.05, weight_decay=1e-4
+        #         )
+        #         criterion = nn.CrossEntropyLoss()
+        #         freq_detector.train()
 
-                for epoch in range(args.frequency_detector_epochs):
-                    for content in train_probe_freq_detector_loader:
-                        # prepare data in this batch
-                        (images_clean, _, _) = content
-                        images_clean = images_clean.to(device)
-                        images_clean = torch.permute(images_clean, (0, 2, 3, 1))
-                        images_clean = np.array(
-                            images_clean.cpu(), dtype=np.float32
-                        )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
-                        images_poi = np.zeros_like(images_clean)
-                        for i in range(images_clean.shape[0]):
-                            images_poi[i] = patching_train(
-                                images_clean[i],
-                                images_clean,
-                                args.image_size,
-                                ensemble_id,
-                                args.frequency_attack_trigger_ids,
-                                args.complex_gaussian,
-                            )
+        #         for epoch in range(args.frequency_detector_epochs):
+        #             for content in train_probe_freq_detector_loader:
+        #                 # prepare data in this batch
+        #                 (images_clean, _, _) = content
+        #                 images_clean = images_clean.to(device)
+        #                 images_clean = torch.permute(images_clean, (0, 2, 3, 1))
+        #                 images_clean = np.array(
+        #                     images_clean.cpu(), dtype=np.float32
+        #                 )  # shape: [bs, 32, 32, 3]; value range: [0, 1]
+        #                 images_poi = np.zeros_like(images_clean)
+        #                 for i in range(images_clean.shape[0]):
+        #                     images_poi[i] = patching_train(
+        #                         images_clean[i],
+        #                         images_clean,
+        #                         args.image_size,
+        #                         ensemble_id,
+        #                         args.frequency_attack_trigger_ids,
+        #                         args.complex_gaussian,
+        #                     )
 
-                        images = np.concatenate(
-                            [images_clean, images_poi], axis=0
-                        )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                        for i in range(images.shape[0]):
-                            for channel in range(3):
-                                images[i][:, :, channel] = dct2(
-                                    (images[i][:, :, channel] * 255).astype(np.uint8)
-                                )
-                        labels = np.concatenate(
-                            (
-                                np.zeros(images_clean.shape[0]),
-                                np.ones(images_clean.shape[0]),
-                            ),
-                            axis=0,
-                        )
+        #                 images = np.concatenate(
+        #                     [images_clean, images_poi], axis=0
+        #                 )  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+        #                 for i in range(images.shape[0]):
+        #                     for channel in range(3):
+        #                         images[i][:, :, channel] = dct2(
+        #                             (images[i][:, :, channel] * 255).astype(np.uint8)
+        #                         )
+        #                 labels = np.concatenate(
+        #                     (
+        #                         np.zeros(images_clean.shape[0]),
+        #                         np.ones(images_clean.shape[0]),
+        #                     ),
+        #                     axis=0,
+        #                 )
 
-                        idx = np.arange(images.shape[0])
-                        random.shuffle(idx)
-                        images = images[
-                            idx
-                        ]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
-                        images = torch.tensor(images, device=device)
-                        images = torch.permute(
-                            images, (0, 3, 1, 2)
-                        )  # shape: [2*bs, 3, 32, 32]
+        #                 idx = np.arange(images.shape[0])
+        #                 random.shuffle(idx)
+        #                 images = images[
+        #                     idx
+        #                 ]  # shape: [2*bs, 32, 32, 3]; value range: [0, 1]
+        #                 images = torch.tensor(images, device=device)
+        #                 images = torch.permute(
+        #                     images, (0, 3, 1, 2)
+        #                 )  # shape: [2*bs, 3, 32, 32]
 
-                        labels = labels[idx]  # shape: [2*bs]
-                        labels = torch.tensor(labels, device=device, dtype=torch.long)
+        #                 labels = labels[idx]  # shape: [2*bs]
+        #                 labels = torch.tensor(labels, device=device, dtype=torch.long)
 
-                        # obtain loss and update params
-                        output = freq_detector(images)
-                        # [2*bs, 2]
-                        loss = criterion(output, labels)
-                        optimizer.zero_grad()
-                        loss.backward()  # update params of freq_detector
-                        optimizer.step()
-                    print(f"> epoch is {epoch}; loss is {loss.item()}")
+        #                 # obtain loss and update params
+        #                 output = freq_detector(images)
+        #                 # [2*bs, 2]
+        #                 loss = criterion(output, labels)
+        #                 optimizer.zero_grad()
+        #                 loss.backward()  # update params of freq_detector
+        #                 optimizer.step()
+        #             print(f"> epoch is {epoch}; loss is {loss.item()}")
 
-                save_model(
-                    freq_detector.state_dict(),
-                    filename=os.path.join(
-                        args.saved_path, f"frequency_ensemble_{ensemble_id}.pth.tar"
-                    ),
-                )
-            else:
-                # load model
-                pretrained_state_dict = torch.load(
-                    f"{args.pretrained_frequency_model}_{ensemble_id}.pth.tar",
-                    map_location=device,
-                )
-                freq_detector.load_state_dict(pretrained_state_dict, strict=True)
-            freq_detector_ensemble.append(freq_detector)
+        #         save_model(
+        #             freq_detector.state_dict(),
+        #             filename=os.path.join(
+        #                 args.saved_path, f"frequency_ensemble_{ensemble_id}.pth.tar"
+        #             ),
+        #         )
+        #     else:
+        #         # load model
+        #         pretrained_state_dict = torch.load(
+        #             f"{args.pretrained_frequency_model}_{ensemble_id}.pth.tar",
+        #             map_location=device,
+        #         )
+        #         freq_detector.load_state_dict(pretrained_state_dict, strict=True)
+        #     freq_detector_ensemble.append(freq_detector)
 
     """
     # if we want to ignore some clean channels voted by train_probe dataset
@@ -1238,7 +1245,77 @@ class CLTrainer:
         return backbone, linear
 
     """
-    Use Mask Pruning (ICML 2023), called when args.use_mask_pruning===True
+    Use MIMIC (Mutual Information Guided Backdoor Mitigation for Pre-trained Encoders, IEEE Transactions on Information Forensics and Security 2024), called when args.use_mimic==True
+    """
+
+    def mimic(self, teacher, poison, student, train_transform):
+        teacher.eval()
+        train_transform = train_transform.to(device)
+
+        # optimizer
+        optimizer = torch.optim.Adam(
+            student.parameters(), lr=self.args.mimic_lr, weight_decay=1e-6
+        )
+
+        scheduler = weight_scheduler(
+            base_opt=[
+                self.args.opt1,
+                self.args.opt2,
+                self.args.opt3,
+                self.args.opt4,
+            ],  # base value, to be modified into params[0], ...
+            args=self.args,
+            momentum_opt=10000,
+            EPOCHS=200,
+        )
+
+        # set params by mi
+        # their memory_loader, which is tensorized, and normalized (input, target pair)
+        mi, student_hook_info = scheduler.estimate_mi(
+            student, poison.train_probe_loader, device
+        )
+        params = scheduler.update_weight(
+            mi
+        )  # weighted four MI values, one for each layer
+        self.args.opt1, self.args.opt2, self.args.opt3, self.args.opt4 = (
+            params[0],
+            params[1],
+            params[2],
+            params[3],
+        )
+        print("Estimated weight: ", params[0], params[1], params[2], params[3])
+
+        epoch_start = 1
+
+        # Training loop
+        for epoch in range(epoch_start, self.args.mimic_epochs + 1):
+            print("=================================================")
+            train_loss = mimic_model_train(
+                student,
+                teacher,
+                poison.train_probe_loader,
+                optimizer,
+                epoch,
+                self.args,
+                train_transform,
+                student_hook_info,
+            )
+            if epoch % 1000 == 0:
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "state_dict": student.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                    },
+                    os.path.join(self.args.saved_path)
+                    + "mimic_student_model_ep"
+                    + str(epoch)
+                    + ".pth",
+                )
+        # FIXME: ideally remove the hooks of student here
+
+    """
+    Use Mask Pruning (ICML 2023), called when args.use_mask_pruning==True
     """
 
     def mask_prune(self, backbone, poison, trained_linear):
@@ -1584,15 +1661,8 @@ class CLTrainer:
                         features = model(v1, v2)
                         loss = model.negcos(*features)
                     elif self.args.method == "mocov2":
-                        loss = model(im_q=v1, im_k=v2)
-                        # loss = moco_losses.combine(
-                        #     contr_w=1,
-                        #     align_w=0,
-                        #     unif_w=0,
-                        # )
-                    # elif self.args.method == "simsiam":
-                    #     features = model(v1, v2)
-                    #     loss = model.criterion(*features)
+                        features = model(v1, v2)
+                        loss = model.loss(*features)
 
                     losses.update(loss.item(), images[0].size(0))
                     cl_losses.update(loss.item(), images[0].size(0))

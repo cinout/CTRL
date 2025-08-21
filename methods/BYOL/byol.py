@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from methods.base import CLModel
-from networks.resnet_org import model_dict
-from networks.resnet_cifar import model_dict as model_dict_cifar
 
 
 class BYOL(CLModel):
@@ -20,13 +18,7 @@ class BYOL(CLModel):
         pred_dim: hidden dimension of the predictor (default: 256)
         """
         super(BYOL, self).__init__(args)
-
         self.args = args
-
-        # encoder_k = backbone_k
-
-        # self.encoder_q = encoder_q
-        # backbone_q = backbone
         self.backbone_k = self.model_generator()
         self.m = args.byol_m
 
@@ -56,7 +48,6 @@ class BYOL(CLModel):
         )
 
         self.encoder_q = nn.Sequential(self.backbone, self.projector_q)
-
         self.encoder_k = nn.Sequential(self.backbone_k, self.projector_k)
 
     @torch.no_grad()

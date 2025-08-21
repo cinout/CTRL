@@ -1,7 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-# Copyright (c) 2020 Tongzhou Wang
-import typing
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,28 +5,28 @@ import torch.nn.functional as F
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class MoCoLosses(typing.NamedTuple):
-    loss_contr: typing.Optional[torch.Tensor] = None
-    logits_contr: typing.Optional[torch.Tensor] = None
-    loss_align: typing.Optional[torch.Tensor] = None
-    loss_unif: typing.Optional[torch.Tensor] = None
+# class MoCoLosses(typing.NamedTuple):
+#     loss_contr: typing.Optional[torch.Tensor] = None
+#     logits_contr: typing.Optional[torch.Tensor] = None
+#     loss_align: typing.Optional[torch.Tensor] = None
+#     loss_unif: typing.Optional[torch.Tensor] = None
 
-    def combine(
-        self, contr_w: float = 1, align_w: float = 1, unif_w: float = 1
-    ) -> torch.Tensor:
-        # assert not contr_w == align_w == unif_w == 0
-        # l = 0
-        # if contr_w != 0:
-        #     assert self.loss_contr is not None
-        #     l += contr_w * self.loss_contr
-        # if align_w != 0:
-        #     assert self.loss_align is not None
-        #     l += align_w * self.loss_align
-        # if unif_w != 0:
-        #     assert self.loss_unif is not None
-        #     l += unif_w * self.loss_unif
-        # return l
-        return self.loss_contr
+#     def combine(
+#         self, contr_w: float = 1, align_w: float = 1, unif_w: float = 1
+#     ) -> torch.Tensor:
+#         # assert not contr_w == align_w == unif_w == 0
+#         # l = 0
+#         # if contr_w != 0:
+#         #     assert self.loss_contr is not None
+#         #     l += contr_w * self.loss_contr
+#         # if align_w != 0:
+#         #     assert self.loss_align is not None
+#         #     l += align_w * self.loss_align
+#         # if unif_w != 0:
+#         #     assert self.loss_unif is not None
+#         #     l += unif_w * self.loss_unif
+#         # return l
+#         return self.loss_contr
 
 
 class MoCo(nn.Module):
@@ -41,52 +37,53 @@ class MoCo(nn.Module):
 
     def __init__(
         self,
-        base_encoder,
+        base_encoder,  # resnet18
         args,
-        dim=128,
+        dim=512,
         K=65536,
         m=0.999,
-        contr_tau=0.07,
-        align_alpha=None,
-        unif_t=None,
-        unif_intra_batch=True,
-        mlp=False,
+        contr_tau=0.2,
+        mlp=True,
+        # align_alpha=None,  # 2
+        # unif_t=None,  # 3
+        # unif_intra_batch=True,  # True
     ):
         r"""
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
         m: moco momentum of updating key encoder (default: 0.999)
-        T: softmax temperature (default: 0.07)
+        contr_tau: softmax temperature (default: 0.07)
         """
         super(MoCo, self).__init__()
         self.args = args
-
         self.feat_dim = dim
-
         self.K = K
         self.m = m
-
-        # l_contr
         self.contr_tau = contr_tau
+
         if contr_tau is not None:
             self.register_buffer("scalar_label", torch.zeros((), dtype=torch.long))
         else:
             self.register_parameter("scalar_label", None)
 
-        # l_align
-        self.align_alpha = align_alpha
+        # # l_align
+        # self.align_alpha = align_alpha
 
-        # l_unif
-        self.unif_t = unif_t
-        self.unif_intra_batch = unif_intra_batch
+        # # l_unif
+        # self.unif_t = unif_t
+        # self.unif_intra_batch = unif_intra_batch
 
         # create the encoders
         # num_classes is the output fc dimension
-        self.encoder_q = base_encoder(num_classes=dim)
+        self.encoder_q = base_encoder(
+            num_classes=dim
+        )  # has [conv1, bn1, relu, maxpool, layer1-4, avgpool, fc]
         self.encoder_k = base_encoder(num_classes=dim)
 
         if mlp:  # hack: brute-force replacement
-            dim_mlp = self.encoder_q.fc.weight.shape[1]
+            dim_mlp = self.encoder_q.fc.weight.shape[1]  # in_feautere=512
+
+            # resnet18's fc is replaced with a MLP, with two linear layers, 512 -> 512 -> 1000
             self.encoder_q.fc = nn.Sequential(
                 nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_q.fc
             )
@@ -103,7 +100,6 @@ class MoCo(nn.Module):
         # create the queue
         self.register_buffer("queue", torch.randn(dim, K))
         self.queue = F.normalize(self.queue, dim=0)
-
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
 
     @torch.no_grad()
@@ -198,33 +194,7 @@ class MoCo(nn.Module):
 
         return x_gather[idx_this]
 
-    def forward(self, im_q, im_k):
-        r"""
-        Input:
-            im_q: a batch of query images
-            im_k: a batch of key images
-        Output:
-            MoCoLosses object containing the loss terms (and logits if contrastive loss is used)
-        """
-
-        # compute query features
-        q = self.encoder_q(im_q)  # queries: NxC
-        q = F.normalize(q, dim=1)
-
-        # compute key features
-        with torch.no_grad():  # no gradient to keys
-            self._momentum_update_key_encoder()  # update the key encoder
-
-            # shuffle for making use of BN
-            im_k, idx_unshuffle = self._batch_shuffle_ddp(im_k)
-
-            k = self.encoder_k(im_k)  # keys: NxC
-            k = F.normalize(k, dim=1)
-
-            # undo shuffle
-            k = self._batch_unshuffle_ddp(k, idx_unshuffle)
-
-        # moco_loss_ctor_dict = {}
+    def loss(self, q, k):
 
         # lazyily computed & cached!
         def get_q_bdot_k():
@@ -289,6 +259,8 @@ class MoCo(nn.Module):
         )
 
         if self.args.ssl_covariance_loss:
+            # can remove
+
             N, C = q.shape
             off_diag_mask = ~torch.eye(C, dtype=bool)
 
@@ -301,8 +273,35 @@ class MoCo(nn.Module):
             return standard_mocov2_loss + self.args.ssl_covariance_loss_w * loss_q
 
         else:
-
+            # arrive here
             return standard_mocov2_loss
+
+    def forward(self, im_q, im_k):
+        r"""
+        Input:
+            im_q: a batch of query images
+            im_k: a batch of key images
+        """
+
+        # compute query features
+        q = self.encoder_q(im_q)  # queries: NxC
+        q = F.normalize(q, dim=1)
+
+        # compute key features
+        with torch.no_grad():  # no gradient to keys
+            self._momentum_update_key_encoder()  # update the key encoder
+
+            # shuffle for making use of BN
+            im_k, idx_unshuffle = self._batch_shuffle_ddp(im_k)
+
+            k = self.encoder_k(im_k)  # keys: NxC
+            k = F.normalize(k, dim=1)
+
+            # undo shuffle
+            k = self._batch_unshuffle_ddp(k, idx_unshuffle)
+
+        # both are flattened, normalized projector (.fc) output
+        return q, k
 
 
 # utils

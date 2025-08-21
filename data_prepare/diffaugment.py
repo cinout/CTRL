@@ -591,6 +591,7 @@ def set_aug_diff(args):
         #     )
         #     train_transform = (transform_1, transform_2)
 
+        # train_transform assumes input images are already tensorized, so we use kornia.augmentation to augment images, which accepts tensoirized inputs
         train_transform = nn.Sequential(
             aug.RandomResizedCrop(
                 size=(args.image_size, args.image_size), scale=(0.2, 1.0)

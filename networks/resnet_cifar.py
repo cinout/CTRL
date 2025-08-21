@@ -173,6 +173,7 @@ class ResNet(nn.Module):
 
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
+
         if representation:
             return out
         if self.full_model:

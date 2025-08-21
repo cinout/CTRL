@@ -178,6 +178,7 @@ class weight_scheduler:
                     estimator.train()
                     # TODO: remove me
                     print("======1========")
+                    print(f"layer: {layers[index]}")
                     print(f"fea_layers.shape: {fea_layers.shape}")
                     print(f"features.shape: {features.shape}")
                     loss = estimator.learning_loss(fea_layers, features)

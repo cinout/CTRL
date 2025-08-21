@@ -709,10 +709,17 @@ def main(args):
         trainer.mimic(model, poison, student, train_transform)
 
         # TODO: error line
+        student.eval()
         for p in student.parameters():
-            p = p.detach().clone()
+            p.requires_grad = False
 
-        student_backbone = extract_backbone(args.method, student)
+        if args.method == "mocov2":
+            student_backbone = student.encoder_q
+            student_backbone.fc = nn.Sequential()
+        else:
+            student_backbone = student.backbone
+
+        # student_backbone = extract_backbone(args.method, student)
 
         # if args.method == "mocov2":
         #     # backbone = copy.deepcopy(model.encoder_q)

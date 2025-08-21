@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=2-02:00:00
+#SBATCH --time=0-08:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -50,14 +50,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --ssl_cleanse_seed 20 \
-    --num_views 1 \
+    --mimic_seed 20 \
     \
-    --use_ssl_cleanse \
+    --use_mimic \
     \
-    --note "Use ssl-cleanse, sd=20" \
-    \
-    --num_clusters 100 \
+    --note "Use MIMIC, sd=20" \
 
 
 

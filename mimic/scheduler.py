@@ -126,6 +126,8 @@ class weight_scheduler:
                     feature_maps, _ = torch.split(feature_maps, [bs, bs], dim=0)
 
                 # TODO: remove me
+                print("======0========")
+                print(f"layer: {layers[index]}")
                 print(f"feature_maps.shape: {feature_maps.shape}")
                 print(f"features.shape: {features.shape}")
 
@@ -174,6 +176,10 @@ class weight_scheduler:
                             fea_layers, _ = torch.split(fea_layers, [bs, bs], dim=0)
 
                     estimator.train()
+                    # TODO: remove me
+                    print("======1========")
+                    print(f"fea_layers.shape: {fea_layers.shape}")
+                    print(f"features.shape: {features.shape}")
                     loss = estimator.learning_loss(fea_layers, features)
                     assert not loss.isnan()
                     opt.zero_grad()

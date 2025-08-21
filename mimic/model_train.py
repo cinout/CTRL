@@ -92,10 +92,10 @@ def mimic_model_train(
         # simclr/moco: use v1;
         # byol: use v2, as the hook naturally overwrites v1
         if args.method == "simclr":
-            bs = features_1.shape[0] // 2
-            features_1, _ = torch.split(features_1, [bs, bs], dim=0)
-            bs = features_3.shape[0] // 2
-            features_3, _ = torch.split(features_3, [bs, bs], dim=0)
+            bs = feature_1.shape[0] // 2
+            feature_1, _ = torch.split(feature_1, [bs, bs], dim=0)
+            bs = feature_3.shape[0] // 2
+            feature_3, _ = torch.split(feature_3, [bs, bs], dim=0)
 
         # SSL loss, for student only
         if args.method == "simclr":

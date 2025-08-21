@@ -503,13 +503,11 @@ parser.add_argument("--trigger_location", type=float, default=0.9)
 """
 Baseline: MIMIC
 """
-# TODO: [Later] add to slurm
 parser.add_argument(
     "--use_mimic",
     action="store_true",
     help="use the method from Mutual Information Guided Backdoor Mitigation for Pre-trained Encoders",
 )
-# TODO: [Later] add to slurm
 parser.add_argument("--mimic_seed", default=42, type=int)
 parser.add_argument(
     "--mimic_lr", default=1e-2, type=float, help="initial learning rate"

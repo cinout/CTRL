@@ -2,10 +2,10 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
-#SBATCH --partition=feit-gpu-a100
-#SBATCH --qos=feit
+###SBATCH --partition=feit-gpu-a100
+###SBATCH --qos=feit
 
 ###SBATCH --partition=deeplearn
 ###SBATCH --qos=gpgpudeeplearn
@@ -50,11 +50,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --mimic_seed 10 \
+    --mimic_seed 42 \
     \
     --use_mimic \
     \
-    --note "Use MIMIC, sd=10" \
+    --note "Use MIMIC, sd=42" \
 
 
 

@@ -50,11 +50,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --mimic_seed 20 \
+    --mimic_seed 10 \
     \
     --use_mimic \
     \
-    --note "Use MIMIC, sd=20" \
+    --note "Use MIMIC, sd=10" \
 
 
 

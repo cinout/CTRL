@@ -359,7 +359,7 @@ class PoisonAgent:
         )
 
         # create 1% train probe set for classifier training
-        percent = 0.01
+        percent = self.args.probe_set_percent
         id_and_label = dict()
         for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
             if label in id_and_label.keys():

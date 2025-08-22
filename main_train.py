@@ -167,6 +167,7 @@ Trigger / Poisoning
 parser.add_argument("--trigger_type", default="ftrojan", choices=["ftrojan", "htba"])
 parser.add_argument("--target_class", default=0, type=int)
 parser.add_argument("--poison_ratio", default=0.01, type=float)  # right value
+parser.add_argument("--probe_set_percent", default=0.01, type=float)  # right value
 parser.add_argument("--trigger_position", nargs="+", type=int, default=[15, 31])
 parser.add_argument("--magnitude_train", default=50.0, type=float)  # right value
 parser.add_argument("--magnitude_val", default=100.0, type=float)  # right value

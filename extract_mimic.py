@@ -57,31 +57,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14680714-[ST:mimic_sd20].out",
-    "slurm-14680715.out",
-    "slurm-14680716.out",
-    "slurm-14680717.out",
-    "slurm-14680718.out",
-    "slurm-14680719.out",
-    "slurm-14680720.out",
-    "slurm-14680721.out",
-    "slurm-14680722.out",
-    "slurm-14680723.out",
-    "slurm-14680724.out",
-    "slurm-14680725.out",
-    "slurm-14680906.out",
-    "slurm-14680907.out",
-    "slurm-14680908.out",
-    "slurm-14680909.out",
-    "slurm-14680910.out",
-    "slurm-14680911-[END:mimic_sd20].out",
+    "slurm-14680931-[ST:mimic_sd10].out",
+    "slurm-14680932.out",
+    "slurm-14680933.out",
+    "slurm-14680934.out",
+    "slurm-14680935.out",
+    "slurm-14680936.out",
+    "slurm-14680937.out",
+    "slurm-14680938.out",
+    "slurm-14680939.out",
+    "slurm-14680940.out",
+    "slurm-14680941.out",
+    "slurm-14680942.out",
+    "slurm-14680943.out",
+    "slurm-14680944.out",
+    "slurm-14680945.out",
+    "slurm-14680946.out",
+    "slurm-14680947.out",
+    "slurm-14680948-[END:mimic_sd10].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "mimic_sd20_"  # FIXME: change
+title = "mimic_sd10_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

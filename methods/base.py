@@ -1263,8 +1263,8 @@ class CLTrainer:
         )
 
         # adaptive layer-wise weight re-initialization
-        teacher_state_dict = copy.deepcopy(teacher.state_dict()).to(device)
-        student_state_dict = student.state_dict().to(device)
+        teacher_state_dict = copy.deepcopy(teacher.state_dict())
+        student_state_dict = student.state_dict()
         for key in teacher_state_dict.keys():
             if (
                 key.find("bn") != -1

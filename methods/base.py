@@ -1263,8 +1263,8 @@ class CLTrainer:
         )
 
         # adaptive layer-wise weight re-initialization
-        teacher_state_dict = copy.deepcopy(teacher.state_dict())
-        student_state_dict = student.state_dict()
+        teacher_state_dict = copy.deepcopy(teacher.state_dict()).to(device)
+        student_state_dict = student.state_dict().to(device)
         for key in teacher_state_dict.keys():
             if (
                 key.find("bn") != -1
@@ -1289,7 +1289,7 @@ class CLTrainer:
                     p = self.args.bcu_layerwise_ratio[5]
 
                 mask_one = torch.ones(teacher_state_dict[key].shape) * (1 - p)
-                mask = torch.bernoulli(mask_one)
+                mask = torch.bernoulli(mask_one).to(device)
                 masked_weight = teacher_state_dict[key] * mask + student_state_dict[
                     key
                 ] * (

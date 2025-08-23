@@ -2,18 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg5|dlg6
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -50,12 +50,12 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
+    --mimic_seed 42 \
+    --probe_set_percent 0.04 \
     \
-    --use_bcu \
-    --bcu_seed 20 \
-    --bcu_epochs 200 \
+    --use_mimic \
     \
-    --note "Use BCU, eps=200, sd=20" \
+    --note "Use MIMIC, sd=42, 4%ref set" \
 
 
 

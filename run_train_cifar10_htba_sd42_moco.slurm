@@ -51,9 +51,9 @@ python -u main_train.py \
     --ssl_pretrain_seed 42 \
     \
     --use_bcu \
-    --bcu_seed 10 \
+    --bcu_seed 20 \
     \
-    --note "Use BCU, sd=10" \
+    --note "Use BCU, sd=20" \
 
 
 

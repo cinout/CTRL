@@ -1276,17 +1276,17 @@ class CLTrainer:
                 # ignore
                 continue
             if key.endswith(".weight") or key.endswith(".bias"):
-                p = self.args.layerwise_ratio[0]
+                p = self.args.bcu_layerwise_ratio[0]
                 if key.startswith("layer1"):
-                    p = self.args.layerwise_ratio[1]
+                    p = self.args.bcu_layerwise_ratio[1]
                 elif key.startswith("layer2"):
-                    p = self.args.layerwise_ratio[2]
+                    p = self.args.bcu_layerwise_ratio[2]
                 elif key.startswith("layer3"):
-                    p = self.args.layerwise_ratio[3]
+                    p = self.args.bcu_layerwise_ratio[3]
                 elif key.startswith("layer4"):
-                    p = self.args.layerwise_ratio[4]
+                    p = self.args.bcu_layerwise_ratio[4]
                 elif key.startswith("fc"):
-                    p = self.args.layerwise_ratio[5]
+                    p = self.args.bcu_layerwise_ratio[5]
 
                 mask_one = torch.ones(teacher_state_dict[key].shape) * (1 - p)
                 mask = torch.bernoulli(mask_one)

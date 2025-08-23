@@ -53,8 +53,9 @@ python -u main_train.py \
     \
     --use_bcu \
     --bcu_seed 20 \
+    --bcu_epochs 200 \
     \
-    --note "Use BCU, sd=20" \
+    --note "Use BCU, eps=200, sd=20" \
 
 
 

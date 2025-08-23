@@ -542,7 +542,6 @@ parser.add_argument(
     type=float,
     default=0.01,
 )
-# TODO: maybe we can increase it
 parser.add_argument(
     "--bcu_epochs",
     type=int,

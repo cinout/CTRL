@@ -4,11 +4,6 @@ import torch
 import random
 
 
-aa = [1, 2, 3]
-bb = 4
-print(aa + [bb])
-
-
 # for index in range(4):
 #     print(index)
 
@@ -16,21 +11,15 @@ print(aa + [bb])
 Read from saved dictionary
 """
 
-# pretrained_state_dict = torch.load(
-#     "Experiments/imagenet100_htba_byol_ref_set_sd30/last.pth.tar",
-#     map_location=torch.device("cpu"),
-# )
+pretrained_state_dict = torch.load(
+    "Experiments/imagenet100_htba_byol_ref_set_sd30/last.pth.tar",
+    map_location=torch.device("cpu"),
+)
 
-# state_dict = pretrained_state_dict["state_dict"]
+state_dict = pretrained_state_dict["state_dict"]
 
-# print(state_dict["backbone.layer4.1.bn2.weight"])
-# print("----------")
-# print(state_dict["encoder_q.0.layer4.1.bn2.weight"])
-# print("----------")
-# print(
-#     state_dict["backbone.layer4.1.bn2.weight"]
-#     == state_dict["encoder_q.0.layer4.1.bn2.weight"]
-# )
+for key in state_dict:
+    print(key)
 
 
 """

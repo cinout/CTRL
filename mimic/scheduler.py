@@ -39,7 +39,7 @@ class weight_scheduler:
 
         for content in test_loader:
             (images, _, _) = content
-            images = images.to(device)  # tensorized, and normalized
+            images = images.to(device)  # tensorized and /255.0ed
             v1 = transform(images)
 
             estimator.eval()

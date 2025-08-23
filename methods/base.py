@@ -7,6 +7,7 @@ import torch
 import numpy as np
 
 # from methods import set_model
+from bcu.distillation import distillation
 from mimic.model_train import mimic_model_train
 from mimic.scheduler import weight_scheduler
 from warmup_scheduler import GradualWarmupScheduler
@@ -26,6 +27,7 @@ import torchvision.transforms as T
 from networks.mask_batchnorm import MaskBatchNorm2d
 import PIL
 import random
+from kornia import augmentation as aug
 
 # from frequency_detector import FrequencyDetector, patching_train, dct2
 from methods.maskprune import (
@@ -1245,10 +1247,83 @@ class CLTrainer:
         return backbone, linear
 
     """
+    Use BCU (Backdoor Cleansing with Unlabeled Data, CVPR 2023)
+    """
+
+    def bcu(self, teacher, student, poison):
+        teacher.eval()
+
+        # create aug pipeline
+        bcu_aug = nn.Sequential(
+            aug.RandomCrop(
+                size=(self.args.image_size, self.args.image_size), padding=4
+            ),
+            aug.RandomHorizontalFlip(),
+            aug.Normalize(mean=self.args.mean, std=self.args.std),
+        )
+
+        # adaptive layer-wise weight re-initialization
+        teacher_state_dict = copy.deepcopy(teacher.state_dict())
+        student_state_dict = student.state_dict()
+        for key in teacher_state_dict.keys():
+            if (
+                key.find("bn") != -1
+                or key.find("shortcut.1") != -1
+                or key.find("scalar_label") != -1
+                or key.find("queue") != -1
+                or key.find("queue_ptr") != -1
+            ):
+                # ignore
+                continue
+            if key.endswith(".weight") or key.endswith(".bias"):
+                p = self.args.layerwise_ratio[0]
+                if key.startswith("layer1"):
+                    p = self.args.layerwise_ratio[1]
+                elif key.startswith("layer2"):
+                    p = self.args.layerwise_ratio[2]
+                elif key.startswith("layer3"):
+                    p = self.args.layerwise_ratio[3]
+                elif key.startswith("layer4"):
+                    p = self.args.layerwise_ratio[4]
+                elif key.startswith("fc"):
+                    p = self.args.layerwise_ratio[5]
+
+                mask_one = torch.ones(teacher_state_dict[key].shape) * (1 - p)
+                mask = torch.bernoulli(mask_one)
+                masked_weight = teacher_state_dict[key] * mask + student_state_dict[
+                    key
+                ] * (
+                    1 - mask
+                )  # 1 copy, 0 random
+                teacher_state_dict[key] = masked_weight
+        student.load_state_dict(teacher_state_dict, strict=False)
+        student.to(device)
+
+        optimizer = torch.optim.SGD(
+            student.parameters(), lr=self.args.bcu_lr, momentum=0.9, weight_decay=5e-4
+        )
+        scheduler = getattr(torch.optim.lr_scheduler, "CosineAnnealingLR")(
+            optimizer, T_max=100
+        )
+        student.train()
+        for i in range(self.args.bcu_epochs):
+            distillation(
+                self.args,
+                teacher,
+                student,
+                optimizer,
+                scheduler,
+                i,
+                poison.train_probe_loader,
+                bcu_aug,
+                device,
+            )
+
+    """
     Use MIMIC (Mutual Information Guided Backdoor Mitigation for Pre-trained Encoders, IEEE Transactions on Information Forensics and Security 2024), called when args.use_mimic==True
     """
 
-    def mimic(self, teacher, poison, student, train_transform):
+    def mimic(self, teacher, student, poison, train_transform):
         teacher.eval()
         train_transform = train_transform.to(device)
 
@@ -1655,14 +1730,13 @@ class CLTrainer:
                     v1 = train_transform(images)
                     v2 = train_transform(images)
 
+                    features = model(v1, v2)
+
                     if self.args.method == "simclr":
-                        features = model(v1, v2)
                         loss = model.supConLoss(features)
                     elif self.args.method == "byol":
-                        features = model(v1, v2)
                         loss = model.negcos(*features)
                     elif self.args.method == "mocov2":
-                        features = model(v1, v2)
                         loss = model.loss(*features)
 
                     losses.update(loss.item(), images[0].size(0))

@@ -521,6 +521,34 @@ parser.add_argument("--opt3", default=1000, type=int, help="opt3")
 parser.add_argument("--opt4", default=1000, type=int, help="opt4")
 parser.add_argument("--opt5", default=1, type=int, help="opt5")
 
+
+"""
+Baseline: BCU
+"""
+parser.add_argument(
+    "--use_bcu",
+    action="store_true",
+    help="use the method from Backdoor Cleansing with Unlabeled Data (CVPR 2023)",
+)
+parser.add_argument("--bcu_seed", default=42, type=int)
+parser.add_argument(
+    "--bcu_layerwise_ratio",
+    type=float,
+    nargs="+",
+    default=[0.01, 0.01, 0.03, 0.09, 0.27, 0.10],
+)
+parser.add_argument(
+    "--bcu_lr",
+    type=float,
+    default=0.01,
+)
+# TODO: maybe we can increase it
+parser.add_argument(
+    "--bcu_epochs",
+    type=int,
+    default=100,
+)
+
 """
 SSL Training Loss
 """
@@ -703,11 +731,10 @@ def main(args):
     Baseline 4: MIMIC
     """
     if args.use_mimic:
-        # teacher = extract_backbone(args.method, model)
         update_seed(args.mimic_seed)
         student = set_model(args)
         student = student.to(device)
-        trainer.mimic(model, poison, student, train_transform)
+        trainer.mimic(model, student, poison, train_transform)
 
         student.eval()
         for p in student.parameters():
@@ -718,18 +745,6 @@ def main(args):
             student_backbone.fc = nn.Sequential()
         else:
             student_backbone = student.backbone
-
-        # student_backbone = extract_backbone(args.method, student)
-
-        # if args.method == "mocov2":
-        #     # backbone = copy.deepcopy(model.encoder_q)
-        #     student_backbone = type(student.encoder_q)()  # new instance
-        #     student_backbone.load_state_dict(student.encoder_q.state_dict())
-        #     student_backbone.fc = nn.Sequential()
-        # else:
-        #     # backbone = copy.deepcopy(model.backbone)
-        #     student_backbone = type(student.backbone)()  # new instance
-        #     student_backbone.load_state_dict(student.backbone.state_dict())
 
         new_trainer = CLTrainer(args)
         clean_acc, back_acc = new_trainer.knn_monitor_fre(
@@ -742,6 +757,40 @@ def main(args):
         )
         print(
             f">>>> With MIMIC model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
+        )
+        _ = new_trainer.linear_probing(student_backbone, poison, force_training=True)
+
+    """
+    Baseline 5: BCU
+    """
+    if args.use_bcu:
+        update_seed(args.bcu_seed)
+        student = set_model(args)
+        student = student.to(device)
+        trainer.bcu(model, student, poison)
+
+        student.eval()
+
+        for p in student.parameters():
+            p.requires_grad = False
+
+        if args.method == "mocov2":
+            student_backbone = student.encoder_q
+            student_backbone.fc = nn.Sequential()
+        else:
+            student_backbone = student.backbone
+
+        new_trainer = CLTrainer(args)
+        clean_acc, back_acc = new_trainer.knn_monitor_fre(
+            student_backbone,
+            poison.memory_loader,
+            poison.test_clean_loader,
+            args,
+            classes=args.num_classes,
+            backdoor_loader=poison.test_pos_loader,
+        )
+        print(
+            f">>>> With BCU model, for kNN classifier, clean acc: {clean_acc:.1f}, back acc: {back_acc:.1f}",
         )
         _ = new_trainer.linear_probing(student_backbone, poison, force_training=True)
 

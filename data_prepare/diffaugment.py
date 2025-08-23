@@ -442,8 +442,6 @@ def set_aug_diff(args):
     else:
         raise ValueError(args.dataset)
 
-    normalize = aug.Normalize(mean=mean, std=std)
-
     ####################### Define Diff Transforms #######################
 
     # class GaussianBlur(object):
@@ -599,10 +597,10 @@ def set_aug_diff(args):
             aug.RandomHorizontalFlip(),
             RandomApply(aug.ColorJitter(0.4, 0.4, 0.4, 0.1), p=0.8),
             aug.RandomGrayscale(p=0.2),
-            normalize,
+            aug.Normalize(mean=mean, std=std),
         )
 
-        # applied to a PIL image (never used?)
+        # applied to a PIL image (NEVER used?)
         transform_load = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize(mean, std)]  # arrive here
         )

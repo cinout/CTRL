@@ -47,11 +47,11 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --mimic_seed 42 \
     \
-    --use_mimic \
+    --use_bcu \
+    --bcu_seed 42 \
     \
-    --note "Use MIMIC, sd=42" \
+    --note "Use BCU, sd=42" \
 
 
 

@@ -21,7 +21,8 @@ def distillation(
         v2 = bcu_aug(images)
 
         with torch.no_grad():
-            teacher_outputs = teacher(v1, v2).detach()
+            teacher_outputs = teacher(v1, v2)
+
         student_outputs = student(v1, v2)
 
         # the shape of output. The original code's last layer is fc (512-> num_class)
@@ -36,6 +37,8 @@ def distillation(
         elif args.method == "mocov2":
             teacher_outputs = teacher_outputs[0]
             student_outputs = student_outputs[0]
+
+        teacher_outputs = teacher_outputs.detach()
 
         loss = CrossEntropy(
             student_outputs,

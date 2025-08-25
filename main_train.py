@@ -49,6 +49,7 @@ parser.add_argument(
 """
 Normalisation
 """
+# TODO: change it? only affect linear classifier performance. No need to, because linear_probe_normalize is only used in linear classification, which assumes 1% clean images are available.
 parser.add_argument(
     "--linear_probe_normalize",
     default="ref_set",

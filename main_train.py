@@ -211,6 +211,7 @@ parser.add_argument(
     action="store_true",
     help="apply channel removal strategy",
 )
+parser.add_argument("--trigger_channel_removal_seed", default=42, type=int)
 parser.add_argument(
     "--remove_random_channels",
     action="store_true",
@@ -679,9 +680,34 @@ def main(args):
     Ours: Channel Voting, Estimation, and Removal Strategy
     """
     if args.use_trigger_channel_removal:
+        update_seed(args.trigger_channel_removal_seed)
         if args.find_channels_from_n_few_samples > 0:
+            knn_clean_acc_list = []
+            knn_back_asr_list = []
+            linear_clean_acc_list = []
+            linear_back_asr_list = []
             for _ in range(10):
-                trainer.trigger_channel_removal(model, poison, trained_linear)
+                knn_clean, knn_back, linear_clean, linear_back = (
+                    trainer.trigger_channel_removal(model, poison, trained_linear)
+                )
+                knn_clean_acc_list.append(knn_clean)
+                knn_back_asr_list.append(knn_back)
+                linear_clean_acc_list.append(linear_clean)
+                linear_back_asr_list.append(linear_back)
+            print("============= Overall =============")
+            print(
+                f"knn_clean_acc: {np.round(np.mean(knn_clean_acc_list),1)}±{np.round(np.std(knn_clean_acc_list),1)}"
+            )
+            print(
+                f"knn_back_asr: {np.round(np.mean(knn_back_asr_list),1)}±{np.round(np.std(knn_back_asr_list),1)}"
+            )
+            print(
+                f"linear_clean_acc: {np.round(np.mean(linear_clean_acc_list),1)}±{np.round(np.std(linear_clean_acc_list),1)}"
+            )
+            print(
+                f"linear_back_asr: {np.round(np.mean(linear_back_asr_list),1)}±{np.round(np.std(linear_back_asr_list),1)}"
+            )
+
         else:
             trainer.trigger_channel_removal(model, poison, trained_linear)
 

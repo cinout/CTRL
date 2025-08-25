@@ -1930,6 +1930,13 @@ class CLTrainer:
             print(
                 f"In linear probe, by replacing {k} channels, the ACC on clean val is: {np.round(clean_acc1[k],1)}, the ASR on poisoned val is: {np.round(poison_acc1[k],1)}"
             )
+
+        return (
+            clean_acc_SSDETECTOR[max(self.args.removed_channel_num)],
+            back_acc_SSDETECTOR[max(self.args.removed_channel_num)],
+            clean_acc1[max(self.args.removed_channel_num)],
+            poison_acc1[max(self.args.removed_channel_num)],
+        )
         # else:
         #     ######## Find trigger channels in REALISTIC case (i.e., find channel from poisoned train set)
 

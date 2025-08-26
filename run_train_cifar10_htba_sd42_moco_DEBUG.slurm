@@ -46,11 +46,10 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --ssl_pretrain_seed 42 \
+    --ssl_pretrain_seed 30 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
-    --trigger_channel_removal_seed 30 \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \

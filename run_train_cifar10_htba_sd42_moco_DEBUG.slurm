@@ -46,7 +46,7 @@ python -u main_train.py \
     \
     --linear_probe_normalize ref_set \
     \
-    --ssl_pretrain_seed 30 \
+    --ssl_pretrain_seed 42 \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
@@ -56,8 +56,8 @@ python -u main_train.py \
     --removed_channel_num 70 \
     \
     --note "use 8 poi images, vote 30 remove 70" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 
 
 

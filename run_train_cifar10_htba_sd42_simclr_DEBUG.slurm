@@ -36,7 +36,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u main_train.py \
-    --method mocov2 \
+    --method simclr \
     --trigger_type htba \
     \
     --magnitude_train 50.0 \
@@ -56,8 +56,8 @@ python -u main_train.py \
     --removed_channel_num 70 \
     \
     --note "use 8 poi images, vote 30 remove 70" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_simclr_ref_set_sd42/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_simclr_ref_set_sd42/linear.pth.tar" \
 
 
 

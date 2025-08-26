@@ -50,15 +50,15 @@ python -u main_train.py \
     --num_views 64 \
     \
     --use_trigger_channel_removal \
-    --trigger_channel_removal_seed 42 \
+    --trigger_channel_removal_seed 30 \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
     --note "use 4 poi images, vote 30 remove 70" \
-    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/last.pth.tar" \
-    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/linear.pth.tar" \
+    --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/last.pth.tar" \
+    --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd30/linear.pth.tar" \
 
 
 

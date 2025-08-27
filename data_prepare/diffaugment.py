@@ -99,20 +99,31 @@ class PoisonAgent:
 
         # if self.args.use_trigger_channel_removal:
 
-        if self.args.use_complex_ss_aug:
+        # if self.args.use_complex_ss_aug:
+        #     ss_views_aug = [
+        #         RandomApply(
+        #             transforms.ColorJitter(
+        #                 brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1
+        #             ),
+        #             p=0.8,
+        #         ),
+        #         # RandomApply(
+        #         #     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)), p=0.2
+        #         # ),
+        #         # RandomApply(transforms.RandomSolarize(threshold=128), p=0.2),
+        #         transforms.RandomGrayscale(p=0.2),
+        #         transforms.RandomHorizontalFlip(p=0.5),
+        #         transforms.RandomResizedCrop(
+        #             self.args.image_size,
+        #             scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
+        #             ratio=(0.2, 5),
+        #         ),
+        #         transforms.RandomPerspective(p=0.5),
+        #     ]
+
+        # TODO: try change the options here
+        if self.args.ss_aug_option == 0:
             ss_views_aug = [
-                RandomApply(
-                    transforms.ColorJitter(
-                        brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1
-                    ),
-                    p=0.8,
-                ),
-                # RandomApply(
-                #     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)), p=0.2
-                # ),
-                # RandomApply(transforms.RandomSolarize(threshold=128), p=0.2),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomResizedCrop(
                     self.args.image_size,
                     scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
@@ -120,14 +131,18 @@ class PoisonAgent:
                 ),
                 transforms.RandomPerspective(p=0.5),
             ]
-        else:
-            # TODO: try change the options here
+        elif self.args.ss_aug_option == 1:
+            # only RRC
             ss_views_aug = [
                 transforms.RandomResizedCrop(
                     self.args.image_size,
                     scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
                     ratio=(0.2, 5),
                 ),
+            ]
+        elif self.args.ss_aug_option == 2:
+            # only perspective
+            ss_views_aug = [
                 transforms.RandomPerspective(p=0.5),
             ]
 

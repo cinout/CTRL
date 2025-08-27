@@ -24,6 +24,11 @@ import numpy as np
 parser = argparse.ArgumentParser(description="CTRL Training")
 
 """
+DEBUG
+"""
+parser.add_argument("ss_aug_option", type=int, default=0)
+
+"""
 Pretrained Models
 """
 parser.add_argument(

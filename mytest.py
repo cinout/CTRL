@@ -2,24 +2,27 @@ from collections import Counter
 import numpy as np
 import torch
 import random
+import rbo
 
+S = [1, 10, 8]
+T = [1, 3, 2]
 
-# for index in range(4):
-#     print(index)
+score = rbo.RankingSimilarity(S, T).rbo()
+print(score)  # e.g., 0.8333
 
 """
 Read from saved dictionary
 """
 
-pretrained_state_dict = torch.load(
-    "Experiments/imagenet100_htba_byol_ref_set_sd30/last.pth.tar",
-    map_location=torch.device("cpu"),
-)
+# pretrained_state_dict = torch.load(
+#     "Experiments/imagenet100_htba_byol_ref_set_sd30/last.pth.tar",
+#     map_location=torch.device("cpu"),
+# )
 
-state_dict = pretrained_state_dict["state_dict"]
+# state_dict = pretrained_state_dict["state_dict"]
 
-for key in state_dict:
-    print(key)
+# for key in state_dict:
+#     print(key)
 
 
 """

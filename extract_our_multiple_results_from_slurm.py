@@ -70,13 +70,32 @@ def match_basic_info(pattern, file_content, file_path, error_message):
 Input File Paths
 """
 # FIXME: change
-all_input_file_paths = ["slurm-14781172.out"]
+all_input_file_paths = [
+    "slurm-14852886-[ST:aug_1].out",
+    "slurm-14852887.out",
+    "slurm-14852888.out",
+    "slurm-14852889.out",
+    "slurm-14852890.out",
+    "slurm-14852891.out",
+    "slurm-14852892.out",
+    "slurm-14852893.out",
+    "slurm-14852894.out",
+    "slurm-14852895.out",
+    "slurm-14852896.out",
+    "slurm-14852897.out",
+    "slurm-14852898.out",
+    "slurm-14852899.out",
+    "slurm-14852900.out",
+    "slurm-14852901.out",
+    "slurm-14852902.out",
+    "slurm-14852903-[END:aug_1].out",
+]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "debug_"  # FIXME: change
+title = "ablation_aug_1_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

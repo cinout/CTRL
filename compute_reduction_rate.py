@@ -140,44 +140,44 @@ uncleansed_asr = [
 # FIXME: update
 baseline_asr = [
     # BYOL
+    0.4,
+    4.5,
+    0.0,
+    0.8,
+    37.8,
+    0.1,
+    0.3,
+    7.6,
+    0.0,
     0.7,
-    8.7,
-    7.4,
-    0.5,
-    45.4,
-    45.7,
-    1.0,
-    65.7,
-    10.4,
-    3.2,
-    51.4,
-    31.8,
-    # MoCo
     14.3,
-    38.6,
-    26.9,
-    12.6,
-    3.2,
-    1.0,
-    24.0,
-    20.7,
-    17.1,
-    14.5,
+    0.3,
+    # MoCo
+    2.4,
+    53.7,
     3.5,
-    0.9,
-    # SimCLR
-    4.1,
-    69.0,
-    36.2,
-    0.9,
-    58.9,
-    51.4,
-    0.9,
-    58.5,
-    31.3,
+    0.8,
+    1.1,
+    0.1,
+    0.3,
+    56.7,
     1.2,
-    64.1,
-    31.9,
+    0.7,
+    2.1,
+    0.3,
+    # SimCLR
+    1.3,
+    0.8,
+    0.0,
+    0.4,
+    14.6,
+    0.0,
+    0.0,
+    0.1,
+    0.0,
+    0.0,
+    3.1,
+    12.0,
 ]
 
 
@@ -205,8 +205,10 @@ baseline_asr = np.array(baseline_asr)
 """
 percent diff with respect to uncleansed
 """
-# only consider uncleansed ASR>1.0
-uncleansed_asr_gt_1 = uncleansed_asr > 1
+# FIXME: update
+filter = np.array([1, 10, 1] * 12)
+
+uncleansed_asr_gt_1 = uncleansed_asr > filter
 
 uncleansed_asr = uncleansed_asr[uncleansed_asr_gt_1]
 baseline_asr = baseline_asr[uncleansed_asr_gt_1]

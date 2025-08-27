@@ -55,9 +55,11 @@ python -u main_train.py \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
-    --ss_aug_option 1 \
+    --ss_aug_option 0 \
+    --rrc_scale_min 0.4 \
+    --rrc_scale_max 0.6 \
     \
-    --note "#poi=4, vote=30, rm=70, ss_aug_option=1" \
+    --note "#poi=4, vote=30, rm=70, ss_aug_option=0, rrc_scale=[0.4-0.6]" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_byol_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_byol_ref_set_sd42/linear.pth.tar" \
 

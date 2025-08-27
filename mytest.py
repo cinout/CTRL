@@ -4,11 +4,13 @@ import torch
 import random
 import rbo
 
-S = [1, 10, 8]
-T = [1, 3, 2]
+S = np.array([1, 10, 1] * 12)
+print(S)
 
-score = rbo.RankingSimilarity(S, T).rbo()
-print(score)  # e.g., 0.8333
+T = np.random.randint(low=0, high=12, size=(36,))
+print(T)
+
+print(S > T)
 
 """
 Read from saved dictionary

@@ -71,31 +71,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-14859706-[ST:rrc_05_095].out",
-    "slurm-14859707.out",
-    "slurm-14859708.out",
-    "slurm-14859709.out",
-    "slurm-14859710.out",
-    "slurm-14859711.out",
-    "slurm-14859712.out",
-    "slurm-14859713.out",
-    "slurm-14859714.out",
-    "slurm-14859715.out",
-    "slurm-14859716.out",
-    "slurm-14859717.out",
-    "slurm-14859718.out",
-    "slurm-14859719.out",
-    "slurm-14859720.out",
-    "slurm-14859721.out",
-    "slurm-14859722.out",
-    "slurm-14859723-[END:rrc_05_095].out",
+    "slurm-14865198-[ST:rrc_01_095].out",
+    "slurm-14865199.out",
+    "slurm-14865200.out",
+    "slurm-14865201.out",
+    "slurm-14865202.out",
+    "slurm-14865203.out",
+    "slurm-14865204.out",
+    "slurm-14865205.out",
+    "slurm-14865206.out",
+    "slurm-14865207.out",
+    "slurm-14865208.out",
+    "slurm-14865209.out",
+    "slurm-14865210.out",
+    "slurm-14865211.out",
+    "slurm-14865212.out",
+    "slurm-14865213.out",
+    "slurm-14865214.out",
+    "slurm-14865215-[END:rrc_01_095].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "ablation_aug_rrc_05_095_"  # FIXME: change
+title = "ablation_aug_rrc_01_095_"  # FIXME: change
 output_file_voted_channels = prefix + title + "voted_channels.py"
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 

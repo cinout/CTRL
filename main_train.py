@@ -75,7 +75,7 @@ Batch Size
 """
 parser.add_argument("--eval_batch_size", default=512, type=int)
 parser.add_argument("--linear_probe_batch_size", default=128, type=int)
-parser.add_argument("--batch_size", default=128, type=int)
+parser.add_argument("--pretrain_batch_size", default=128, type=int)
 
 
 """
@@ -841,7 +841,7 @@ def main(args):
 
         poison.train_pos_loader = DataLoader(
             Subset(poison.train_pos_loader.dataset, estimated_clean_indices),
-            batch_size=args.batch_size,
+            batch_size=args.pretrain_batch_size,
             sampler=None,
             shuffle=True,
             drop_last=False,

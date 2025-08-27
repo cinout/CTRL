@@ -11,8 +11,9 @@ from bcu.distillation import distillation
 from mimic.model_train import mimic_model_train
 from mimic.scheduler import weight_scheduler
 from warmup_scheduler import GradualWarmupScheduler
-from torch.utils.tensorboard import SummaryWriter
-import logging
+
+# from torch.utils.tensorboard import SummaryWriter
+# import logging
 from sklearn.metrics import roc_auc_score
 from collections import Counter
 from networks.resnet_org import model_dict
@@ -1129,13 +1130,13 @@ class CLTrainer:
 
     def __init__(self, args):
         self.args = args
-        # self.tb_logger = tb_logger.Logger(logdir=args.saved_path, flush_secs=2)
-        self.tb_logger = SummaryWriter(log_dir=args.saved_path)
-        logging.basicConfig(
-            filename=os.path.join(self.tb_logger.log_dir, "training.log"),
-            level=logging.DEBUG,
-        )
-        logging.info(str(args))
+        # # self.tb_logger = tb_logger.Logger(logdir=args.saved_path, flush_secs=2)
+        # self.tb_logger = SummaryWriter(log_dir=args.saved_path)
+        # logging.basicConfig(
+        #     filename=os.path.join(self.tb_logger.log_dir, "training.log"),
+        #     level=logging.DEBUG,
+        # )
+        # logging.info(str(args))
 
         self.args.warmup_epoch = 10
 
@@ -1702,13 +1703,11 @@ class CLTrainer:
         clean_acc = 0.0
         back_acc = 0.0
 
+        training_required = self.args.pretrained_ssl_model == "" or force_training
+
         for epoch in range(self.args.start_epoch, self.args.epochs):
             losses = AverageMeter()
             cl_losses = AverageMeter()
-
-            # (transform_1, transform_2) = train_transform
-            # transform_1 = transform_1.to(device)
-            # transform_2 = transform_2.to(device)
 
             train_transform = train_transform.to(device)
 
@@ -1716,7 +1715,7 @@ class CLTrainer:
             start = time.time()
 
             # SSL TRAIN
-            if self.args.pretrained_ssl_model == "" or force_training:
+            if training_required:
                 for i, content in enumerate(
                     train_loader
                 ):  # frequency backdoor has been injected
@@ -1751,8 +1750,7 @@ class CLTrainer:
 
             # EVAL
             if epoch + 1 == self.args.epochs or (
-                (self.args.pretrained_ssl_model == "" or force_training)
-                and epoch % self.args.knn_eval_freq == 0
+                (training_required) and epoch % self.args.knn_eval_freq == 0
             ):
                 model.eval()
 
@@ -1777,7 +1775,7 @@ class CLTrainer:
                     )
                 )
 
-        if self.args.pretrained_ssl_model == "" or force_training:
+        if training_required:
             # Save final model
             if not self.args.distributed or (
                 self.args.distributed

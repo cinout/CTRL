@@ -15,12 +15,12 @@ from PIL import ImageFilter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class Subset(torch.utils.data.Subset):
-    """Overwrite subset class to provide class methods of main class."""
+# class Subset(torch.utils.data.Subset):
+#     """Overwrite subset class to provide class methods of main class."""
 
-    def __getattr__(self, name):
-        """Call this only if all attributes of Subset are exhausted."""
-        return getattr(self.dataset, name)
+#     def __getattr__(self, name):
+#         """Call this only if all attributes of Subset are exhausted."""
+#         return getattr(self.dataset, name)
 
 
 def get_data_and_label(paths, size):
@@ -32,7 +32,7 @@ def get_data_and_label(paths, size):
 
         img = Image.open(item.split()[0]).convert("RGB")
         img = img.resize((size, size))
-        img = np.asarray(img).astype(np.float32) / 255.0
+        img = np.asarray(img).astype(np.float32) / 255.0  # tensorised
         img = torch.tensor(img)
         img = torch.permute(img, (2, 0, 1))  # shape: [c=3, h, w], value: [0, 1]
         images.append(img)
@@ -48,14 +48,14 @@ def get_data_and_label(paths, size):
     return images, targets
 
 
-def tensor_back_to_PIL(input):
-    input = torch.permute(input, (1, 2, 0))
-    input = input * 255.0
-    input = torch.clamp(input, 0, 255)
-    input = np.array(input, dtype=np.uint8)
-    input = PIL.Image.fromarray(input)
+# def tensor_back_to_PIL(input):
+#     input = torch.permute(input, (1, 2, 0))
+#     input = input * 255.0
+#     input = torch.clamp(input, 0, 255)
+#     input = np.array(input, dtype=np.uint8)
+#     input = PIL.Image.fromarray(input)
 
-    return input
+#     return input
 
 
 class NCropsTransform:
@@ -121,6 +121,7 @@ class PoisonAgent:
                 transforms.RandomPerspective(p=0.5),
             ]
         else:
+            # TODO: try change the options here
             ss_views_aug = [
                 transforms.RandomResizedCrop(
                     self.args.image_size,
@@ -149,9 +150,6 @@ class PoisonAgent:
         ) = self.choose_poisons_randomly()
 
     def choose_poisons_randomly(self):
-
-        # construct class prototype for each class
-
         """
         basic data manipulation
         """
@@ -288,6 +286,7 @@ class PoisonAgent:
                     )
                 )
 
+        # for convenience (saved in disk)
         if self.args.dataset == "imagenet100" and os.path.exists(
             f"quick_fetch_tensors_imagenet100_{self.args.trigger_type}.pth"
         ):
@@ -312,6 +311,7 @@ class PoisonAgent:
         train_is_poisoned = torch.zeros_like(y_train_tensor)
         train_is_poisoned[poison_index] = 1
 
+        # for image indexing, used for input-filtering methods
         train_index = torch.tensor(list(range(len(self.trainset))), dtype=torch.long)
         test_index = torch.tensor(list(range(len(self.validset))), dtype=torch.long)
         memory_index = torch.tensor(list(range(len(x_memory_tensor))), dtype=torch.long)
@@ -328,11 +328,9 @@ class PoisonAgent:
                 # if self.args.use_trigger_channel_removal
                 # else TensorDataset(x_train_tensor, y_train_tensor, train_index)
             ),
-            batch_size=self.args.batch_size,
+            batch_size=self.args.pretrain_batch_size,
             sampler=None,
             shuffle=True,
-            drop_last=False,
-            # drop_last=True if self.args.method == "mocov2" else False,
         )
 
         # clean validation set (used in knn eval only, in base.py)
@@ -358,28 +356,29 @@ class PoisonAgent:
             shuffle=False,
         )
 
-        # create 1% train probe set for classifier training
-        percent = self.args.probe_set_percent
-        id_and_label = dict()
+        # create 1% train probe set for linear classifier training
+        id_and_label = dict()  # choose 1% images for each label to achieve balance
         for i, label in enumerate(y_memory_tensor.cpu().detach().numpy()):
             if label in id_and_label.keys():
                 id_and_label[label].append(i)
             else:
                 id_and_label[label] = [i]
-
         x_probe_tensor = []
         y_probe_tensor = []
         for label, indices in id_and_label.items():
-
             # for each label (class)
             random.shuffle(indices)
-            indices = torch.tensor(indices[: int(len(indices) * percent)])
+            indices = torch.tensor(
+                indices[: int(len(indices) * self.args.probe_set_percent)]
+            )
 
             x_probe_tensor.append(x_memory_tensor[indices])
             y_probe_tensor.append(y_memory_tensor[indices])
         x_probe_tensor = torch.cat(x_probe_tensor, dim=0)
         y_probe_tensor = torch.cat(y_probe_tensor, dim=0)
-        probe_index = torch.tensor(list(range(len(x_probe_tensor))), dtype=torch.long)
+        probe_index = torch.tensor(
+            list(range(len(x_probe_tensor))), dtype=torch.long
+        )  # indexed based on x_probe_tensor, not on the whole trainset
 
         train_probe_loader = DataLoader(
             TensorDataset(x_probe_tensor, y_probe_tensor, probe_index),
@@ -400,8 +399,8 @@ class PoisonAgent:
             train_loader,
             test_clean_loader,
             test_pos_loader,
-            memory_loader,
-            train_probe_loader,
+            memory_loader,  # for kNN eval
+            train_probe_loader,  # 1% clean images
             train_probe_freq_detector_loader,
         )
 
@@ -656,6 +655,7 @@ def set_aug_diff(args):
     else:
         raise NotImplementedError
 
+    # memory loader is train set without shuffle
     memory_loader = torch.utils.data.DataLoader(
         memory_dataset,
         args.eval_batch_size,

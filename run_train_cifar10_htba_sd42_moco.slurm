@@ -55,10 +55,10 @@ python -u main_train.py \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     --ss_aug_option 0 \
-    --rrc_scale_min 0.4 \
-    --rrc_scale_max 0.6 \
+    --rrc_scale_min 0.5 \
+    --rrc_scale_max 0.95 \
     \
-    --note "#poi=4, vote=30, rm=70, ss_aug_option=0, rrc_scale=[0.4-0.6]" \
+    --note "#poi=4, vote=30, rm=70, ss_aug_option=0, rrc_scale=[0.5-0.95]" \
     --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 

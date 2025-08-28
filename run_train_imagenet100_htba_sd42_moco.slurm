@@ -54,9 +54,10 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
-    --removed_channel_num 100 \
+    --removed_channel_num 70 \
+    --ss_aug_option 3 \
     \
-    --note "#poi=4, vote=30 rm=100" \
+    --note "#poi=4, vote=30 rm=70, aug_option=3" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 

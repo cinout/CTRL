@@ -190,10 +190,6 @@ class PoisonAgent:
                 ),
             ]
         # TODO: try change the options here
-        # RandomRotation – rotate by a random angle within a given range.
-        # RandomAffine – apply affine transformations (rotation, translation, scale, shear).
-        # CenterCrop – crop from the center.
-        # Pad – add padding (constant, reflect, replicate, circular).
 
         # used in find_trigger_channels_or_poisoned_images. for augment an image into multiple views, and finding trigger channels
         self.ss_transform = NCropsTransform(

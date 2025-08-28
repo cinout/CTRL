@@ -167,6 +167,16 @@ class PoisonAgent:
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomPerspective(p=0.5),
             ]
+        elif self.args.ss_aug_option == 5:
+            # perspective first, then RRC
+            ss_views_aug = [
+                transforms.RandomPerspective(p=0.5),
+                transforms.RandomResizedCrop(
+                    self.args.image_size,
+                    scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
+                    ratio=(0.2, 5),
+                ),
+            ]
 
         # used in find_trigger_channels_or_poisoned_images. for augment an image into multiple views, and finding trigger channels
         self.ss_transform = NCropsTransform(

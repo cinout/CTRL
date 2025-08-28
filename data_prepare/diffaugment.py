@@ -189,6 +189,22 @@ class PoisonAgent:
                     ratio=(0.2, 5),
                 ),
             ]
+        elif self.args.ss_aug_option == 7:
+            # Jitter + PSP + RRC
+            ss_views_aug = [
+                RandomApply(
+                    transforms.ColorJitter(
+                        brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1
+                    ),
+                    p=0.8,
+                ),
+                transforms.RandomPerspective(p=0.5),
+                transforms.RandomResizedCrop(
+                    self.args.image_size,
+                    scale=(self.args.rrc_scale_min, self.args.rrc_scale_max),
+                    ratio=(0.2, 5),
+                ),
+            ]
         # TODO: try change the options here
 
         # used in find_trigger_channels_or_poisoned_images. for augment an image into multiple views, and finding trigger channels

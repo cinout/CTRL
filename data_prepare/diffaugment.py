@@ -121,7 +121,6 @@ class PoisonAgent:
         #         transforms.RandomPerspective(p=0.5),
         #     ]
 
-        # TODO: try change the options here
         if self.args.ss_aug_option == 0:
             ss_views_aug = [
                 transforms.RandomResizedCrop(
@@ -177,6 +176,12 @@ class PoisonAgent:
                     ratio=(0.2, 5),
                 ),
             ]
+        # TODO: try change the options here
+        # RandomRotation – rotate by a random angle within a given range.
+        # RandomAffine – apply affine transformations (rotation, translation, scale, shear).
+        # CenterCrop – crop from the center.
+        # FiveCrop / TenCrop – crop corners + center (for test-time augmentation)
+        # Pad – add padding (constant, reflect, replicate, circular).
 
         # used in find_trigger_channels_or_poisoned_images. for augment an image into multiple views, and finding trigger channels
         self.ss_transform = NCropsTransform(

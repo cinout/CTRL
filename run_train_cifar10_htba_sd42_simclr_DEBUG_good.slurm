@@ -53,10 +53,9 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_few_samples 4 \
     --voted_channel_num 30 \
-    --removed_channel_num 70 \
-    --ss_aug_option 1 \
+    --removed_channel_num 180 \
     \
-    --note "DEBUG: ss_aug_option=1" \
+    --note "DEBUG: rm=180" \
     --pretrained_ssl_model "./Experiments/cifar10_htba_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_htba_simclr_ref_set_sd42/linear.pth.tar" \
 

@@ -157,7 +157,7 @@ class PoisonAgent:
                 transforms.RandomPerspective(p=0.5),
             ]
         elif self.args.ss_aug_option == 4:
-            # add Horizontal Flip
+            # add Vertical Flip
             ss_views_aug = [
                 transforms.RandomResizedCrop(
                     self.args.image_size,

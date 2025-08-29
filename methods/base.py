@@ -517,16 +517,16 @@ def find_trigger_channels_or_poisoned_images(
         ]  # find all clean images
 
         if args.find_channels_from_n_poison_samples > 0:
-            poisoned_indices = random.sample(
+            random_poisoned_indices = random.sample(
                 poisoned_indices, args.find_channels_from_n_poison_samples
             )
         if args.find_channels_from_n_clean_samples > 0:
-            clean_indices = random.sample(
+            random_clean_indices = random.sample(
                 clean_indices, args.find_channels_from_n_clean_samples
             )
-        all_indices = [*poisoned_indices, *clean_indices]
-        print(f"poisoned_indices size: ", len(poisoned_indices))
-        print(f"clean_indices size: ", len(clean_indices))
+        all_indices = [*random_poisoned_indices, *random_clean_indices]
+        print(f"poisoned_indices size: ", len(random_poisoned_indices))
+        print(f"clean_indices size: ", len(random_clean_indices))
         print(f"all_indices size: ", len(all_indices))
 
         subset = Subset(dataset, all_indices)

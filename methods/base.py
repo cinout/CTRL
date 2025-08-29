@@ -525,9 +525,9 @@ def find_trigger_channels_or_poisoned_images(
             clean_indices, args.find_channels_from_n_clean_samples
         )
         all_indices = [*random_poisoned_indices, *random_clean_indices]
-        print(f"poisoned_indices size: ", len(random_poisoned_indices))
-        print(f"clean_indices size: ", len(random_clean_indices))
-        print(f"all_indices size: ", len(all_indices))
+        # print(f"poisoned_indices size: ", len(random_poisoned_indices))
+        # print(f"clean_indices size: ", len(random_clean_indices))
+        # print(f"all_indices size: ", len(all_indices))
 
         subset = Subset(dataset, all_indices)
         data_loader = DataLoader(

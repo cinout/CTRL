@@ -686,7 +686,8 @@ def main(args):
     """
     if args.use_trigger_channel_removal:
         update_seed(args.trigger_channel_removal_seed)
-        if args.find_channels_from_n_few_samples > 0:
+        # if args.find_channels_from_n_few_samples > 0:
+        if True:
             knn_clean_acc_list = []
             knn_back_asr_list = []
             linear_clean_acc_list = []

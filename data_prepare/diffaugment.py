@@ -205,7 +205,7 @@ class PoisonAgent:
                     ratio=(0.2, 5),
                 ),
             ]
-        # TODO: try change the options here
+        # FIXME: try change the options here
 
         # used in find_trigger_channels_or_poisoned_images. for augment an image into multiple views, and finding trigger channels
         self.ss_transform = NCropsTransform(

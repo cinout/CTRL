@@ -510,27 +510,38 @@ def find_trigger_channels_or_poisoned_images(
             if train_is_poisoned == 1
         ]  # find all real poisoned images from train set
 
-        if args.find_channels_from_n_few_samples > 0:
-            poisoned_indices = random.sample(
-                poisoned_indices, args.find_channels_from_n_few_samples
-            )
+        clean_indices = [
+            i
+            for i, (_, train_is_poisoned, _, _) in enumerate(dataset)
+            if train_is_poisoned == 0
+        ]  # find all clean images
 
-        poisoned_subset = Subset(dataset, poisoned_indices)
+        if args.find_channels_from_n_poison_samples > 0:
+            poisoned_indices = random.sample(
+                poisoned_indices, args.find_channels_from_n_poison_samples
+            )
+        if args.find_channels_from_n_clean_samples > 0:
+            clean_indices = random.sample(
+                clean_indices, args.find_channels_from_n_clean_samples
+            )
+        all_indices = [*poisoned_indices, *clean_indices]
+
+        subset = Subset(dataset, all_indices)
         data_loader = DataLoader(
-            poisoned_subset, batch_size=args.linear_probe_batch_size, shuffle=False
+            subset, batch_size=args.linear_probe_batch_size, shuffle=False
         )
 
-        if args.match_with_clean_samples > 0:
-            total_clean_samples = len(train_probe_loader.dataset)
-            random_clean_indices = random.sample(
-                range(total_clean_samples), args.match_with_clean_samples
-            )
-            clean_subset = Subset(
-                train_probe_loader.dataset, random_clean_indices
-            )  # iterate through, and alwasy take the first item, which is images
-            clean_samples = torch.stack(
-                [image for (image, _, _) in clean_subset], dim=0
-            )  # a list of clean images
+        # if args.find_channels_from_n_clean_samples > 0:
+        #     total_clean_samples = len(train_probe_loader.dataset)
+        #     random_clean_indices = random.sample(
+        #         range(total_clean_samples), args.find_channels_from_n_clean_samples
+        #     )
+        #     clean_subset = Subset(
+        #         train_probe_loader.dataset, random_clean_indices
+        #     )  # iterate through, and alwasy take the first item, which is images
+        #     clean_samples = torch.stack(
+        #         [image for (image, _, _) in clean_subset], dim=0
+        #     )  # a list of clean images
 
     # if args.use_channel_var:
     #     variance_by_channel = []
@@ -538,12 +549,11 @@ def find_trigger_channels_or_poisoned_images(
     for i, content in tqdm(enumerate(data_loader)):
         (images, is_batch_poisoned, _, file_index) = content
 
-        if (
-            args.ideal_case
-            and args.find_channels_from_n_few_samples > 0
-            and args.match_with_clean_samples > 0
-        ):
-            images = torch.cat([images, clean_samples], dim=0)
+        # if args.ideal_case and (
+        #     args.find_channels_from_n_poison_samples > 0
+        #     or args.find_channels_from_n_clean_samples > 0
+        # ):
+        #     images = torch.cat([images, clean_samples], dim=0)
 
         is_batch_poisoned = is_batch_poisoned.to(device)
         images = images.to(device)
@@ -602,11 +612,11 @@ def find_trigger_channels_or_poisoned_images(
                 args,
             )
 
-        if args.match_with_clean_samples > 0:
-            # remove the attached clean samples
-            all_votes.append(max_indices_at_channel[: -clean_samples.shape[0], :])
-        else:
-            all_votes.append(max_indices_at_channel)
+        # if args.find_channels_from_n_clean_samples > 0:
+        #     # remove the attached clean samples
+        #     all_votes.append(max_indices_at_channel[: -clean_samples.shape[0], :])
+        # else:
+        all_votes.append(max_indices_at_channel)
         is_poisoned.append(is_batch_poisoned)
 
     """
@@ -654,7 +664,7 @@ def find_trigger_channels_or_poisoned_images(
         all_votes = np.concatenate(all_votes, axis=0)  # [#dataset, n_view*take_channel]
 
         if args.use_ss_contribute_percent:
-            total_views = args.find_channels_from_n_few_samples * args.num_views
+            total_views = args.find_channels_from_n_poison_samples * args.num_views
             contribution_percent_by_channel /= total_views
 
             if args.contribute_percent_option == "standalone":

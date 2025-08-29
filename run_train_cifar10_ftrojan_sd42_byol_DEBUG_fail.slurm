@@ -49,7 +49,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_few_samples 4 \
+    --find_channels_from_n_poison_samples 4 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     --ss_aug_option 5 \

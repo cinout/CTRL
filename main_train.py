@@ -284,16 +284,16 @@ parser.add_argument(
     help="number of clusters",
 )
 parser.add_argument(
-    "--find_channels_from_n_few_samples",
+    "--find_channels_from_n_poison_samples",
     type=int,
     default=0,
     help="If >0, sample from limited number of images for trigger channel",
 )
 parser.add_argument(
-    "--match_with_clean_samples",
+    "--find_channels_from_n_clean_samples",
     type=int,
     default=0,
-    help="Used together with find_channels_from_n_few_samples. If >0, sample some clean images as well",
+    help="Used together with find_channels_from_n_poison_samples. If >0, sample some clean images as well",
 )
 parser.add_argument(
     "--use_complex_ss_aug",
@@ -686,7 +686,7 @@ def main(args):
     """
     if args.use_trigger_channel_removal:
         update_seed(args.trigger_channel_removal_seed)
-        # if args.find_channels_from_n_few_samples > 0:
+        # if args.find_channels_from_n_poison_samples > 0:
         if True:
             knn_clean_acc_list = []
             knn_back_asr_list = []

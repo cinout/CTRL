@@ -5,6 +5,8 @@ from collections import Counter, OrderedDict
 import torch.nn as nn
 import torchvision.transforms as T
 
+from methods.base import CLTrainer
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -94,7 +96,7 @@ def test_maskprune(args, model, linear, criterion, data_loader, val_mode):
 # called at 3rd pruning stage
 def evaluate_by_threshold(
     args,
-    model,
+    model,  # backbone
     linear,
     mask_values,  # sorted by [2], from low to high.
     pruning_max,  # 0.9
@@ -102,16 +104,20 @@ def evaluate_by_threshold(
     criterion,
     clean_loader,
     poison_loader,
+    memory_loader,
 ):
+    new_trainer = CLTrainer(args)
     model.eval()
     linear.eval()
 
     thresholds = np.arange(0, pruning_max + pruning_step, pruning_step)
     start = 0  # prune from which idx in mask_values
+
     for threshold in thresholds:
         idx = start
         for idx in range(start, len(mask_values)):
             if float(mask_values[idx][2]) <= threshold:
+                # pruning action here
                 pruning(model, mask_values[idx])
                 start += 1
             else:
@@ -121,6 +127,18 @@ def evaluate_by_threshold(
             mask_values[idx][1],
             mask_values[idx][2],
         )
+
+        # kNN performance
+        clean_acc, back_acc = new_trainer.knn_monitor_fre(
+            model,
+            memory_loader,
+            clean_loader,
+            args,
+            classes=args.num_classes,
+            backdoor_loader=poison_loader,
+        )
+
+        # linear performance
         cl_loss, cl_acc = test_maskprune(
             args=args,
             model=model,
@@ -143,9 +161,13 @@ def evaluate_by_threshold(
                 layer_name,  # idx's layer name
                 neuron_idx,  # idx's indice inn the layer
                 threshold,
-                # po_loss,
+                # knn asr
+                back_acc * 100,
+                # knn acc
+                clean_acc * 100,
+                # linear asr
                 po_acc * 100,
-                # cl_loss,
+                # linear acc
                 cl_acc * 100,
             )
         )

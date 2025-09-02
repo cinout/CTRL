@@ -2,18 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg5|dlg6
 
 #SBATCH --job-name="img_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:04:00
+#SBATCH --time=0-00:20:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,19 +45,11 @@ python -u main_train.py \
     --dataset imagenet100 \
     --target_class 26 \
     \
-    --linear_probe_normalize ref_set \
-    \
     --ssl_pretrain_seed 42 \
-    --num_views 64 \
+    --use_mask_pruning \
+    --mask_pruning_seed 42 \
     \
-    --use_trigger_channel_removal \
-    --ideal_case \
-    --find_channels_from_n_poison_samples 6 \
-    --find_channels_from_n_clean_samples 2 \
-    --voted_channel_num 30 \
-    --removed_channel_num 70 \
-    \
-    --note "#poi=6, #clean=2, vote=30 rm=70" \
+    --note "use mask pruning, sd42" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/linear.pth.tar" \
 

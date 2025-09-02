@@ -1509,6 +1509,17 @@ class CLTrainer:
         mask_values = sorted(mask_values, key=lambda x: float(x[2]))
         print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
 
+        # unimpacted kNN performance
+        clean_acc, back_acc = self.knn_monitor_fre(
+            backbone,
+            poison.memory_loader,
+            poison.test_clean_loader,
+            self.args,
+            classes=self.args.num_classes,
+            backdoor_loader=poison.test_pos_loader,
+        )
+
+        # unimpacted linear performance
         cl_loss, cl_acc = test_maskprune(
             args=self.args,
             model=backbone,
@@ -1525,15 +1536,21 @@ class CLTrainer:
             data_loader=poison.test_pos_loader,
             val_mode="poison",
         )
+
         print(
-            "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f}".format(
-                # po_loss,
+            "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
+                # knn asr
+                back_acc * 100,
+                # knn acc
+                clean_acc * 100,
+                # linear asr
                 po_acc * 100,
-                # cl_loss,
+                # linear acc
                 cl_acc * 100,
             )
         )  # this records the backdoored model's initial results
 
+        # masking with changing threshold
         if self.args.pruning_by == "threshold":
             evaluate_by_threshold(
                 self.args,
@@ -1545,6 +1562,7 @@ class CLTrainer:
                 criterion=criterion,
                 clean_loader=poison.test_clean_loader,
                 poison_loader=poison.test_pos_loader,
+                memory_loader=poison.memory_loader,
             )
         else:
             raise Exception("Not implemented yet")

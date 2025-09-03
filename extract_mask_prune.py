@@ -92,24 +92,19 @@ pattern_uncleansed_model_knn = (
 pattern_uncleansed_model_linear = r"for linear classifier, the ACC on clean val is: ([\d.]+), the ASR on poisoned val is: ([\d.]+)"
 
 # Cleansed
-pattern_mask_0 = r"(0)\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d1 = r".*(layer|bn|downsample).*0\.10\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d3 = r".*(layer|bn|downsample).*0\.30\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d5 = r".*(layer|bn|downsample).*0\.50\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d7 = r".*(layer|bn|downsample).*0\.70\s+([\d.]+)\s+([\d.]+)\s*"
-pattern_mask_0d9 = r".*(layer|bn|downsample).*0\.90\s+([\d.]+)\s+([\d.]+)\s*"
+pattern_mask_0 = (
+    r"(0)\s+None\s+None\s+None\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*"
+)
+pattern_mask_0d5 = (
+    r".*(layer|bn|downsample).*0\.50\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*"
+)
 
 
 output_acc_asr_file_handle = open(output_file_acc_asr, "w", encoding="utf-8")
 
 # FIXME: update
 pattern_list = [
-    # pattern_mask_0,
-    # pattern_mask_0d1,
-    # pattern_mask_0d3,
     pattern_mask_0d5,
-    # pattern_mask_0d7,
-    # pattern_mask_0d9,
 ]
 num_mask_thresholds = len(pattern_list)
 

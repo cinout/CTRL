@@ -105,7 +105,7 @@ def evaluate_by_threshold(
     memory_loader,
     knn_evaluator,
 ):
-    # TODO: error
+
     model.eval()
     linear.eval()
 

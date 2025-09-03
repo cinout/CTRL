@@ -47,31 +47,31 @@ Input File Paths
 """
 # FIXME: change
 all_input_file_paths = [
-    "slurm-15158746.out",
-    "slurm-15158747.out",
-    "slurm-15158748.out",
-    "slurm-15158749.out",
-    "slurm-15158750.out",
-    "slurm-15158751.out",
-    "slurm-15158752.out",
-    "slurm-15158753.out",
-    "slurm-15158754.out",
-    "slurm-15158755.out",
-    "slurm-15158756.out",
-    "slurm-15158757.out",
-    "slurm-15158758.out",
-    "slurm-15158759.out",
-    "slurm-15158760.out",
-    "slurm-15158761.out",
-    "slurm-15158762.out",
-    "slurm-15158763-[mask_prune_with_knn_sd10].out",
+    "slurm-15158806.out",
+    "slurm-15158807.out",
+    "slurm-15158808.out",
+    "slurm-15158809.out",
+    "slurm-15158810.out",
+    "slurm-15158811.out",
+    "slurm-15158812.out",
+    "slurm-15158813.out",
+    "slurm-15158814.out",
+    "slurm-15158815.out",
+    "slurm-15158816.out",
+    "slurm-15158817.out",
+    "slurm-15158818.out",
+    "slurm-15158819.out",
+    "slurm-15158820.out",
+    "slurm-15158821.out",
+    "slurm-15158822.out",
+    "slurm-15158823-[mask_prune_with_knn_sd20].out",
 ]
 
 """
 Output File Paths
 """
 prefix = "zz_results_"
-title = "mask_prune_with_knn_sd10_"  # FIXME: change
+title = "mask_prune_with_knn_sd20_"  # FIXME: change
 output_file_acc_asr = prefix + title + "acc_asr_results.txt"
 
 ideal_case_channels = nested_dict()

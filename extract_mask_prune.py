@@ -21,12 +21,14 @@ def to_dict(d):
 
 
 # match a group of two float numbers from strings
-def match_a_group_of_two_float_numbers(pattern, file_content, file_path, error_message):
+def match_a_group_of_four_float_numbers(
+    pattern, file_content, file_path, error_message
+):
 
     match_pattern = re.findall(pattern, file_content)
     if match_pattern:
         item = match_pattern[0]
-        return float(item[2]), float(item[1])
+        return float(item[1]), float(item[2]), float(item[3]), float(item[4])
     else:
         raise Exception(error_message + f" in file {file_path}")
 
@@ -129,39 +131,43 @@ for file_path in all_input_file_paths:
         """
         ACC and ASR - Cleansed
         """
+        cleansed_knn_acc_mean_list = []
+        cleansed_knn_asr_mean_list = []
         cleansed_linear_acc_mean_list = []
         cleansed_linear_asr_mean_list = []
 
         for pattern in pattern_list:
 
-            # Cleansed kNN
-            cleansed_acc, cleansed_asr = match_a_group_of_two_float_numbers(
-                pattern,
-                file_content,
-                file_path,
-                "no matching found",
+            knn_acc, knn_asr, linear_acc, linear_asr = (
+                match_a_group_of_four_float_numbers(
+                    pattern,
+                    file_content,
+                    file_path,
+                    "no matching found",
+                )
             )
 
-            cleansed_linear_acc_mean_list.append(cleansed_acc)
-            cleansed_linear_asr_mean_list.append(cleansed_asr)
+            cleansed_knn_acc_mean_list.append(knn_acc)
+            cleansed_knn_asr_mean_list.append(knn_asr)
+            cleansed_linear_acc_mean_list.append(linear_acc)
+            cleansed_linear_asr_mean_list.append(linear_asr)
 
         """
         Write Table -- collect data
         """
 
-        ideal_case_acc_asr_table[dataset][trigger][ssl_method][
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["knn"][
+            "acc"
+        ] = cleansed_knn_acc_mean_list
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["knn"][
+            "asr"
+        ] = cleansed_knn_asr_mean_list
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["linear"][
             "acc"
         ] = cleansed_linear_acc_mean_list
-
-        # print("cleansed_linear_acc_mean_list")
-        # print(cleansed_linear_acc_mean_list)
-
-        ideal_case_acc_asr_table[dataset][trigger][ssl_method][
+        ideal_case_acc_asr_table[dataset][trigger][ssl_method]["linear"][
             "asr"
         ] = cleansed_linear_asr_mean_list
-
-        # print("cleansed_linear_asr_mean_list")
-        # print(cleansed_linear_asr_mean_list)
 
 
 """
@@ -171,6 +177,7 @@ ssl_methods = ["byol", "mocov2", "simclr"]
 thresholds_count = list(range(num_mask_thresholds))
 datasets = ["imagenet100", "cifar10", "cifar100"]
 triggers = ["htba", "ftrojan"]
+classifiers = ["knn", "linear"]
 metrics = ["acc", "asr"]
 
 for metric in metrics:
@@ -178,16 +185,16 @@ for metric in metrics:
     for method in ssl_methods:
         output_acc_asr_file_handle.write(f"{method}\n")
         for thres in thresholds_count:
+            for classifier in classifiers:
+                for trigger in triggers:
+                    for dataset in datasets:
 
-            for trigger in triggers:
-                for dataset in datasets:
+                        value = ideal_case_acc_asr_table[dataset][trigger][method][
+                            classifier
+                        ][metric][thres]
 
-                    value = ideal_case_acc_asr_table[dataset][trigger][method][metric][
-                        thres
-                    ]
-
-                    if isinstance(value, (int, float)):
-                        output_acc_asr_file_handle.write(f"{value:.1f}\t")
+                        if isinstance(value, (int, float)):
+                            output_acc_asr_file_handle.write(f"{value:.1f}\t")
 
             output_acc_asr_file_handle.write("\n")
     output_acc_asr_file_handle.write("\n")

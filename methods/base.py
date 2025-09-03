@@ -2096,7 +2096,7 @@ class CLTrainer:
         """
         Evaluate clean KNN
         """
-        print(">>>>>>> now KNN evaluate for CLEAN val")
+        # print(">>>>>>> now KNN evaluate for CLEAN val")
         if use_SS_detector:
             clean_val_top1_dict = {}
             clean_val_total_num_dict = {}
@@ -2148,7 +2148,7 @@ class CLTrainer:
         """
         Evaluate poison KNN
         """
-        print(">>>>>>> now KNN evaluate for POISON val")
+        # print(">>>>>>> now KNN evaluate for POISON val")
         if use_SS_detector:
             backdoor_val_top1_dict = {}
             backdoor_val_total_num_dict = {}

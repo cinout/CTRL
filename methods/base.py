@@ -1540,7 +1540,7 @@ class CLTrainer:
         )
 
         print(
-            "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
+            "0 \t None     \t None  \t None   \t {:.1f} \t {:.1f} \t {:.1f} \t {:.1f}".format(
                 # knn acc
                 clean_acc,
                 # knn asr

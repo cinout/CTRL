@@ -155,7 +155,7 @@ def evaluate_by_threshold(
             val_mode="poison",
         )
         print(
-            "{} \t {} \t {} \t {:.2f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
+            "{} \t {} \t {} \t {:.2f} \t {:.1f} \t {:.1f} \t {:.1f} \t {:.1f}".format(
                 start,  # prune from which idx in mask_values
                 layer_name,  # idx's layer name
                 neuron_idx,  # idx's indice inn the layer

@@ -1507,7 +1507,9 @@ class CLTrainer:
         mask_file = os.path.join(self.args.saved_path, "mask_values.txt")
         mask_values = read_data(mask_file)
         mask_values = sorted(mask_values, key=lambda x: float(x[2]))
-        print("No. \t Layer Name \t Neuron Idx \t Mask \t PoisonACC \t CleanACC")
+        print(
+            "No. \t Layer Name \t Neuron Idx \t Mask \t knn_acc \t knn_asr \t linear_acc \t linear_asr"
+        )
 
         # unimpacted kNN performance
         clean_acc, back_acc = self.knn_monitor_fre(
@@ -1539,14 +1541,14 @@ class CLTrainer:
 
         print(
             "0 \t None     \t None  \t None   \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}".format(
-                # knn asr
-                back_acc * 100,
                 # knn acc
-                clean_acc * 100,
-                # linear asr
-                po_acc * 100,
+                clean_acc,
+                # knn asr
+                back_acc,
                 # linear acc
                 cl_acc * 100,
+                # linear asr
+                po_acc * 100,
             )
         )  # this records the backdoored model's initial results
 

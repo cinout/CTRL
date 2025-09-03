@@ -160,14 +160,14 @@ def evaluate_by_threshold(
                 layer_name,  # idx's layer name
                 neuron_idx,  # idx's indice inn the layer
                 threshold,
-                # knn asr
-                back_acc * 100,
                 # knn acc
                 clean_acc * 100,
-                # linear asr
-                po_acc * 100,
+                # knn asr
+                back_acc * 100,
                 # linear acc
                 cl_acc * 100,
+                # linear asr
+                po_acc * 100,
             )
         )
 

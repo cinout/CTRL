@@ -1563,6 +1563,7 @@ class CLTrainer:
                 clean_loader=poison.test_clean_loader,
                 poison_loader=poison.test_pos_loader,
                 memory_loader=poison.memory_loader,
+                knn_evaluator=self.knn_monitor_fre,
             )
         else:
             raise Exception("Not implemented yet")

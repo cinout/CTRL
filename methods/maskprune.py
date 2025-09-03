@@ -5,8 +5,6 @@ from collections import Counter, OrderedDict
 import torch.nn as nn
 import torchvision.transforms as T
 
-from methods.base import CLTrainer
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -105,8 +103,9 @@ def evaluate_by_threshold(
     clean_loader,
     poison_loader,
     memory_loader,
+    knn_evaluator,
 ):
-    new_trainer = CLTrainer(args)
+    # TODO: error
     model.eval()
     linear.eval()
 
@@ -129,7 +128,7 @@ def evaluate_by_threshold(
         )
 
         # kNN performance
-        clean_acc, back_acc = new_trainer.knn_monitor_fre(
+        clean_acc, back_acc = knn_evaluator(
             model,
             memory_loader,
             clean_loader,

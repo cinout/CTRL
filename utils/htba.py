@@ -2,7 +2,6 @@ import random
 import numpy as np
 from PIL import Image
 import torch
-import torch.utils.data
 
 
 def tensor_back_to_PIL(input):

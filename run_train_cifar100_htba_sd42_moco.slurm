@@ -2,18 +2,18 @@
 
 ###SBATCH --partition=gpu-a100
 
-#SBATCH --partition=gpu-a100-short
+###SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-###SBATCH --partition=deeplearn
-###SBATCH --qos=gpgpudeeplearn
-###SBATCH --constraint=dlg4|dlg5|dlg6
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
+#SBATCH --constraint=dlg4|dlg5|dlg6
 
 #SBATCH --job-name="c100_h"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-00:04:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -45,11 +45,19 @@ python -u main_train.py \
     --dataset cifar100 \
     --target_class 0 \
     \
-    --ssl_pretrain_seed 42 \
-    --use_mask_pruning \
-    --mask_pruning_seed 20 \
+    --linear_probe_normalize ref_set \
     \
-    --note "use mask pruning, sd20" \
+    --ssl_pretrain_seed 42 \
+    --num_views 64 \
+    \
+    --use_trigger_channel_removal \
+    --ideal_case \
+    --find_channels_from_n_poison_samples 7 \
+    --find_channels_from_n_clean_samples 1 \
+    --voted_channel_num 30 \
+    --removed_channel_num 70 \
+    \
+    --note "#poi=7, #clean=1, vote=30 rm=70" \
     --pretrained_ssl_model "./Experiments/cifar100_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar100_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 

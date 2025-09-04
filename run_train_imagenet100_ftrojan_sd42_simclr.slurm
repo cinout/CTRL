@@ -2,14 +2,14 @@
 
 ###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
 #SBATCH --job-name="img_f"
 #SBATCH --account=punim1623
@@ -51,12 +51,12 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_poison_samples 7 \
-    --find_channels_from_n_clean_samples 1 \
+    --find_channels_from_n_poison_samples 5 \
+    --find_channels_from_n_clean_samples 3 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=7, #clean=1, vote=30 rm=70" \
+    --note "#poi=5, #clean=3, vote=30 rm=70" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
     

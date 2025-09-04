@@ -49,12 +49,12 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_poison_samples 5 \
-    --find_channels_from_n_clean_samples 3 \
+    --find_channels_from_n_poison_samples 3 \
+    --find_channels_from_n_clean_samples 5 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=5, #clean=3, vote=30 rm=70" \
+    --note "#poi=3, #clean=5, vote=30 rm=70" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
 

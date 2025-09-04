@@ -52,7 +52,7 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_poison_samples 2 \
+    --find_channels_from_n_poison_samples 1 \
     --find_channels_from_n_clean_samples 0 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \

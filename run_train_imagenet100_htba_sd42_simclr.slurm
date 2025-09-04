@@ -52,12 +52,12 @@ python -u main_train.py \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_poison_samples 2 \
+    --find_channels_from_n_poison_samples 4 \
     --find_channels_from_n_clean_samples 0 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=2, [run once to check time], vote=30 rm=70" \
+    --note "#poi=4, [run once to check time], vote=30 rm=70" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_simclr_ref_set_sd42/linear.pth.tar" \
 

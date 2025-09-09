@@ -47,7 +47,7 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --num_views 16 \
+    --num_views 32 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
@@ -56,7 +56,7 @@ python -u main_train.py \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=4, vote=30 rm=70, #view=16" \
+    --note "#poi=4, vote=30 rm=70, #view=32" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

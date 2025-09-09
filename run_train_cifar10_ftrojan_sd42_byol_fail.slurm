@@ -52,9 +52,9 @@ python -u main_train.py \
     --find_channels_from_n_poison_samples 1 \
     --find_channels_from_n_clean_samples 0 \
     --voted_channel_num 30 \
-    --removed_channel_num 180 \
+    --removed_channel_num 120 \
     \
-    --note "#poi=1, vote=30 rm=180" \
+    --note "#poi=1, vote=30 rm=120" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_byol_ref_set_sd42/linear.pth.tar" \
 

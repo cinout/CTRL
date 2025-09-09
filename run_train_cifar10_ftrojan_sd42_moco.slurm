@@ -45,16 +45,16 @@ python -u main_train.py \
     --linear_probe_normalize ref_set \
     \
     --ssl_pretrain_seed 42 \
-    --num_views 64 \
+    --num_views 16 \
     \
     --use_trigger_channel_removal \
     --ideal_case \
-    --find_channels_from_n_poison_samples 2 \
+    --find_channels_from_n_poison_samples 4 \
     --find_channels_from_n_clean_samples 0 \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=2, vote=30 rm=70" \
+    --note "#poi=4, vote=30 rm=70, #view=16" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_mocov2_ref_set_sd42/linear.pth.tar" \
 

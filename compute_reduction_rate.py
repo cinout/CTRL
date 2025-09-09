@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import rankdata, wilcoxon
 
 """
 ACC
@@ -44,53 +45,348 @@ uncleansed_acc = [
     75.7,
     24.8,
 ]
-
-# FIXME: update
-baseline_acc = [
-    # BYOL
-    42.0,
+ssl_cleanse_acc = [
+    24.5,
+    87.8,
+    56.0,
+    23.4,
     87.2,
-    55.0,
-    41.9,
+    56.0,
+    17.4,
+    85.2,
+    44.2,
+    16.2,
+    83.6,
+    44.3,
+    31.4,
+    76.8,
+    43.8,
+    30.5,
+    77.7,
+    43.6,
+    23.6,
+    71.3,
+    28.0,
+    22.4,
+    72.8,
+    29.1,
+    30.4,
+    87.2,
+    53.9,
+    32.0,
     87.1,
+    53.4,
+    23.4,
+    84.7,
+    42.1,
+    24.5,
+    83.6,
+    42.4,
+]
+rnp_acc = [
+    39.2,
+    87.1,
+    53.8,
+    35.8,
+    87.5,
+    50.1,
+    18.7,
+    78.4,
+    34.8,
+    15.2,
+    77.8,
+    30.3,
+    10.8,
+    48.0,
+    29.5,
+    26.8,
+    51.3,
+    37.0,
+    1.3,
+    17.4,
+    8.5,
+    10.3,
+    23.3,
+    16.4,
+    11.0,
     55.4,
-    20.5,
-    82.2,
-    37.9,
-    21.6,
-    77.9,
-    36.3,
-    # MoCo
-    42.0,
-    78.3,
-    46.2,
+    31.8,
+    11.2,
+    51.5,
+    41.7,
+    0.9,
+    27.1,
+    11.9,
+    1.5,
+    26.1,
+    22.0,
+]
+random_drop_acc = [
+    42.4,
+    87.0,
+    55.7,
+    41.8,
+    87.6,
+    56.3,
+    20.2,
+    76.0,
+    33.5,
+    21.1,
+    75.5,
+    34.3,
+    42.5,
+    78.9,
+    45.9,
+    42.5,
+    79.6,
+    46.5,
+    24.9,
+    68.3,
+    24.0,
+    25.3,
+    69.2,
+    26.5,
+    38.4,
+    85.1,
+    49.9,
+    38.8,
+    85.4,
+    50.4,
+    20.4,
+    70.8,
+    24.7,
+    23.6,
+    74.9,
+    24.0,
+]
+mimic_acc = [
+    15.6,
+    57.5,
+    25.0,
+    15.7,
+    55.3,
+    24.8,
+    9.5,
+    48.4,
+    13.4,
+    9.2,
+    47.3,
+    13.8,
+    12.1,
+    53.7,
+    21.0,
+    11.7,
+    53.7,
+    21.1,
+    7.5,
+    47.6,
+    11.8,
+    7.3,
+    47.1,
+    12.3,
+    18.6,
+    60.2,
+    26.2,
+    18.9,
+    60.2,
+    26.5,
+    11.7,
+    53.2,
+    15.3,
+    11.8,
+    54.8,
+    16.0,
+]
+bcu_acc = [
+    5.5,
+    87.1,
+    56.7,
+    8.1,
+    88.0,
+    56.2,
+    6.6,
+    83.6,
+    42.8,
+    7.7,
+    82.8,
+    41.8,
+    33.8,
+    71.5,
+    36.1,
+    34.7,
+    72.3,
+    36.6,
+    27.1,
+    68.0,
+    23.7,
+    26.6,
+    67.9,
+    24.8,
+    35.0,
+    85.9,
+    51.8,
+    35.9,
+    86.2,
+    51.4,
+    27.2,
+    83.5,
+    38.5,
+    26.7,
+    82.5,
+    38.9,
+]
+ours_1_acc = [
     42.2,
+    87.2,
+    55.3,
+    42.1,
+    87.3,
+    55.6,
+    20.7,
+    82.4,
+    37.5,
+    21.1,
     79.1,
+    36.3,
+    42.1,
+    78.4,
+    46.1,
+    42.3,
+    79.2,
+    45.4,
+    23.6,
+    68.4,
+    22.6,
+    25.3,
+    68.7,
+    24.9,
+    37.7,
+    82.5,
+    48.6,
+    37.8,
+    82.3,
+    49.1,
+    19.6,
+    66.5,
+    23.0,
+    23.0,
+    70.9,
+    25.0,
+]
+ours_2_acc = [
+    41.9,
+    87.2,
+    55.3,
+    41.7,
+    87.2,
+    55.3,
+    20.6,
+    82.0,
+    37.6,
+    21.6,
+    78.2,
+    35.8,
+    42.2,
+    78.3,
+    46.1,
+    42.1,
+    79.0,
     45.5,
     23.5,
     68.2,
     22.4,
     25.1,
-    70.0,
-    24.9,
-    # SimCLR
+    70.1,
+    24.8,
     37.5,
-    82.3,
+    82.7,
     48.6,
     37.8,
-    80.8,
-    48.9,
-    19.8,
-    67.5,
-    22.9,
-    22.8,
-    70.0,
-    23.6,
+    82.1,
+    49.0,
+    19.7,
+    66.5,
+    22.7,
+    23.2,
+    70.6,
+    23.9,
 ]
-uncleansed_acc = np.array(uncleansed_acc)
-baseline_acc = np.array(baseline_acc)
-baseline_percent_wrt_uncleansed = (baseline_acc - uncleansed_acc) / uncleansed_acc
-print(f"ACC reduction rate:{baseline_percent_wrt_uncleansed.mean()*100:.1f}")
+ours_4_acc = [
+    41.9,
+    87.2,
+    54.9,
+    41.9,
+    87.3,
+    55.3,
+    20.8,
+    82.5,
+    37.4,
+    21.5,
+    78.0,
+    35.7,
+    42.1,
+    78.4,
+    46.1,
+    42.2,
+    79.1,
+    45.4,
+    23.3,
+    68.2,
+    22.3,
+    25.0,
+    70.0,
+    24.9,
+    37.6,
+    82.1,
+    48.4,
+    37.7,
+    80.4,
+    49.1,
+    19.8,
+    66.9,
+    22.7,
+    22.8,
+    70.1,
+    22.8,
+]
+ours_8_acc = [
+    41.8,
+    87.2,
+    54.9,
+    41.7,
+    86.8,
+    55.3,
+    20.6,
+    82.3,
+    37.9,
+    21.4,
+    77.3,
+    35.5,
+    42.1,
+    78.4,
+    46.2,
+    41.9,
+    79.0,
+    45.4,
+    23.3,
+    68.2,
+    22.2,
+    24.9,
+    69.7,
+    24.7,
+    37.5,
+    81.9,
+    48.4,
+    37.7,
+    79.9,
+    49.0,
+    19.9,
+    66.7,
+    22.7,
+    22.8,
+    69.6,
+    22.8,
+]
 
 """
 ASR
@@ -136,89 +432,453 @@ uncleansed_asr = [
     86.7,
     53.2,
 ]
-
-# FIXME: update
-baseline_asr = [
-    # BYOL
-    0.5,
-    4.2,
-    0.0,
-    0.7,
-    37.7,
-    0.2,
-    0.8,
-    6.4,
-    0.0,
-    0.8,
-    15.9,
-    0.5,
-    # MoCo
-    2.6,
-    54.7,
-    2.4,
-    1.1,
+ssl_cleanse_asr = [
+    1.5,
+    2.0,
     1.4,
+    1.4,
+    8.3,
+    14.5,
+    1.6,
+    4.6,
+    1.8,
+    1.7,
+    17.2,
+    6.6,
+    2.7,
+    23.5,
+    22.0,
+    1.8,
+    2.3,
+    0.6,
+    4.9,
+    24.4,
+    17.1,
+    1.4,
+    2.9,
+    0.8,
+    4.1,
+    47.4,
+    29.0,
+    2.4,
+    12.0,
+    16.7,
+    1.7,
+    45.5,
+    24.7,
+    2.4,
+    11.9,
+    11.9,
+]
+rnp_asr = [
+    0.8,
+    3.0,
+    35.7,
+    24.9,
+    57.0,
+    61.6,
+    0.0,
+    4.6,
+    36.0,
+    36.9,
+    60.7,
+    38.7,
+    0.8,
+    11.9,
+    1.0,
+    10.8,
+    3.0,
+    0.4,
+    0.0,
+    1.8,
+    23.3,
+    6.9,
+    22.3,
+    0.5,
+    0.9,
+    4.3,
+    28.7,
+    0.3,
+    5.8,
+    56.8,
+    0.0,
+    2.3,
+    25.9,
+    0.0,
+    15.9,
+    54.2,
+]
+random_drop_asr = [
+    2.1,
+    3.5,
+    38.7,
+    44.9,
+    86.5,
+    88.0,
+    0.0,
+    1.1,
+    46.1,
+    64.6,
+    92.0,
+    67.0,
+    2.0,
+    84.7,
+    43.2,
+    41.8,
+    1.8,
+    0.3,
+    6.6,
+    61.9,
+    19.6,
+    22.2,
+    3.8,
+    1.1,
+    48.6,
+    85.7,
+    80.3,
+    28.3,
+    82.3,
+    72.5,
+    48.8,
+    66.9,
+    71.0,
+    14.1,
+    86.6,
+    47.2,
+]
+mimic_asr = [
+    1.1,
+    8.8,
+    0.3,
+    1.5,
+    4.3,
+    0.5,
+    1.2,
+    8.1,
+    0.2,
+    1.0,
+    7.2,
+    0.5,
+    0.4,
+    7.8,
+    0.1,
+    0.5,
+    4.9,
+    0.8,
+    2.0,
+    9.2,
     0.1,
     0.9,
-    58.1,
-    0.6,
+    7.7,
+    0.5,
+    1.0,
+    5.9,
+    0.3,
     1.1,
+    3.6,
+    0.6,
+    0.7,
+    11.3,
+    0.1,
+    1.0,
+    6.5,
+    0.4,
+]
+bcu_asr = [
+    0.7,
+    8.7,
+    7.4,
+    0.5,
+    45.4,
+    45.7,
+    1.0,
+    65.7,
+    10.4,
+    3.2,
+    51.4,
+    31.8,
+    14.3,
+    38.6,
+    26.9,
+    12.6,
+    3.2,
+    1.0,
+    24.0,
+    20.7,
+    17.1,
+    14.5,
+    3.5,
+    0.9,
+    4.1,
+    69.0,
+    36.2,
+    0.9,
+    58.9,
+    51.4,
+    0.9,
+    58.5,
+    31.3,
+    1.2,
+    64.1,
+    31.9,
+]
+ours_1_asr = [
+    0.8,
+    6.3,
+    0.2,
+    1.1,
+    49.0,
+    14.1,
+    1.1,
+    7.9,
+    0.0,
+    0.9,
+    26.7,
+    2.6,
+    5.0,
+    60.4,
+    4.9,
+    2.2,
+    1.6,
+    0.2,
+    2.6,
+    62.2,
+    2.6,
+    1.9,
+    3.7,
+    0.5,
+    1.3,
+    3.3,
+    0.4,
+    0.9,
+    36.1,
+    2.1,
+    0.1,
+    1.2,
+    0.1,
+    0.5,
+    20.4,
+    14.8,
+]
+ours_2_asr = [
+    0.7,
+    4.9,
+    0.0,
+    0.8,
+    44.2,
+    1.8,
+    0.5,
+    5.8,
+    0.0,
+    1.2,
+    24.7,
+    0.7,
+    3.4,
+    53.7,
+    4.8,
+    1.8,
+    1.2,
+    0.1,
+    0.8,
+    56.7,
+    2.1,
+    1.5,
     3.0,
     0.3,
-    # SimCLR
+    1.5,
+    2.2,
+    0.0,
+    0.8,
+    30.7,
+    0.1,
+    0.1,
+    0.4,
+    0.0,
+    0.3,
+    15.6,
+    12.5,
+]
+ours_4_asr = [
+    0.5,
+    4.0,
+    0.0,
+    0.6,
+    39.2,
+    0.1,
+    0.4,
+    7.6,
+    0.0,
+    0.5,
+    19.1,
+    0.3,
+    2.5,
+    53.1,
+    3.1,
     1.1,
-    1.8,
+    1.2,
+    0.1,
+    0.5,
+    54.5,
+    0.7,
+    0.8,
+    2.6,
+    0.4,
+    1.2,
+    1.4,
+    0.0,
+    0.3,
+    19.6,
+    0.0,
+    0.0,
+    0.5,
+    0.0,
+    0.1,
+    5.7,
+    9.2,
+]
+ours_8_asr = [
+    0.4,
+    4.5,
+    0.0,
+    0.8,
+    37.8,
+    0.1,
+    0.3,
+    7.6,
+    0.0,
+    0.7,
+    14.3,
+    0.3,
+    2.4,
+    53.7,
+    3.5,
+    0.8,
+    1.1,
+    0.1,
+    0.3,
+    56.7,
+    1.2,
+    0.7,
+    2.1,
+    0.3,
+    1.3,
+    0.8,
     0.0,
     0.4,
-    24.3,
+    14.6,
     0.0,
     0.0,
-    0.2,
+    0.1,
     0.0,
-    0.2,
-    10.1,
-    10.9,
+    0.0,
+    3.1,
+    12.0,
 ]
 
 
-# ours_sample16_asr = [
-#     #
-# ]
+"""
+Baselines Dictionary
+"""
+baseline_scores = {
+    "ssl_cleanse": {"acc": ssl_cleanse_acc, "asr": ssl_cleanse_asr},
+    "rnp": {"acc": rnp_acc, "asr": rnp_asr},
+    "random_drop": {"acc": random_drop_acc, "asr": random_drop_asr},
+    "mimic": {"acc": mimic_acc, "asr": mimic_asr},
+    "bcu": {"acc": bcu_acc, "asr": bcu_asr},
+    "ours_1": {"acc": ours_1_acc, "asr": ours_1_asr},
+    "ours_2": {"acc": ours_2_acc, "asr": ours_2_asr},
+    "ours_4": {"acc": ours_4_acc, "asr": ours_4_asr},
+    "ours_8": {"acc": ours_8_acc, "asr": ours_8_asr},
+}
 
+
+uncleansed_acc = np.array(uncleansed_acc)
 uncleansed_asr = np.array(uncleansed_asr)
-baseline_asr = np.array(baseline_asr)
-# ours_sample16_asr = np.array(ours_sample16_asr)
+failed_asr_indices = np.where(uncleansed_asr == 0)[0]
 
-# """
-# Absolute Diff
-# """
+baseline_change_rates = dict()
+for baseline_name, scores in baseline_scores.items():
+    baseline_acc = scores["acc"]
+    baseline_acc = np.array(baseline_acc)
+    acc_change_rate = (baseline_acc - uncleansed_acc) / uncleansed_acc
 
-# diff = baseline_asr - ours_sample16_asr
+    baseline_asr = scores["asr"]
+    baseline_asr = np.array(baseline_asr)
+    asr_change_rate = (baseline_asr - uncleansed_asr) / (
+        uncleansed_asr
+        + 1e-10
+        # uncleansed_asr + 0.01 if uncleansed_asr == 0 else uncleansed_asr
+    )
+    asr_change_rate[failed_asr_indices] = 0
 
-# baseline_wins = np.sum(diff < 0)
-# our_wins = np.sum(diff > 0)
-# ties = np.sum(diff == 0)
-
-# print(f"baseline_wins: {baseline_wins}; our_wins: {our_wins}; ties: {ties}")
+    # the higher the value, the better the performance
+    total_change_rate = acc_change_rate - asr_change_rate
+    baseline_change_rates[baseline_name] = total_change_rate
 
 
 """
-percent diff with respect to uncleansed
+Wilcoxon signed-rank test
 """
-# FIXME: update
-filter = np.array([1, 10, 1] * 12)
+all_baseline_names = list(baseline_change_rates.keys())
+baselines_count = len(all_baseline_names)
+baseline_i = "ours_1"
+for j in range(0, baselines_count):
+    baseline_j = all_baseline_names[j]
+    if baseline_j == baseline_i:
+        continue
+    x = baseline_change_rates[baseline_i]
+    y = baseline_change_rates[baseline_j]
 
-uncleansed_asr_gt_1 = uncleansed_asr > filter
+    # Step 1: differences
+    d = x - y
 
-uncleansed_asr = uncleansed_asr[uncleansed_asr_gt_1]
-baseline_asr = baseline_asr[uncleansed_asr_gt_1]
-# ours_sample16_asr = ours_sample16_asr[uncleansed_asr_gt_1]
+    # Step 2: remove zeros (Wilcoxon ignores ties with diff=0)
+    d_nonzero = d[d != 0]
 
+    # Step 3: ranks of absolute differences
+    ranks = rankdata(abs(d_nonzero))
 
-baseline_percent_wrt_uncleansed = (baseline_asr - uncleansed_asr) / uncleansed_asr
-# ours_sample16_percent_wrt_uncleansed = (
-#     ours_sample16_asr - uncleansed_asr
-# ) / uncleansed_asr
+    # Step 4: assign signs to ranks
+    signed_ranks = np.sign(d_nonzero) * ranks
 
+    # Step 5: W+ and W-
+    W_plus = signed_ranks[signed_ranks > 0].sum()
+    W_minus = -signed_ranks[signed_ranks < 0].sum()
 
-print(f"ASR reduction rate:{baseline_percent_wrt_uncleansed.mean()*100:.1f}")
+    # Additiona: Compare with scipy's wilcoxon
+    stat, p = wilcoxon(x, y)
+
+    print("==================")
+    print(baseline_i, baseline_j)
+    print("W+ =", W_plus, " W- =", W_minus, "p-value:", p)
+
+# for i in range(0, baselines_count - 1):
+#     for j in range(i + 1, baselines_count):
+#         baseline_i = all_baseline_names[i]
+#         baseline_j = all_baseline_names[j]
+#         x = baseline_change_rates[baseline_i]
+#         y = baseline_change_rates[baseline_j]
+
+#         # Step 1: differences
+#         d = x - y
+
+#         # Step 2: remove zeros (Wilcoxon ignores ties with diff=0)
+#         d_nonzero = d[d != 0]
+
+#         # Step 3: ranks of absolute differences
+#         ranks = rankdata(abs(d_nonzero))
+
+#         # Step 4: assign signs to ranks
+#         signed_ranks = np.sign(d_nonzero) * ranks
+
+#         # Step 5: W+ and W-
+#         W_plus = signed_ranks[signed_ranks > 0].sum()
+#         W_minus = -signed_ranks[signed_ranks < 0].sum()
+
+#         # Additiona: Compare with scipy's wilcoxon
+#         stat, p = wilcoxon(x, y)
+
+#         print("==================")
+#         print(baseline_i, baseline_j)
+#         print("W+ =", W_plus, " W- =", W_minus)
+#         print("Wilcoxon test statistic (min(W+, W-)):", stat, " p-value:", p)

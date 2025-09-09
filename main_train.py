@@ -692,8 +692,7 @@ def main(args):
             knn_back_asr_list = []
             linear_clean_acc_list = []
             linear_back_asr_list = []
-            # TODO: change back to range(10)
-            for _ in range(1):
+            for _ in range(10):
                 knn_clean, knn_back, linear_clean, linear_back = (
                     trainer.trigger_channel_removal(model, poison, trained_linear)
                 )

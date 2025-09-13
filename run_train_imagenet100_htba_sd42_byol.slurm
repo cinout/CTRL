@@ -54,10 +54,10 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_poison_samples 4 \
     --find_channels_from_n_clean_samples 0 \
-    --voted_channel_num 30 \
-    --removed_channel_num 130 \
+    --voted_channel_num 10 \
+    --removed_channel_num 70 \
     \
-    --note "#poi=4, vote=30 rm=130, #view=64" \
+    --note "#poi=4, vote=10 rm=70, #view=64" \
     --pretrained_ssl_model "./Experiments/imagenet100_htba_byol_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_htba_byol_ref_set_sd42/linear.pth.tar" \
     

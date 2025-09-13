@@ -51,10 +51,10 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_poison_samples 4 \
     --find_channels_from_n_clean_samples 0 \
-    --voted_channel_num 20 \
+    --voted_channel_num 40 \
     --removed_channel_num 70 \
     \
-    --note "#poi=4, vote=20 rm=70, #view=64" \
+    --note "#poi=4, vote=40 rm=70, #view=64" \
     --pretrained_ssl_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
 

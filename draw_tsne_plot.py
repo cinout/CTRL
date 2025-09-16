@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
-vision_features = np.load("visions_for_tsne_imagenet100_htba_simclr.npy")
+vision_features = np.load("visions_for_tsne_imagenet100_ftrojan_simclr.npy")
 
 
 bs, n_views, C = vision_features.shape

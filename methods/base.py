@@ -1905,22 +1905,33 @@ class CLTrainer:
                 clean_val_dataset = poison.test_clean_loader.dataset
                 poi_val_dataset = poison.test_pos_loader.dataset
 
-                #  ensure two different classes
+                #  2 classes
                 index_1 = 2
-                index_2 = 600
-                index_3 = 1509
-                index_4 = 2006
-                index_5 = 3002
                 index_6 = 4001
-
                 clean_subset = Subset(
                     clean_val_dataset,
-                    [index_1, index_2, index_3, index_4, index_5, index_6],
+                    [index_1, index_6],
                 )
                 poi_subset = Subset(
                     poi_val_dataset,
-                    [index_1, index_2, index_3, index_4, index_5, index_6],
+                    [index_1, index_6],
                 )
+
+                # #  6 classes
+                # index_1 = 2
+                # index_2 = 600
+                # index_3 = 1509
+                # index_4 = 2006
+                # index_5 = 3002
+                # index_6 = 4001
+                # clean_subset = Subset(
+                #     clean_val_dataset,
+                #     [index_1, index_2, index_3, index_4, index_5, index_6],
+                # )
+                # poi_subset = Subset(
+                #     poi_val_dataset,
+                #     [index_1, index_2, index_3, index_4, index_5, index_6],
+                # )
 
                 clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
                 poi_images = torch.stack([item[0] for item in poi_subset], dim=0)

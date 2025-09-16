@@ -1915,8 +1915,8 @@ class CLTrainer:
                 clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
                 poi_images = torch.stack([item[0] for item in poi_subset], dim=0)
 
-                print("clean_images.shape", clean_images)
-                print("poi_images.shape", poi_images)
+                print("clean_images.shape", clean_images.shape)
+                print("poi_images.shape", poi_images.shape)
 
                 exit()
 

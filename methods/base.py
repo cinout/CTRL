@@ -1934,6 +1934,7 @@ class CLTrainer:
                         bs, n_views, -1
                     )  # [bs, n_views, 512]
                     vision_features = vision_features.cpu().numpy()
+                    print(vision_features.shape)
                     np.save("visions_for_tsne.npy", vision_features)
 
                 exit()

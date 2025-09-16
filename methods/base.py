@@ -1915,8 +1915,26 @@ class CLTrainer:
                 clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
                 poi_images = torch.stack([item[0] for item in poi_subset], dim=0)
 
-                print("clean_images.shape", clean_images.shape)
-                print("poi_images.shape", poi_images.shape)
+                images = torch.cat([clean_images, poi_images], dim=0)
+                images = images.to(device)
+                views = generate_view_tensors(images, poison.ss_transform)
+                views = views.to(device)
+                bs, n_views, c, h, w = views.shape
+                views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+
+                transform = T.Compose(
+                    [
+                        T.Normalize(self.args.mean, self.args.std),
+                    ]
+                )
+                views = transform(views)
+                with torch.no_grad():
+                    vision_features = backbone(views)  # [bs*n_views, 512]
+                    vision_features = vision_features.reshape(
+                        bs, n_views, -1
+                    )  # [bs, n_views, 512]
+                    vision_features = vision_features.cpu().numpy()
+                    np.save("visions_for_tsne.npy", vision_features)
 
                 exit()
 

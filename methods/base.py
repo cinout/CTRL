@@ -325,7 +325,7 @@ Return:
 
 def find_trigger_channels_or_poisoned_images(
     args,
-    data_loader,
+    data_loader,  # poisoned train set
     train_probe_loader,
     train_probe_freq_detector_loader,
     backbone,
@@ -1899,6 +1899,27 @@ class CLTrainer:
                 : max(self.args.removed_channel_num)
             ]
         else:
+            # TODO: remove this later
+            if self.args.debug_tsne:
+                # val: 100 classes, each class 50 images
+                clean_val_dataset = poison.test_clean_loader.dataset
+                poi_val_dataset = poison.test_pos_loader.dataset
+
+                #  ensure two different classes
+                index_1 = 20
+                index_2 = 400
+
+                clean_subset = Subset(clean_val_dataset, [index_1, index_2])
+                poi_subset = Subset(poi_val_dataset, [index_1, index_2])
+
+                clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
+                poi_images = torch.stack([item[0] for item in poi_subset], dim=0)
+
+                print("clean_images.shape", clean_images)
+                print("poi_images.shape", poi_images)
+
+                exit()
+
             contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
                 poison.train_pos_loader,  # poisoned training set

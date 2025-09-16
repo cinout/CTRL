@@ -27,6 +27,9 @@ parser = argparse.ArgumentParser(description="CTRL Training")
 DEBUG
 """
 parser.add_argument("--ss_aug_option", type=int, default=0)
+parser.add_argument(
+    "--debug_tsne", action="store_true", help="getting embeddings for tsne"
+)
 
 """
 Pretrained Models

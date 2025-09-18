@@ -894,7 +894,8 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
                 indices_toremove = contributing_indices[
                     0 : max(args.removed_channel_num)
                 ]
-                output[:, indices_toremove] = 0.0
+                # TODO: change back to 0.0
+                output[:, indices_toremove] = 100.0
 
             cur_feats = F.normalize(output, dim=1).cpu()  # default: L2 norm
             B, D = cur_feats.shape
@@ -956,7 +957,8 @@ def train_linear_classifier(
                 indices_toremove = contributing_indices[
                     0 : max(args.removed_channel_num)
                 ]
-                output[:, indices_toremove] = 0.0
+                # TODO: back to 0.0
+                output[:, indices_toremove] = 100.0
         else:
             with torch.no_grad():
                 output = backbone(images)
@@ -964,7 +966,8 @@ def train_linear_classifier(
                     indices_toremove = contributing_indices[
                         0 : max(args.removed_channel_num)
                     ]
-                    output[:, indices_toremove] = 0.0
+                    # TODO: back to 0.0
+                    output[:, indices_toremove] = 100.0
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -1044,7 +1047,9 @@ def eval_linear_classifier(
             if args.use_trigger_channel_removal and use_ss_detector:
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
-                    output[:, indices_toremove] = 0.0
+
+                    # TODO: change back to 0.0
+                    output[:, indices_toremove] = 100.0
 
                     acc1_r, total_r = produces_evaluation_results(
                         linear,
@@ -2181,7 +2186,8 @@ class CLTrainer:
             if use_SS_detector:
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
-                    feature[:, indices_toremove] = 0.0
+                    # TODO: change back to 0.0
+                    feature[:, indices_toremove] = 100.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
                         feature, feature_bank, feature_labels, classes, k, t
@@ -2246,7 +2252,8 @@ class CLTrainer:
             if use_SS_detector:
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
-                    feature[:, indices_toremove] = 0.0
+                    # TODO: back to 0.0
+                    feature[:, indices_toremove] = 100.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
                         feature, feature_bank, feature_labels, classes, k, t

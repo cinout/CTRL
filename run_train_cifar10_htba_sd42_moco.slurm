@@ -53,10 +53,10 @@ python -u main_train.py \
     --ideal_case \
     --find_channels_from_n_poison_samples 4 \
     --find_channels_from_n_clean_samples 0 \
-    --voted_channel_num 50 \
+    --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=4, vote=50 rm=70, #view=64" \
+    --note "#poi=4, vote=30 rm=70" \
     --pretrained_ssl_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/cifar10_htba_mocov2_ref_set_sd42/linear.pth.tar" \
 

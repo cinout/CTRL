@@ -56,7 +56,7 @@ python -u main_train.py \
     --voted_channel_num 30 \
     --removed_channel_num 70 \
     \
-    --note "#poi=4, vote=30 rm=70" \
+    --note "#poi=4, vote=30 rm=70, replace_value=100.0" \
     --pretrained_ssl_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd42/last.pth.tar" \
     --pretrained_linear_model "./Experiments/imagenet100_ftrojan_simclr_ref_set_sd42/linear.pth.tar" \
     

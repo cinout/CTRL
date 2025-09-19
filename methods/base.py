@@ -894,8 +894,7 @@ def get_feats(loader, model, args, use_ss_detector=False, contributing_indices=N
                 indices_toremove = contributing_indices[
                     0 : max(args.removed_channel_num)
                 ]
-                # TODO: change back to 0.0
-                output[:, indices_toremove] = 0.4
+                output[:, indices_toremove] = 0.0
 
             cur_feats = F.normalize(output, dim=1).cpu()  # default: L2 norm
             B, D = cur_feats.shape
@@ -957,8 +956,8 @@ def train_linear_classifier(
                 indices_toremove = contributing_indices[
                     0 : max(args.removed_channel_num)
                 ]
-                # TODO: back to 0.0
-                output[:, indices_toremove] = 0.4
+
+                output[:, indices_toremove] = 0.0
         else:
             with torch.no_grad():
                 output = backbone(images)
@@ -966,8 +965,8 @@ def train_linear_classifier(
                     indices_toremove = contributing_indices[
                         0 : max(args.removed_channel_num)
                     ]
-                    # TODO: back to 0.0
-                    output[:, indices_toremove] = 0.4
+
+                    output[:, indices_toremove] = 0.0
 
         output = linear(output)
         loss = F.cross_entropy(output, target)
@@ -1048,8 +1047,7 @@ def eval_linear_classifier(
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
 
-                    # TODO: change back to 0.0
-                    output[:, indices_toremove] = 0.4
+                    output[:, indices_toremove] = 0.0
 
                     acc1_r, total_r = produces_evaluation_results(
                         linear,
@@ -1904,66 +1902,66 @@ class CLTrainer:
                 : max(self.args.removed_channel_num)
             ]
         else:
-            # TODO: remove this later
-            if self.args.debug_tsne:
-                # val: 100 classes, each class 50 images
-                clean_val_dataset = poison.test_clean_loader.dataset
-                poi_val_dataset = poison.test_pos_loader.dataset
+            # remove this later
+            # if self.args.debug_tsne:
+            #     # val: 100 classes, each class 50 images
+            #     clean_val_dataset = poison.test_clean_loader.dataset
+            #     poi_val_dataset = poison.test_pos_loader.dataset
 
-                #  2 classes
-                index_1 = 2
-                index_6 = 4001
-                clean_subset = Subset(
-                    clean_val_dataset,
-                    [index_1, index_6],
-                )
-                poi_subset = Subset(
-                    poi_val_dataset,
-                    [index_1, index_6],
-                )
+            #     #  2 classes
+            #     index_1 = 2
+            #     index_6 = 4001
+            #     clean_subset = Subset(
+            #         clean_val_dataset,
+            #         [index_1, index_6],
+            #     )
+            #     poi_subset = Subset(
+            #         poi_val_dataset,
+            #         [index_1, index_6],
+            #     )
 
-                # #  6 classes
-                # index_1 = 2
-                # index_2 = 600
-                # index_3 = 1509
-                # index_4 = 2006
-                # index_5 = 3002
-                # index_6 = 4001
-                # clean_subset = Subset(
-                #     clean_val_dataset,
-                #     [index_1, index_2, index_3, index_4, index_5, index_6],
-                # )
-                # poi_subset = Subset(
-                #     poi_val_dataset,
-                #     [index_1, index_2, index_3, index_4, index_5, index_6],
-                # )
+            #     # #  6 classes
+            #     # index_1 = 2
+            #     # index_2 = 600
+            #     # index_3 = 1509
+            #     # index_4 = 2006
+            #     # index_5 = 3002
+            #     # index_6 = 4001
+            #     # clean_subset = Subset(
+            #     #     clean_val_dataset,
+            #     #     [index_1, index_2, index_3, index_4, index_5, index_6],
+            #     # )
+            #     # poi_subset = Subset(
+            #     #     poi_val_dataset,
+            #     #     [index_1, index_2, index_3, index_4, index_5, index_6],
+            #     # )
 
-                clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
-                poi_images = torch.stack([item[0] for item in poi_subset], dim=0)
+            #     clean_images = torch.stack([item[0] for item in clean_subset], dim=0)
+            #     poi_images = torch.stack([item[0] for item in poi_subset], dim=0)
 
-                images = torch.cat([clean_images, poi_images], dim=0)
-                images = images.to(device)
-                views = generate_view_tensors(images, poison.ss_transform)
-                views = views.to(device)
-                bs, n_views, c, h, w = views.shape
-                views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
+            #     images = torch.cat([clean_images, poi_images], dim=0)
+            #     images = images.to(device)
+            #     views = generate_view_tensors(images, poison.ss_transform)
+            #     views = views.to(device)
+            #     bs, n_views, c, h, w = views.shape
+            #     views = views.reshape(-1, c, h, w)  # [bs*n_views, c, h, w]
 
-                transform = T.Compose(
-                    [
-                        T.Normalize(self.args.mean, self.args.std),
-                    ]
-                )
-                views = transform(views)
-                with torch.no_grad():
-                    vision_features = backbone(views)  # [bs*n_views, 512]
-                    vision_features = vision_features.reshape(
-                        bs, n_views, -1
-                    )  # [bs, n_views, 512]
-                    vision_features = vision_features.cpu().numpy()
-                    print(vision_features.shape)
-                    np.save("visions_for_tsne.npy", vision_features)
+            #     transform = T.Compose(
+            #         [
+            #             T.Normalize(self.args.mean, self.args.std),
+            #         ]
+            #     )
+            #     views = transform(views)
+            #     with torch.no_grad():
+            #         vision_features = backbone(views)  # [bs*n_views, 512]
+            #         vision_features = vision_features.reshape(
+            #             bs, n_views, -1
+            #         )  # [bs, n_views, 512]
+            #         vision_features = vision_features.cpu().numpy()
+            #         print(vision_features.shape)
+            #         np.save("visions_for_tsne.npy", vision_features)
 
-                exit()
+            #     exit()
 
             contributing_indices = find_trigger_channels_or_poisoned_images(
                 self.args,
@@ -2186,8 +2184,8 @@ class CLTrainer:
             if use_SS_detector:
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
-                    # TODO: change back to 0.0
-                    feature[:, indices_toremove] = 0.4
+
+                    feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
                         feature, feature_bank, feature_labels, classes, k, t
@@ -2252,8 +2250,8 @@ class CLTrainer:
             if use_SS_detector:
                 for k in args.removed_channel_num:
                     indices_toremove = contributing_indices[0:k]
-                    # TODO: back to 0.0
-                    feature[:, indices_toremove] = 0.4
+
+                    feature[:, indices_toremove] = 0.0
                     feature = F.normalize(feature, dim=1)
                     pred_labels = self.knn_predict(
                         feature, feature_bank, feature_labels, classes, k, t

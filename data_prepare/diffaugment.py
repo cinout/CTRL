@@ -122,6 +122,7 @@ class PoisonAgent:
         #     ]
 
         if self.args.ss_aug_option == 0:
+            # (default) both RRC and perspective
             ss_views_aug = [
                 transforms.RandomResizedCrop(
                     self.args.image_size,

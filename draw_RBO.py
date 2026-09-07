@@ -4,10 +4,10 @@ import matplotlib.patches as mpatches
 
 # Data from your table
 methods = [
-    "BYOL\n+Ftrojan\n+Cifar10",
-    "MoCoV2\n+HTBA\n+Cifar10",
-    "SimCLR\n+HTBA\n+Cifar10",
-    "SimCLR\n+HTBA\n+Cifar100",
+    "BYOL\n+CIFAR-10\n+FTrojan",
+    "MoCoV2\n+CIFAR-10\n+HTBA",
+    "SimCLR\n+CIFAR-10\n+HTBA",
+    "SimCLR\n+CIFAR-100\n+HTBA",
 ]
 values = [0.34, 0.66, 0.79, 0.86]
 errors = [0.08, 0.05, 0.03, 0.02]
@@ -40,12 +40,12 @@ for bar, val, err in zip(bars, values, errors):
         f"{val:.2f}±{err:.2f}",
         ha="center",
         va="bottom",
-        fontsize=10,
+        fontsize=11,
     )
 
 # Labels and ticks
-plt.xticks(x, methods, rotation=0, ha="center", fontsize=10)
-plt.ylabel("RBO")
+plt.xticks(x, methods, rotation=0, ha="center", fontsize=11)
+plt.ylabel("RBO", fontsize=11, labelpad=-2)
 # plt.title("Comparison of Backdoor-channel Estimation Certainty")
 
 # Add legend
@@ -59,7 +59,12 @@ ax = plt.gca()  # Get current Axes
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 
-plt.legend(handles=legend_handles, loc="lower right")
+plt.legend(
+    handles=legend_handles,
+    loc="lower right",
+    facecolor="white",
+    framealpha=0.7,
+)
 
 plt.tight_layout()
 plt.show()
